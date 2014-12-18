@@ -55,7 +55,15 @@ char CCDSendToDebuger = 0;//发送到调试器
 char CCDDataSendStart = 0;
 char AngDataStart = 0;
 char AngDataSendOK = 1;
-
+char AngSendToDebuger = 0;//发送数据到调试器,默认不发,与调试器建立连接后发送
+char ControlByteRcvStart = 0;
+char ControlByteCnt = 0;
+int ControlRcvErrorCnt = 0;//控制字接受错误计数
+unsigned char ControlByte[7];
+unsigned char AngTemp5b[5] = { 0xdd};
+#define ANG_TO_DEBUGER_TIME 65000
+unsigned int AngToDebugerDelay = 0;//发送角度时间的计数,计数多少个周期才发送数据
+char AngToDebugerTimesUp = 0;//发送角度的时间到
 /**********************/
 char DebugerDataStart = 0;//开始发送数据
 char ShakeHandFlag = 0;//是否握手
@@ -63,7 +71,9 @@ char WaitFlag = 1;//等待周期结束,置1
 unsigned char DTUDataCnt = 0;//透传接受到的数据计数
 uint8 Temp1B = 0;
 char DataReciveStart = 0;
+char CarStop = 0;//强制停车的标志
 int DebugerErrorCnt = 0;
+
 uint8 DebugerByte36[PageDateLen];
 void WatiPeriod(int t);
 /**********************/
@@ -120,7 +130,18 @@ void main(void)
 		{
 			TimeFlag_2Ms = 0;
 			LPLD_GPIO_Toggle_b(PTC, Scope2Ms);
-			MotorControl_Out(); //输出电机控制的值
+			if (CarStop == 0)//如果停车标志位为1,则停止输出电机值
+			{
+				MotorControl_Out(); //输出电机控制的值
+			}
+			else
+			{
+				TempValue.AngControl_OutValue = 0;
+				TempValue.Dir_LeftOutValue = 0;
+				TempValue.Dir_RightOutValue = 0;
+				TempValue.SpeedOutValue = 0;
+				MotorControl_Out();
+			}
 		}
 		if (CCDSendImage == 1)
 		{
@@ -175,7 +196,7 @@ void main(void)
 				}
 			}
 		}
-		if (AngDataSend == 1)
+		if (AngDataSend == 1 && AngSendToDebuger==0)
 		{
 			if (AngDataStart == 1)
 			{
@@ -204,6 +225,39 @@ void main(void)
 				}
 			}
 		}
+		if (AngDataSend == 1 && AngSendToDebuger == 1)
+		{
+			if (AngToDebugerTimesUp == 1)
+			{
+				if (AngDataStart == 1)
+				{
+					if (AngDataSendOK == 1)
+					{
+						AngDataSendOK = 0;
+						Float2Byte(&CarInfo_Now.CarAngle, AngTemp5b, 1);
+						AngTemp5b[0] = 0xdd;
+					}
+					LPLD_UART_PutChar(UART5, AngTemp5b[ScopeSendPointCnt]);
+					ScopeSendPointCnt++;
+					if (ScopeSendPointCnt >= 5)
+					{
+						ScopeSendPointCnt = 0;
+						AngDataSendOK = 1;
+						AngDataStart = 0;
+						AngToDebugerTimesUp = 0;
+					}
+				}
+			}
+			else
+			{
+				AngToDebugerDelay++;
+				if (AngToDebugerDelay >= ANG_TO_DEBUGER_TIME)
+				{
+					AngToDebugerDelay = 0;
+					AngToDebugerTimesUp = 1;
+				}
+			}
+		}
 		if (Debuger == 1)
 		{
 			if (LPLD_UART_GetChar_Present(UART5))
@@ -214,6 +268,7 @@ void main(void)
 					ShakeHandFlag = 1;
 					CCDSendImage = 0;
 					AngDataSend = 0;
+					AngSendToDebuger = 1;
 					LPLD_UART_PutChar(UART5, 0xEF);
 				}
 				else if (Temp1B == 0xFD)
@@ -232,7 +287,7 @@ void main(void)
 					Float2Byte(&Dir_PID.Kd, DebugerByte36, 8 * 4);
 					LPLD_SYSTICK_DelayUs(1000);
 				}
-				else if (Temp1B == 0xf9)
+				else if (Temp1B == 0xf9)//
 				{
 					DataReciveStart = 1;
 					DTUDataCnt = 0;
@@ -247,9 +302,29 @@ void main(void)
 				}
 				else if (Temp1B == 0xf7)
 				{
-					LPLD_UART_PutChar(UART5, 0xf7);
+					LPLD_UART_PutChar(UART5, 0x7f);
 					CCDSendImage = 0;
 					CCDSendToDebuger = 0;
+				}
+				else if (Temp1B == 0xf6)//开始接受控制字,接收控制字的时候取消和调试器的连接
+				{
+					ControlByteRcvStart = 1;
+					Debuger = 0;
+					ControlByteCnt = 0;
+					LPLD_UART_PutChar(UART5, 0x6f);
+				}
+				else if (Temp1B == 0xf5)
+				{
+					if (CarStop == 1)
+					{
+						CarStop = 0;
+						LPLD_UART_PutChar(UART5, 0x5f);
+					}
+					else
+					{
+						CarStop = 1;
+						LPLD_UART_PutChar(UART5, 0x4f);
+					}
 				}
 			}
 		}
@@ -261,6 +336,7 @@ void main(void)
 			{
 				DebugerDataStart = 0;
 				DebugDataPointCnt = 0;
+				AngDataSend = 1;
 			}
 		}
 		if (DataReciveStart == 1 && Debuger == 0)//数据接受要互斥
@@ -296,6 +372,30 @@ void main(void)
 					DTUDataCnt = 0;
 					Debuger = 1;
 					DebugerErrorCnt = 0;
+				}
+			}
+		}
+		if (ControlByteRcvStart == 1 && Debuger == 0)
+		{
+			if (LPLD_UART_GetChar_Present(UART5))
+			{
+				ControlByte[ControlByteCnt] = LPLD_UART_GetChar(UART5);
+				ControlByteCnt++;
+				if (ControlByteCnt>=7)
+				{
+					ControlByteRcvStart = 0;
+					Debuger = 1;
+					//从上到下依次7个参数
+					CCDSendImage = ControlByte[0];//这个参数不应该改,如果调试器需要ccd图像的时候会置一,如果希望图像发回电脑,
+													//则此参数为1,且CCDSendToDebuger为0
+					if (CCDSendImage == 1)
+						CCDSendToDebuger = 0;
+					else
+						CCDSendToDebuger = 1;
+					AngDataSend = ControlByte[1];
+					AngSendToDebuger = ControlByte[2];
+					/*CCDSendToDebuger = ControlByte[3];*/
+					LPLD_UART_PutChar(UART5, 0x6f);
 				}
 			}
 		}
