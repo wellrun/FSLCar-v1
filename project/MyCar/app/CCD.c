@@ -1,12 +1,12 @@
 #include "CCD.h"
 void SamplingDelay(void);
-#define TSL1401_SI(x)   LPLD_GPIO_Output_b(PTA, 28, x)
-#define TSL1401_CLK(x)  LPLD_GPIO_Output_b(PTA, 29, x)
+// #define TSL1401_SI(x)   LPLD_GPIO_Output_b(PTA, 28, x)
+// #define TSL1401_CLK(x)  LPLD_GPIO_Output_b(PTA, 29, x)
 
-#define SI_SetVal() LPLD_GPIO_Output_b(PTA, 28, 1)
-#define SI_ClrVal() LPLD_GPIO_Output_b(PTA, 28, 0)
-#define CLK_SetVal() LPLD_GPIO_Output_b(PTA, 29, 1)
-#define CLK_ClrVal() LPLD_GPIO_Output_b(PTA, 29, 0)
+#define SI_SetVal_M() LPLD_GPIO_Output_b(PTA, 28, 1)
+#define SI_ClrVal_M() LPLD_GPIO_Output_b(PTA, 28, 0)
+#define CLK_SetVal_M() LPLD_GPIO_Output_b(PTA, 29, 1)
+#define CLK_ClrVal_S() LPLD_GPIO_Output_b(PTA, 29, 0)
 
 
 
@@ -26,7 +26,8 @@ unsigned char CCDTimeMs = 0;
 unsigned char CCDReady = 0;
 uint16 send_data = 0;
 uint8 IntegrationTime = 10;
-unsigned char ccd_array[128] = { 0 };
+unsigned char CCDM_Arr[128] = { 0 };
+unsigned char CCDS_Arr[128] = { 0 };
 extern short SpeedControlPeriod, DirectionConrtolPeriod;
 char TimeFlag_4Ms, TimeFlag_80Ms, TimeFlag_20Ms,TimeFlag_2Ms;
 char TimerMsCnt = 0;
@@ -82,28 +83,28 @@ void StartIntegration(void)
 
 	unsigned char i;
 
-	SI_SetVal();            /* SI  = 1 */
+	SI_SetVal_M();            /* SI  = 1 */
 	SamplingDelay();
-	CLK_SetVal();           /* CLK = 1 */
+	CLK_SetVal_M();           /* CLK = 1 */
 	SamplingDelay();
-	SI_ClrVal();            /* SI  = 0 */
+	SI_ClrVal_M();            /* SI  = 0 */
 	SamplingDelay();
-	CLK_ClrVal();           /* CLK = 0 */
+	CLK_ClrVal_S();           /* CLK = 0 */
 
 	for (i = 0; i < 127; i++) {
 		SamplingDelay();
 		SamplingDelay();
-		CLK_SetVal();       /* CLK = 1 */
+		CLK_SetVal_M();       /* CLK = 1 */
 		SamplingDelay();
 		SamplingDelay();
-		CLK_ClrVal();       /* CLK = 0 */
+		CLK_ClrVal_S();       /* CLK = 0 */
 	}
 	SamplingDelay();
 	SamplingDelay();
-	CLK_SetVal();           /* CLK = 1 */
+	CLK_SetVal_M();           /* CLK = 1 */
 	SamplingDelay();
 	SamplingDelay();
-	CLK_ClrVal();           /* CLK = 0 */
+	CLK_ClrVal_S();           /* CLK = 0 */
 }
 
 
@@ -113,11 +114,11 @@ void ImageCapture(unsigned char * ImageData)
 	unsigned char i;
 	extern uint8 AtemP;
 
-	SI_SetVal();            /* SI  = 1 */
+	SI_SetVal_M();            /* SI  = 1 */
 	SamplingDelay();
-	CLK_SetVal();           /* CLK = 1 */
+	CLK_SetVal_M();           /* CLK = 1 */
 	SamplingDelay();
-	SI_ClrVal();            /* SI  = 0 */
+	SI_ClrVal_M();            /* SI  = 0 */
 	SamplingDelay();
 
 	//Delay 10us for sample the first pixel
@@ -130,26 +131,26 @@ void ImageCapture(unsigned char * ImageData)
 
 	*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD12));
 	ImageData++;
-	CLK_ClrVal();           /* CLK = 0 */
+	CLK_ClrVal_S();           /* CLK = 0 */
 
 	for (i = 0; i < 127; i++) {
 		SamplingDelay();
 		SamplingDelay();
-		CLK_SetVal();       /* CLK = 1 */
+		CLK_SetVal_M();       /* CLK = 1 */
 		SamplingDelay();
 		SamplingDelay();
 		//Sampling Pixel 2~128
 
 		*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD12));
 		ImageData++;
-		CLK_ClrVal();       /* CLK = 0 */
+		CLK_ClrVal_S();       /* CLK = 0 */
 	}
 	SamplingDelay();
 	SamplingDelay();
-	CLK_SetVal();           /* CLK = 1 */
+	CLK_SetVal_M();           /* CLK = 1 */
 	SamplingDelay();
 	SamplingDelay();
-	CLK_ClrVal();           /* CLK = 0 */
+	CLK_ClrVal_S();           /* CLK = 0 */
 }
 
 
@@ -171,7 +172,7 @@ void CalculateIntegrationTime(void)
 	uint16 TargetPixelAverageVoltageAllowError = 2;
 
 	/* 计算128个像素点的平均AD值 */
-	PixelAverageValue = PixelAverage(128, ccd_array);
+	PixelAverageValue = PixelAverage(128, CCDM_Arr);
 	/* 计算128个像素点的平均电压值,实际值的10倍 */
 	PixelAverageVoltage = (unsigned char)((int)PixelAverageValue * 25 / 194);//把0-194平均分成了25份
 

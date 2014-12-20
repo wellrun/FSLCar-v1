@@ -2,7 +2,7 @@
 #define _CCD_H_
 #include "common.h"
 #define CCD_DataLen 50
-extern unsigned char ccd_array[128]; //外部调用的时候用
+extern unsigned char CCDM_Arr[128]; //外部调用的时候用
 extern unsigned char CCDReady ;
 extern uint16 send_data;
 extern unsigned char CCDTimeMs;

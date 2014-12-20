@@ -22,6 +22,7 @@ PC16-CCDReady(20Ms);
 #define Scope20Ms 14
 #define Scope80Ms 15
 #define ScopeCCDReady 16
+#define CCD2
 
 CarInfo_TypeDef CarInfo_Now;
 CarControl_TypeDef MotorControl; //存储电机控制的值
@@ -58,10 +59,14 @@ char AngDataSendOK = 1;
 char AngSendToDebuger = 0;//发送数据到调试器,默认不发,与调试器建立连接后发送
 char ControlByteRcvStart = 0;
 char ControlByteCnt = 0;
+unsigned char AngDataSendTEMP = 0;//在修改前用来存放标志位的临时状态.擦擦擦擦擦擦
 int ControlRcvErrorCnt = 0;//控制字接受错误计数
 unsigned char ControlByte[7];
 unsigned char AngTemp5b[5] = { 0xdd};
-#define ANG_TO_DEBUGER_TIME 65000
+#define ANG_TO_DEBUGER_TIME 120000
+#define InitData_Delay_Time 3000
+unsigned short InitDataDelayCnt = 0;
+signed char InitDataTimesUp = 0;
 unsigned int AngToDebugerDelay = 0;//发送角度时间的计数,计数多少个周期才发送数据
 char AngToDebugerTimesUp = 0;//发送角度的时间到
 /**********************/
@@ -89,7 +94,7 @@ void main(void)
 	//	Flash_WriteTest(); 测试flash区
 
 	//Timer_Init(); //初始化程序时间计数器
-	Flash_ReadAllData(); //从Flash中读取所有的数据
+	//Flash_ReadAllData(); //从Flash中读取所有的数据
 	Struct_Init();
 	while (1)
 	{
@@ -101,9 +106,9 @@ void main(void)
 			//Timer_ReSet();  //重置程序时间计数器
 			if (CCDOn == 1)
 			{
-				ImageCapture(ccd_array);
+				ImageCapture(CCDM_Arr);
 				//CalculateIntegrationTime();
-				CCD_Deal_Main(ccd_array);
+				CCD_Deal_Main(CCDM_Arr);
 				DirControlValueCale();//方向控制
 				CCDDataSendStart = 1;
 			}
@@ -123,7 +128,8 @@ void main(void)
 		{
 			TimeFlag_80Ms = 0;
 			LPLD_GPIO_Toggle_b(PTC, Scope80Ms);
-			LPLD_GPIO_Toggle_b(PTA, 17);//一闪一闪亮晶晶
+			//LPLD_GPIO_Toggle_b(PTA, 17);//一闪一闪亮晶晶
+                        LPLD_GPIO_Output_b(PTA,17,0);
 			SpeedControlValueCalc();//速度闭环,先调直立,再调速度闭环
 		}
 		if (TimeFlag_2Ms == 1)
@@ -152,7 +158,7 @@ void main(void)
 					CCDDataSendOK = 0;
 					for (i = 0; i < 128; i++)
 					{
-						TempArr[i] = ccd_array[i];
+						TempArr[i] = CCDM_Arr[i];
 					}
 					/*TempArr[CCDMain_Status.LeftPoint] = 250;
 					TempArr[CCDMain_Status.RightPoint] = 250;*/
@@ -268,7 +274,6 @@ void main(void)
 					ShakeHandFlag = 1;
 					CCDSendImage = 0;
 					AngDataSend = 0;
-					AngSendToDebuger = 1;
 					LPLD_UART_PutChar(UART5, 0xEF);
 				}
 				else if (Temp1B == 0xFD)
@@ -291,6 +296,8 @@ void main(void)
 				{
 					DataReciveStart = 1;
 					DTUDataCnt = 0;
+					AngDataSendTEMP = AngDataSend;
+					AngDataSend = 0;
 					LPLD_UART_PutChar(UART5, 0x9f);
 					Debuger = 0;
 				}
@@ -326,17 +333,34 @@ void main(void)
 						LPLD_UART_PutChar(UART5, 0x4f);
 					}
 				}
+				else if (Temp1B == 0xdf)
+				{
+					AngDataSend = 1;
+                                        AngSendToDebuger=1;
+				}
 			}
 		}
-		if (DebugerDataStart == 1)
+		if (DebugerDataStart == 1 )
 		{
-			LPLD_UART_PutChar(UART5, DebugerByte36[DebugDataPointCnt]);
-			DebugDataPointCnt++;
-			if (DebugDataPointCnt >= (PageDateLen))
+			if (InitDataTimesUp == 1)
 			{
-				DebugerDataStart = 0;
-				DebugDataPointCnt = 0;
-				AngDataSend = 1;
+				InitDataTimesUp = 0;
+				LPLD_UART_PutChar(UART5, DebugerByte36[DebugDataPointCnt]);
+				DebugDataPointCnt++;
+				if (DebugDataPointCnt >= (PageDateLen))
+				{
+					DebugerDataStart = 0;
+					DebugDataPointCnt = 0;
+				}
+			}
+			else
+			{
+				InitDataDelayCnt++;
+				if (InitDataDelayCnt >= InitData_Delay_Time)
+				{
+					InitDataDelayCnt = 0;
+					InitDataTimesUp = 1;
+				}
 			}
 		}
 		if (DataReciveStart == 1 && Debuger == 0)//数据接受要互斥
@@ -350,6 +374,7 @@ void main(void)
 					DataReciveStart = 0;
 					DTUDataCnt = 0;
 					Debuger = 1;
+					AngDataSend = AngDataSendTEMP;
 					Byte2Float(&CarInfo_Now.CarAngle, DebugerByte36, 0);
 					Byte2Float(&Ang_PID.Kp, DebugerByte36, 1 * 4);
 					Byte2Float(&Ang_PID.Kd, DebugerByte36, 2 * 4);
@@ -359,14 +384,17 @@ void main(void)
 					Byte2Float(&Speed_PID.Ki, DebugerByte36, 6 * 4);
 					Byte2Float(&Dir_PID.Kp, DebugerByte36, 7 * 4);
 					Byte2Float(&Dir_PID.Kd, DebugerByte36, 8 * 4);
+					LPLD_SYSTICK_DelayUs(500);
 					LPLD_UART_PutChar(UART5, 0xaf);
+					
 				}
+                DebugerErrorCnt=0;
 			}
 			else
 			{
 				DebugerErrorCnt++;
 				LPLD_SYSTICK_DelayUs(20);
-				if (DebugerErrorCnt >= 40000)
+				if (DebugerErrorCnt >= 400000)
 				{
 					DebugerDataStart = 0;
 					DTUDataCnt = 0;

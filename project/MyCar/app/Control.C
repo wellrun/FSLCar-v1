@@ -90,7 +90,7 @@ void DirControlValueCale(void)
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
 }
 
-void ControlValueSmooth(void)
+void ControlSmooth(void)
 {
 	static float TempF = 0;
 	TempF = TempValue.New_SpeedOutValue - TempValue.Old_SpeedOutValue;
@@ -103,7 +103,7 @@ void ControlValueSmooth(void)
 }
 void MotorControl_Out(void)
 {
-	ControlValueSmooth();
+	ControlSmooth();
 	MotorControl.LeftMotorOutValue = (int) TempValue.AngControl_OutValue
 			+ (int) TempValue.Dir_LeftOutValue+(int)TempValue.SpeedOutValue; //È¡Õû
 	MotorControl.RightMotorOutValue = (int) TempValue.AngControl_OutValue
