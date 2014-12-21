@@ -80,7 +80,6 @@ char CarStop = 0;//强制停车的标志
 int DebugerErrorCnt = 0;
 
 uint8 DebugerByte36[PageDateLen];
-void WatiPeriod(int t);
 /**********************/
 void main(void)
 {
@@ -128,8 +127,8 @@ void main(void)
 		{
 			TimeFlag_80Ms = 0;
 			LPLD_GPIO_Toggle_b(PTC, Scope80Ms);
-			//LPLD_GPIO_Toggle_b(PTA, 17);//一闪一闪亮晶晶
-                        LPLD_GPIO_Output_b(PTA,17,0);
+			LPLD_GPIO_Toggle_b(PTA, 17);//一闪一闪亮晶晶
+            //LPLD_GPIO_Output_b(PTA,17,0);
 			SpeedControlValueCalc();//速度闭环,先调直立,再调速度闭环
 		}
 		if (TimeFlag_2Ms == 1)
@@ -431,7 +430,7 @@ void main(void)
 	}
 }
 
-void WatiPeriod(int t)
+/*char WatiPeriod(int t)
 {
 	static int WaitCnt;
 	if (WaitFlag == 0)
@@ -445,4 +444,4 @@ void WatiPeriod(int t)
 		WaitCnt = t;
 		WaitFlag = 0;
 	}
-}
+}*/

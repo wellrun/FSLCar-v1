@@ -49,24 +49,19 @@ void Timer_ReSet(void)
 void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 {
 	Ang_PID.Kp = 700; //比例
-	/*Ang_PID.Integral = 0; //积分*/
 	Ang_PID.Kd = 0.01; //微分
 	Ang_PID.AngSet = 37.3; //调试时调试这一行
 	Ang_PID.AngSpeedSet = 0.00;
-	//AngToMotorRatio = 90;
-//	Ang_PID.SetPoint=0;//设定的值
-//	Ang_PID.LastError=0;//上一次的误差
-//	Ang_PID.PrevError=0;//上上次的误差
 
 	Speed_PID.OutMax = 8000;
 	Speed_PID.OutMin = -8000;
-	Speed_PID.Kp = 0.7;
-	Speed_PID.Ki = 0.5;
+	Speed_PID.Kp = 0.1;
+	Speed_PID.Ki = 0.001;
 	Speed_PID.SpeedSet = 0;
 	Speed_PID.IntegralSum = 0;
 
-	Dir_PID.Kp = 2.5;
-	Dir_PID.Kd = 0.5;
+	Dir_PID.Kp = 0.1;
+	Dir_PID.Kd = 0.001;
 
 	TempValue.AngControl_OutValue = 0;
 	TempValue.Dir_RightOutValue = 0;
@@ -76,11 +71,7 @@ void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 
 void PagePrepare(void)
 {
-	page1.AngSet = Ang_PID.AngSet;
-	page1.AngSpeedSet = Ang_PID.AngSpeedSet;
-	//page1.AngToMotorRatio = AngToMotorRatio;
-	page1.Kp = Ang_PID.Kp;
-	page1.Kd = Ang_PID.Kd;
+
 }
 
 void UART5_RxIsr(void)
@@ -89,11 +80,7 @@ void UART5_RxIsr(void)
 
 void SaveAllDateToFlash(void)
 {
-	FlashFloatBuffer[0]=Ang_PID.AngSet;
-	FlashFloatBuffer[1]=Ang_PID.Kp;
-	FlashFloatBuffer[2]=Ang_PID.Kd;
-	//FlashFloatBuffer[3]=AngToMotorRatio;
-	Flash_WriteAllData();
+
 }
 
 void ReciveArr(uint8 *ch, uint8 len)
@@ -108,49 +95,5 @@ void ReciveArr(uint8 *ch, uint8 len)
 }
 void SendFlashData(uint8 sendcount)
 {
-	PagePrepare();
-	switch (sendcount)
-	{
-	case Data_AngSet:
-		Float2Byte(&page1.AngSet, SendTemp8b, 3);
-		SendTemp8b[1] = 0x08;
-		SendTemp8b[2] = sendcount;
-		LPLD_UART_PutCharArr(UART5, SendTemp8b, SendTemp8b[1]);
-		break;
-	case Data_AngPID_D:
-		Float2Byte(&page1.Kd, SendTemp8b, 3);
-		SendTemp8b[1] = 0x08;
-		SendTemp8b[2] = sendcount;
-		LPLD_UART_PutCharArr(UART5, SendTemp8b, SendTemp8b[1]);
-		break;
-	case Data_AngPID_P:
-		Float2Byte(&page1.Kp, SendTemp8b, 3);
-		SendTemp8b[1] = 0x08;
-		SendTemp8b[2] = sendcount;
-		LPLD_UART_PutCharArr(UART5, SendTemp8b, SendTemp8b[1]);
-		break;
-	case Data_AngToMotor_Ratio:
-		//Float2Byte(&page1.AngToMotorRatio, SendTemp8b, 3);
-		SendTemp8b[1] = 0x08;
-		SendTemp8b[2] = sendcount;
-		LPLD_UART_PutCharArr(UART5, SendTemp8b, SendTemp8b[1]);
-		break;
-	case Data_AngNow:
-		Float2Byte(&CarInfo_Now.CarAngle, SendTemp8b, 3);
-		SendTemp8b[1] = 0x08;
-		SendTemp8b[2] = sendcount;
-		LPLD_UART_PutCharArr(UART5, SendTemp8b, SendTemp8b[1]);
-		break;
-	}
-
-	if (sendcount >= DATANumMAX) //只输出第一页的5个值
-	{
-		Temp4b[0] = 0xf1;
-		Temp4b[1] = 0x04;
-		Temp4b[2] = K60SendDataComplete;
-		Temp4b[3] = 0xf2;
-		LPLD_UART_PutCharArr(UART5, Temp4b, Temp4b[1]);
-		//break;
-	}
 
 }

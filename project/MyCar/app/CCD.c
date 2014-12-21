@@ -6,7 +6,7 @@ void SamplingDelay(void);
 #define SI_SetVal_M() LPLD_GPIO_Output_b(PTA, 28, 1)
 #define SI_ClrVal_M() LPLD_GPIO_Output_b(PTA, 28, 0)
 #define CLK_SetVal_M() LPLD_GPIO_Output_b(PTA, 29, 1)
-#define CLK_ClrVal_S() LPLD_GPIO_Output_b(PTA, 29, 0)
+#define CLK_ClrVal_M() LPLD_GPIO_Output_b(PTA, 29, 0)
 
 
 
@@ -89,7 +89,7 @@ void StartIntegration(void)
 	SamplingDelay();
 	SI_ClrVal_M();            /* SI  = 0 */
 	SamplingDelay();
-	CLK_ClrVal_S();           /* CLK = 0 */
+	CLK_ClrVal_M();           /* CLK = 0 */
 
 	for (i = 0; i < 127; i++) {
 		SamplingDelay();
@@ -97,14 +97,14 @@ void StartIntegration(void)
 		CLK_SetVal_M();       /* CLK = 1 */
 		SamplingDelay();
 		SamplingDelay();
-		CLK_ClrVal_S();       /* CLK = 0 */
+		CLK_ClrVal_M();       /* CLK = 0 */
 	}
 	SamplingDelay();
 	SamplingDelay();
 	CLK_SetVal_M();           /* CLK = 1 */
 	SamplingDelay();
 	SamplingDelay();
-	CLK_ClrVal_S();           /* CLK = 0 */
+	CLK_ClrVal_M();           /* CLK = 0 */
 }
 
 
@@ -131,7 +131,7 @@ void ImageCapture(unsigned char * ImageData)
 
 	*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD12));
 	ImageData++;
-	CLK_ClrVal_S();           /* CLK = 0 */
+	CLK_ClrVal_M();           /* CLK = 0 */
 
 	for (i = 0; i < 127; i++) {
 		SamplingDelay();
@@ -143,14 +143,14 @@ void ImageCapture(unsigned char * ImageData)
 
 		*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD12));
 		ImageData++;
-		CLK_ClrVal_S();       /* CLK = 0 */
+		CLK_ClrVal_M();       /* CLK = 0 */
 	}
 	SamplingDelay();
 	SamplingDelay();
 	CLK_SetVal_M();           /* CLK = 1 */
 	SamplingDelay();
 	SamplingDelay();
-	CLK_ClrVal_S();           /* CLK = 0 */
+	CLK_ClrVal_M();           /* CLK = 0 */
 }
 
 
@@ -283,7 +283,10 @@ uint8 u32_trans_uint8(uint16 data)
 #define LeftMode -1
 #define RightMode 1
 #define MidMode 0
-
+void CCDLineInit(void);
+unsigned short CCDInitCnt = 0;//用来初始化左右线的计数,,每次启动重新初始化左右线位置
+short CCDInitLine_Left = 0;
+short CCDInitLine_Right = 0;
 /*#define LostLineDiffValue 20 //准备丢线的差分值*/
 
 
@@ -431,13 +434,25 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 	}
 	if (CCDMain_Status.InitOK == 0)
 	{
-		i = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
-		CCDMain_Status.RightSet = 64 + i;
-		CCDMain_Status.LeftSet = 64 - i;
-		CCDMain_Status.MidSet = 64;
-		CCDMain_Status.InitOK = 1;
+		CCDLineInit();
 		CCDMain_Status.ControlValue = 0;
 	}
 
 	return 0;
+}
+
+void CCDLineInit(void)
+{
+	CCDInitLine_Left += CCDMain_Status.LeftPoint;
+	CCDInitLine_Right += CCDMain_Status.RightPoint;
+	CCDInitCnt++;
+	if (CCDInitCnt >= 20);
+	{
+		CCDInitLine_Left /= CCDInitCnt;
+		CCDInitLine_Right /= CCDInitCnt;
+		CCDMain_Status.RightSet = 64 + (CCDInitLine_Left + CCDInitLine_Right) / 2;
+		CCDMain_Status.LeftSet = 64 - (CCDInitLine_Left + CCDInitLine_Right) / 2;
+		CCDMain_Status.MidSet = 64;
+		CCDMain_Status.InitOK = 1;
+	}
 }
