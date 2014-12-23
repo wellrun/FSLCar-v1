@@ -8,7 +8,7 @@ extern float CarAngle, CarAngSpeed;
 //-------------------------------------------------------
 static float bias_cf = 0.2;
 static const float dt = 0.004;
-static const float ComFilter_t = 0.05;
+static  float ComFilter_t = 0.06;
 //-------------------------------------------------------
 void complement_filter(float angle_m_cf, float gyro_m_cf)
 {

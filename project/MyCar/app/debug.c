@@ -48,20 +48,20 @@ void Timer_ReSet(void)
 
 void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 {
-	Ang_PID.Kp = 700; //比例
-	Ang_PID.Kd = 0.01; //微分
-	Ang_PID.AngSet = 37.3; //调试时调试这一行
+	Ang_PID.Kp = 800; //比例
+	Ang_PID.Kd = 100; //微分
+	Ang_PID.AngSet = 45; //调试时调试这一行
 	Ang_PID.AngSpeedSet = 0.00;
 
 	Speed_PID.OutMax = 8000;
 	Speed_PID.OutMin = -8000;
-	Speed_PID.Kp = 0.1;
-	Speed_PID.Ki = 0.001;
+	Speed_PID.Kp = 0.0;
+	Speed_PID.Ki = 0.000;
 	Speed_PID.SpeedSet = 0;
 	Speed_PID.IntegralSum = 0;
 
-	Dir_PID.Kp = 0.1;
-	Dir_PID.Kd = 0.001;
+	Dir_PID.Kp = 0.0;
+	Dir_PID.Kd = 0.000;
 
 	TempValue.AngControl_OutValue = 0;
 	TempValue.Dir_RightOutValue = 0;

@@ -23,7 +23,9 @@ PC16-CCDReady(20Ms);
 #define Scope80Ms 15
 #define ScopeCCDReady 16
 #define CCD2
-
+#define CAR_STAND_ANG_MAX 60
+#define CAR_STAND_ANG_MIN 30
+char CarStandFlag = 1;
 CarInfo_TypeDef CarInfo_Now;
 CarControl_TypeDef MotorControl; //存储电机控制的值
 short acc_x, gyro_2;
@@ -43,7 +45,7 @@ extern TempOfMotor_TypeDef TempValue; //临时存储角度和速度控制浮点变量的结构体
 extern float AngleIntegraed;//对角速度积分的角度值
 //--控制区
 uint8 Debuger = 1;
-uint8 CCDOn = 1;
+uint8 CCDOn = 0;
 uint8 CCDSendImage = 0;
 uint8 AngleCale = 1;
 uint8 AngDataSend = 0;
@@ -121,6 +123,14 @@ void main(void)
 				AngleGet();
 				AngleControlValueCalc();
 				AngDataStart = 1;
+				if (CarInfo_Now.CarAngle > CAR_STAND_ANG_MIN && CarInfo_Now.CarAngle < CAR_STAND_ANG_MAX)
+				{
+					CarStandFlag = 1;
+				}
+				else
+				{
+					CarStandFlag = 0;
+				}
 			}
 		}
 		if (TimeFlag_80Ms == 1)
@@ -135,17 +145,16 @@ void main(void)
 		{
 			TimeFlag_2Ms = 0;
 			LPLD_GPIO_Toggle_b(PTC, Scope2Ms);
-			if (CarStop == 0)//如果停车标志位为1,则停止输出电机值
+			if (CarStop == 0 && CarStandFlag==1)//如果停车标志位为1,则停止输出电机值
 			{
 				MotorControl_Out(); //输出电机控制的值
 			}
 			else
 			{
-				TempValue.AngControl_OutValue = 0;
-				TempValue.Dir_LeftOutValue = 0;
-				TempValue.Dir_RightOutValue = 0;
-				TempValue.SpeedOutValue = 0;
-				MotorControl_Out();
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
 			}
 		}
 		if (CCDSendImage == 1)
@@ -429,6 +438,8 @@ void main(void)
 
 	}
 }
+
+
 
 /*char WatiPeriod(int t)
 {

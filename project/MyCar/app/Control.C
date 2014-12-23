@@ -2,10 +2,10 @@
 #include "CCD.h"
 
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
-#define MOTOR_OUT_MAX       6000
-#define MOTOR_OUT_MIN       -6000
-#define ANGLE_CONTROL_OUT_MAX			MOTOR_OUT_MAX/2
-#define ANGLE_CONTROL_OUT_MIN			MOTOR_OUT_MIN/2
+#define MOTOR_OUT_MAX       8000
+#define MOTOR_OUT_MIN       -8000
+#define ANGLE_CONTROL_OUT_MAX			MOTOR_OUT_MAX
+#define ANGLE_CONTROL_OUT_MIN			MOTOR_OUT_MIN
 #define CoderResolution 500 //编码器的线数
 #define TyreCircumference 41//轮胎周长CM
 #define DeathValue 300//死区电压 3%的占空比
@@ -29,7 +29,7 @@ short SpeedControlPeriod, DirectionConrtolPeriod;
 void AngleControlValueCalc(void)
 {
 	float ControlValue=0;
-	Ang_PID.Delta = (-Ang_PID.AngSet) - CarInfo_Now.CarAngle; //当前误差//这里全是角度,值很小
+	Ang_PID.Delta = (Ang_PID.AngSet) - CarInfo_Now.CarAngle; //当前误差//这里全是角度,值很小
 	ControlValue = Ang_PID.Delta * Ang_PID.Kp - CarInfo_Now.CarAngSpeed* Ang_PID.Kd; //微分项,如果角速度大于0.说明角度趋势变大,是把微分项产生的数值加上去
 //	Ang_PID.PrevError = Ang_PID.LastError;
 //	Ang_PID.LastError = Ang_PID.Delta; //PID的三步
@@ -45,6 +45,8 @@ void SpeedGet(void)
 {//FTM1是左电机,FTM2是右电机
 	CarInfo_Now.MotorCounterLeft = LPLD_FTM_GetCounter(FTM1);
 	CarInfo_Now.MotorCounterRight = LPLD_FTM_GetCounter(FTM2);
+	LPLD_FTM_ClearCounter(FTM1);
+	LPLD_FTM_ClearCounter(FTM2);
 	CarInfo_Now.LeftSpeed = (CarInfo_Now.MotorCounterLeft / CoderResolution*TyreCircumference) / dt;//计算出速度,是准确的cm/s
 	CarInfo_Now.RightSpeed = (CarInfo_Now.MotorCounterRight / CoderResolution*TyreCircumference) / dt;//计算出速度,是准确的cm/s
 	CarInfo_Now.CarSpeed = (CarInfo_Now.LeftSpeed + CarInfo_Now.RightSpeed) / 2;//车子的速度用左右轮速度平均值,不准确
