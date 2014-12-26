@@ -9,6 +9,7 @@
 #include "Control.h"
 #include "CCD.h"
 #include "Communicate.h"
+#include "MPU6050.h"
 //#include "DataScope_DP.h"
 /*选了几个引脚来判断时序是否正常
 PC12-2Ms;
@@ -23,14 +24,15 @@ PC16-CCDReady(20Ms);
 #define Scope80Ms 15
 #define ScopeCCDReady 16
 #define CCD2
-#define CAR_STAND_ANG_MAX 60
-#define CAR_STAND_ANG_MIN 30
+#define CAR_STAND_ANG_MAX 85
+#define CAR_STAND_ANG_MIN 32
 char CarStandFlag = 1;
 CarInfo_TypeDef CarInfo_Now;
 CarControl_TypeDef MotorControl; //存储电机控制的值
 short acc_x, gyro_2;
 float tempfloat = 0;//临时变量,没有意义
-float dt = 0.019;//全局变量,所有需要周期的都是这个,一个周期20ms
+float Ang_dt = 0.004;//全局变量,所有需要周期的都是这个,一个周期20ms
+float Speed_Dt = 0.08;//速度的周期,0.08ms
 #define ScopeDataNum 4
 #define OutDataLen (ScopeDataNum*4+4)
 #define PageDateLen (4*9)
@@ -217,17 +219,21 @@ void main(void)
 				if (AngDataSendOK == 1)
 				{
 					AngDataSendOK = 0;
-					//tempfloat = TempValue.AngControl_OutValue / 10.0;
-					// 				tempfloat = AngleIntegraed;
-					// 				Float2Byte(&tempfloat, OUTDATA, 2);
-					Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
-					//Float2Byte(&CarInfo_Now.CarAngSpeed, OUTDATA, 10);
+					//调直立用
+					/*Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
 					tempfloat = CarInfo_Now.CarAngSpeed;
 					Float2Byte(&tempfloat, OUTDATA, 10);
 					Float2Byte(&GravityAngle, OUTDATA, 6);
 					tempfloat = (float)gyro_2;
+					Float2Byte(&tempfloat, OUTDATA, 14);*/
+					tempfloat = (float)Speed_PID.SpeedSet;
+					Float2Byte(&tempfloat, OUTDATA, 2);
+					tempfloat = (float)Speed_PID.OutValue;
+					Float2Byte(&tempfloat, OUTDATA, 6);
+					tempfloat = (float)CarInfo_Now.CarSpeed;
+					Float2Byte(&tempfloat, OUTDATA, 10);
+					tempfloat = 0;
 					Float2Byte(&tempfloat, OUTDATA, 14);
-					/*LPLD_UART_PutCharArr(UART5, OUTDATA, 20);*/
 				}
 				LPLD_UART_PutChar(UART5, OUTDATA[ScopeSendPointCnt]);
 				ScopeSendPointCnt++;

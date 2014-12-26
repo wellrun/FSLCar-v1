@@ -8,7 +8,7 @@
 #define ANGLE_CONTROL_OUT_MIN			MOTOR_OUT_MIN
 #define CoderResolution 500 //编码器的线数
 #define TyreCircumference 41//轮胎周长CM
-#define DeathValue 300//死区电压 3%的占空比
+#define DeathValue 200//死区电压 1%的占空比
 
 #define CONTROL_PERIOD	4
 #define SPEED_CONTROL_COUNT 20
@@ -16,7 +16,8 @@
 #define DIRECTION_CONTROL_COUNT			5
 #define DIRECTION_CONTROL_PERIOD		(DIRECTION_CONTROL_COUNT * CONTROL_PERIOD)
 
-extern float dt;//控制周期,在主函数定义,20ms
+extern float Ang_dt;//控制周期,在主函数定义,20ms
+extern float Speed_Dt;//速度的周期,0.08ms
 
 extern CarInfo_TypeDef CarInfo_Now; //当前车子的信息
 extern CarControl_TypeDef MotorControl; //电机控制的值
@@ -30,9 +31,8 @@ void AngleControlValueCalc(void)
 {
 	float ControlValue=0;
 	Ang_PID.Delta = (Ang_PID.AngSet) - CarInfo_Now.CarAngle; //当前误差//这里全是角度,值很小
-	ControlValue = Ang_PID.Delta * Ang_PID.Kp - CarInfo_Now.CarAngSpeed* Ang_PID.Kd; //微分项,如果角速度大于0.说明角度趋势变大,是把微分项产生的数值加上去
-//	Ang_PID.PrevError = Ang_PID.LastError;
-//	Ang_PID.LastError = Ang_PID.Delta; //PID的三步
+	//微分项应该是负的
+        ControlValue = Ang_PID.Delta * Ang_PID.Kp - CarInfo_Now.CarAngSpeed* Ang_PID.Kd; //微分项,如果角速度大于0.说明角度趋势变大,把控制量增大
 	//ControlValue *= AngToMotorRatio; //乘上比例因子将角度转换成PWM的占空比
 	if (ControlValue > ANGLE_CONTROL_OUT_MAX)
 		ControlValue = ANGLE_CONTROL_OUT_MAX;
@@ -47,9 +47,23 @@ void SpeedGet(void)
 	CarInfo_Now.MotorCounterRight = LPLD_FTM_GetCounter(FTM2);
 	LPLD_FTM_ClearCounter(FTM1);
 	LPLD_FTM_ClearCounter(FTM2);
-	CarInfo_Now.LeftSpeed = (CarInfo_Now.MotorCounterLeft / CoderResolution*TyreCircumference) / dt;//计算出速度,是准确的cm/s
-	CarInfo_Now.RightSpeed = (CarInfo_Now.MotorCounterRight / CoderResolution*TyreCircumference) / dt;//计算出速度,是准确的cm/s
-	CarInfo_Now.CarSpeed = (CarInfo_Now.LeftSpeed + CarInfo_Now.RightSpeed) / 2;//车子的速度用左右轮速度平均值,不准确
+
+	if (CarInfo_Now.MotorCounterLeft >= 30000)
+	{
+		CarInfo_Now.MotorCounterLeft -= 65535;
+	}
+	if (CarInfo_Now.MotorCounterRight >= 30000)
+	{
+		CarInfo_Now.MotorCounterRight -= 65535;
+	}
+	CarInfo_Now.MotorCounterRight = -CarInfo_Now.MotorCounterRight;
+	CarInfo_Now.LeftSpeed = (CarInfo_Now.MotorCounterLeft / CoderResolution*TyreCircumference) / Speed_Dt;//计算出速度,是准确的cm/s
+	CarInfo_Now.RightSpeed = (CarInfo_Now.MotorCounterRight / CoderResolution*TyreCircumference) / Speed_Dt;//计算出速度,是准确的cm/s
+	//CarInfo_Now.CarSpeed = (CarInfo_Now.LeftSpeed + CarInfo_Now.RightSpeed) / 2;//车子的速度用左右轮速度平均值,不准确
+	CarInfo_Now.CarSpeed = (CarInfo_Now.MotorCounterLeft + CarInfo_Now.MotorCounterRight) / 2;
+
+	/*printf("QD Counter1 = %d\r\n", CarInfo_Now.MotorCounterLeft);
+	printf("QD Counter2 = %d\r\n", CarInfo_Now.MotorCounterRight);*/
 }
 
 void SpeedControlValueCalc(void)
@@ -74,9 +88,9 @@ void SpeedControlValueCalc(void)
 	}
 	else
 		Index = 1;
-	Speed_PID.IntegralSum += Speed_PID.ThisError*Index*dt;//抗饱和
+	Speed_PID.IntegralSum += Speed_PID.ThisError*Index*Speed_Dt;//抗饱和
 	Speed_PID.OutValue = Speed_PID.Kp*Speed_PID.ThisError + Speed_PID.Ki*Speed_PID.IntegralSum;
-	Speed_PID.OutValue *= 10;//比例因子,转换为PWM占空比
+	Speed_PID.OutValue /= 100;//比例因子,转换为PWM占空比
 	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
 	TempValue.New_SpeedOutValue = Speed_PID.OutValue;
 }
@@ -107,9 +121,12 @@ void MotorControl_Out(void)
 {
 	ControlSmooth();
 	MotorControl.LeftMotorOutValue = (int) TempValue.AngControl_OutValue
-			+ (int) TempValue.Dir_LeftOutValue+(int)TempValue.SpeedOutValue; //取整
+			+ (int) TempValue.Dir_LeftOutValue-(int)TempValue.SpeedOutValue; //取整
 	MotorControl.RightMotorOutValue = (int) TempValue.AngControl_OutValue
-			+ (int) TempValue.Dir_RightOutValue+(int)TempValue.SpeedOutValue; //
+			+ (int) TempValue.Dir_RightOutValue-(int)TempValue.SpeedOutValue; 
+	//调速度PI参数
+	/*MotorControl.LeftMotorOutValue = (int)TempValue.SpeedOutValue; 
+	MotorControl.RightMotorOutValue = (int)TempValue.SpeedOutValue;*/ //
 
 	if (MotorControl.LeftMotorOutValue > MOTOR_OUT_MAX)
 	{

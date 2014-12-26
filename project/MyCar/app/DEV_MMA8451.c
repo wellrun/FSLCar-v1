@@ -54,9 +54,9 @@ uint8 LPLD_MMA8451_Init(void)
 
   //进行寄存器配置
   LPLD_MMA8451_WriteReg(MMA8451_REG_SYSMOD, 0x00);       //默认模式Standby Mode
-  //LPLD_MMA8451_WriteReg(0x0e,0x10);//开启高通滤波器...为什么是高通我擦...
   LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG2, 0x02);    //High Resolution
   LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG1, 0x01);    //主动模式,800HZ
+  LPLD_MMA8451_WriteReg(0x0f, 0x23);//开启低通滤波器
   
   return device_id;
 }

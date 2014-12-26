@@ -1,6 +1,7 @@
 #include "init.h"
 #include "datastructure.h"
 #include "DEV_MMA8451.h"
+#include "mpu6050.h"
 ADC_InitTypeDef Init_ADC_Struct;
 ADC_InitTypeDef Init_ADC_CCD_Struct;
 GPIO_InitTypeDef Init_GPIO_Struct;
@@ -113,6 +114,11 @@ void CarInit(void)
 		LPLD_GPIO_Output_b(PTA, 17, 0);
 		while (1);
 	}
+	if (MPU6050_Init() != 0x68)
+	{
+		LPLD_GPIO_Output_b(PTA, 17, 0);
+		while (1);
+	}
 	//Init_I2C();
 }
 void Init_FTM(void)
@@ -121,9 +127,9 @@ void Init_FTM(void)
 	Init_FTM_Struct.FTM_Mode = FTM_MODE_PWM;
 	Init_FTM_Struct.FTM_PwmFreq = 10000;
 	LPLD_FTM_Init(Init_FTM_Struct);
-	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch4, 1000, PTD4, ALIGN_LEFT); //左边电机正转
+	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch4, 0, PTD4, ALIGN_LEFT); //左边电机正转
 	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch5, 0, PTD5, ALIGN_LEFT); //左边电机反转
-	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch6, 1500, PTD6, ALIGN_LEFT); //右边电机正转
+	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch6, 0, PTD6, ALIGN_LEFT); //右边电机正转
 	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch7, 0, PTD7, ALIGN_LEFT); //右边电机反转
 
 	Init_FTM_Struct.FTM_Ftmx=FTM1;

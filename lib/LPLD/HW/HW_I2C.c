@@ -307,7 +307,7 @@ void LPLD_I2C_Stop(I2C_Type *i2cx)
  */
 void LPLD_I2C_WaitAck(I2C_Type *i2cx, uint8 is_wait)
 {
-  uint16 time_out;
+  uint16 time_out=0;
   if(is_wait == I2C_ACK_ON)
   {
     while(!(i2cx->S & I2C_S_IICIF_MASK))
