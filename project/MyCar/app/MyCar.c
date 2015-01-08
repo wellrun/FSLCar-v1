@@ -13,15 +13,16 @@
 //#include "DataScope_DP.h"
 /*选了几个引脚来判断时序是否正常
 PC12-2Ms;
-PC13-4Ms;
+PC13-5Ms;
 PC14-20Ms;
-PC15-80Ms;
+PC15-40Ms;
 PC16-CCDReady(20Ms);
 ------------------------*/
-#define Scope2Ms 12
+
+#define Scope5Ms 12
 #define Scope4Ms 13
 #define Scope20Ms 14
-#define Scope80Ms 15
+#define Scope40Ms 15
 #define ScopeCCDReady 16
 #define CCD2
 #define CAR_STAND_ANG_MAX 85
@@ -32,14 +33,14 @@ CarControl_TypeDef MotorControl; //存储电机控制的值
 short acc_x, gyro_2;
 float tempfloat = 0;//临时变量,没有意义
 float Ang_dt = 0.004;//全局变量,所有需要周期的都是这个,一个周期20ms
-float Speed_Dt = 0.08;//速度的周期,0.08ms
+float Speed_Dt = 0.04;//速度的周期
 #define ScopeDataNum 4
 #define OutDataLen (ScopeDataNum*4+4)
 #define PageDateLen (4*9)
 uint8 OUTDATA[OutDataLen] =
 { 0x03, 0xfc, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 0xfc, 0x03 }; //示波器
 extern float GravityAngle; //重力角
-extern char TimeFlag_4Ms, TimeFlag_80Ms, TimeFlag_20Ms, TimeFlag_2Ms;
+extern char TimeFlag_5Ms, TimeFlag_40Ms, TimeFlag_20Ms, TimeFlag_2Ms;
 extern unsigned char CCDReady;
 extern unsigned char CCDTimeMs;//时间片标志
 extern uint8 debugerConnected; //是否连接到调试器
@@ -47,18 +48,19 @@ extern TempOfMotor_TypeDef TempValue; //临时存储角度和速度控制浮点变量的结构体
 extern float AngleIntegraed;//对角速度积分的角度值
 //--控制区
 uint8 Debuger = 1;
-uint8 CCDOn = 0;
+uint8 CCDOn = 1;
 uint8 CCDSendImage = 0;
 uint8 AngleCale = 1;
 uint8 AngDataSend = 0;
 //控制区结束
+char WhichCCD=0;
 uint8 AngSendCount = 0; //控制角度的发送次数
 unsigned char testbyte[4];
 unsigned char TempArr[128];
 char CCDDataSendOK = 0;
 char CCDSendToDebuger = 0;//发送到调试器
 char CCDDataSendStart = 0;
-char AngDataStart = 0;
+char AngData_Ready = 0;
 char AngDataSendOK = 1;
 char AngSendToDebuger = 0;//发送数据到调试器,默认不发,与调试器建立连接后发送
 char ControlByteRcvStart = 0;
@@ -109,36 +111,50 @@ void main(void)
 			//Timer_ReSet();  //重置程序时间计数器
 			if (CCDOn == 1)
 			{
-				ImageCapture(CCDM_Arr);
-				//CalculateIntegrationTime();
+				ImageCapture_M(CCDM_Arr,CCDS_Arr);
+				//ImageCapture_S(CCDS_Arr);
+				//CCD_Deal_Main(CCDM_Arr);
 				CCD_Deal_Main(CCDM_Arr);
-				DirControlValueCale();//方向控制
+				CCD_Deal_Slave(CCDS_Arr);
+				if (CCDMain_Status.InitOK == 0)
+				{
+					CCDLineInit();
+				}
+				else
+				{
+					DirControlValueCale();//方向控制
+				}
 				CCDDataSendStart = 1;
 			}
 		}
-		if (TimeFlag_4Ms == 1)
+		if (TimeFlag_5Ms == 1)
 		{
-			TimeFlag_4Ms = 0;
+			TimeFlag_5Ms = 0;
 			LPLD_GPIO_Toggle_b(PTC, Scope4Ms);
 			if (AngleCale == 1)
 			{
 				AngleGet();
 				AngleControlValueCalc();
-				AngDataStart = 1;
-				if (CarInfo_Now.CarAngle > CAR_STAND_ANG_MIN && CarInfo_Now.CarAngle < CAR_STAND_ANG_MAX)
+				AngData_Ready = 1;
+				if (CarStop==0 &&(CarInfo_Now.CarAngle > CAR_STAND_ANG_MIN && CarInfo_Now.CarAngle < CAR_STAND_ANG_MAX))
 				{
 					CarStandFlag = 1;
+					MotorControl_Out();//计算角度以后立即输出一次电机值
 				}
 				else
 				{
 					CarStandFlag = 0;
+					LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
+					LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
+					LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
+					LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
 				}
 			}
 		}
-		if (TimeFlag_80Ms == 1)
+		if (TimeFlag_40Ms == 1)
 		{
-			TimeFlag_80Ms = 0;
-			LPLD_GPIO_Toggle_b(PTC, Scope80Ms);
+			TimeFlag_40Ms = 0;
+			LPLD_GPIO_Toggle_b(PTC, Scope40Ms);
 			LPLD_GPIO_Toggle_b(PTA, 17);//一闪一闪亮晶晶
             //LPLD_GPIO_Output_b(PTA,17,0);
 			SpeedControlValueCalc();//速度闭环,先调直立,再调速度闭环
@@ -146,7 +162,7 @@ void main(void)
 		if (TimeFlag_2Ms == 1)
 		{
 			TimeFlag_2Ms = 0;
-			LPLD_GPIO_Toggle_b(PTC, Scope2Ms);
+			LPLD_GPIO_Toggle_b(PTC, Scope5Ms);
 			if (CarStop == 0 && CarStandFlag==1)//如果停车标志位为1,则停止输出电机值
 			{
 				MotorControl_Out(); //输出电机控制的值
@@ -168,7 +184,14 @@ void main(void)
 					CCDDataSendOK = 0;
 					for (i = 0; i < 128; i++)
 					{
-						TempArr[i] = CCDM_Arr[i];
+						if (WhichCCD == 0)
+						{
+							TempArr[i] = CCDM_Arr[i];
+						}
+						else if (WhichCCD == 1)
+						{
+							TempArr[i] = CCDS_Arr[i];
+						}
 					}
 					/*TempArr[CCDMain_Status.LeftPoint] = 250;
 					TempArr[CCDMain_Status.RightPoint] = 250;*/
@@ -214,26 +237,26 @@ void main(void)
 		}
 		if (AngDataSend == 1 && AngSendToDebuger==0)
 		{
-			if (AngDataStart == 1)
+			if (AngData_Ready == 1)
 			{
 				if (AngDataSendOK == 1)
 				{
 					AngDataSendOK = 0;
 					//调直立用
-					/*Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
+					Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
 					tempfloat = CarInfo_Now.CarAngSpeed;
 					Float2Byte(&tempfloat, OUTDATA, 10);
 					Float2Byte(&GravityAngle, OUTDATA, 6);
 					tempfloat = (float)gyro_2;
-					Float2Byte(&tempfloat, OUTDATA, 14);*/
-					tempfloat = (float)Speed_PID.SpeedSet;
+					Float2Byte(&tempfloat, OUTDATA, 14);
+					/*tempfloat = (float)Speed_PID.SpeedSet;
 					Float2Byte(&tempfloat, OUTDATA, 2);
 					tempfloat = (float)Speed_PID.OutValue;
 					Float2Byte(&tempfloat, OUTDATA, 6);
 					tempfloat = (float)CarInfo_Now.CarSpeed;
 					Float2Byte(&tempfloat, OUTDATA, 10);
 					tempfloat = 0;
-					Float2Byte(&tempfloat, OUTDATA, 14);
+					Float2Byte(&tempfloat, OUTDATA, 14);*/
 				}
 				LPLD_UART_PutChar(UART5, OUTDATA[ScopeSendPointCnt]);
 				ScopeSendPointCnt++;
@@ -241,7 +264,7 @@ void main(void)
 				{
 					ScopeSendPointCnt = 0;
 					AngDataSendOK = 1;
-					AngDataStart = 0;
+					AngData_Ready = 0;
 				}
 			}
 		}
@@ -249,7 +272,7 @@ void main(void)
 		{
 			if (AngToDebugerTimesUp == 1)
 			{
-				if (AngDataStart == 1)
+				if (AngData_Ready == 1)
 				{
 					if (AngDataSendOK == 1)
 					{
@@ -263,7 +286,7 @@ void main(void)
 					{
 						ScopeSendPointCnt = 0;
 						AngDataSendOK = 1;
-						AngDataStart = 0;
+						AngData_Ready = 0;
 						AngToDebugerTimesUp = 0;
 					}
 				}
@@ -435,7 +458,7 @@ void main(void)
 					else
 						CCDSendToDebuger = 1;
 					AngDataSend = ControlByte[1];
-					AngSendToDebuger = ControlByte[2];
+					WhichCCD = ControlByte[2];
 					/*CCDSendToDebuger = ControlByte[3];*/
 					LPLD_UART_PutChar(UART5, 0x6f);
 				}

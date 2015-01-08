@@ -8,13 +8,13 @@
 #define ANGLE_CONTROL_OUT_MIN			MOTOR_OUT_MIN
 #define CoderResolution 500 //编码器的线数
 #define TyreCircumference 41//轮胎周长CM
-#define DeathValue 200//死区电压 1%的占空比
+#define DeathValue 200//死区电压 2%的占空比
 
-#define CONTROL_PERIOD	4
-#define SPEED_CONTROL_COUNT 20
-#define SPEED_CONTROL_PERIOD (SPEED_CONTROL_COUNT * CONTROL_PERIOD)
-#define DIRECTION_CONTROL_COUNT			5
-#define DIRECTION_CONTROL_PERIOD		(DIRECTION_CONTROL_COUNT * CONTROL_PERIOD)
+#define CONTROL_PERIOD	5 //电机的输出周期
+#define SPEED_CONTROL_COUNT 8 //速度控制的分割次数
+#define SPEED_CONTROL_PERIOD (SPEED_CONTROL_COUNT * CONTROL_PERIOD) //速度控制的总时间
+#define DIRECTION_CONTROL_COUNT			4  //方向控制是20Ms一次
+#define DIRECTION_CONTROL_PERIOD		(DIRECTION_CONTROL_COUNT * CONTROL_PERIOD)//方向控制的总时间
 
 extern float Ang_dt;//控制周期,在主函数定义,20ms
 extern float Speed_Dt;//速度的周期,0.08ms
@@ -88,7 +88,7 @@ void SpeedControlValueCalc(void)
 	}
 	else
 		Index = 1;
-	Speed_PID.IntegralSum += Speed_PID.ThisError*Index*Speed_Dt;//抗饱和
+	Speed_PID.IntegralSum += Speed_PID.ThisError;//;*Index;//抗饱和//先取消抗饱和..因为Index的判断可能有问题
 	Speed_PID.OutValue = Speed_PID.Kp*Speed_PID.ThisError + Speed_PID.Ki*Speed_PID.IntegralSum;
 	Speed_PID.OutValue /= 100;//比例因子,转换为PWM占空比
 	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
@@ -98,7 +98,7 @@ void SpeedControlValueCalc(void)
 void DirControlValueCale(void)
 {
 	float Dir_Diff;	
-	Dir_PID.LastError = Dir_PID.LastError;
+	Dir_PID.LastError = Dir_PID.iError;
 	Dir_PID.iError = CCDMain_Status.ControlValue;
 	Dir_Diff = Dir_PID.LastError-Dir_PID.iError;//为了迎合微分项的负号
 	Dir_PID.OutValue = Dir_PID.iError*Dir_PID.Kp - Dir_PID.Kd*Dir_Diff;
@@ -114,8 +114,8 @@ void ControlSmooth(void)
 
 	TempF = TempValue.DirOutValue_New - TempValue.DirOutValue_Old;
 	TempValue.DirOutValue = TempF*(DirectionConrtolPeriod + 1) / DIRECTION_CONTROL_PERIOD + TempValue.DirOutValue_Old;
-	TempValue.Dir_LeftOutValue = -TempValue.DirOutValue;
-	TempValue.Dir_RightOutValue = TempValue.DirOutValue;
+	TempValue.Dir_LeftOutValue = TempValue.DirOutValue;
+	TempValue.Dir_RightOutValue = -TempValue.DirOutValue;
 }
 void MotorControl_Out(void)
 {

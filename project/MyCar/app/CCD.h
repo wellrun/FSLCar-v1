@@ -3,6 +3,7 @@
 #include "common.h"
 #define CCD_DataLen 50
 extern unsigned char CCDM_Arr[128]; //外部调用的时候用
+extern unsigned char CCDS_Arr[128];
 extern unsigned char CCDReady ;
 extern uint16 send_data;
 extern unsigned char CCDTimeMs;
@@ -37,6 +38,22 @@ extern unsigned char CCDTimeMs;
 // 	char ControlValue;//控制值,用来作为PID的输入
 // 	unsigned int ErrorCnt;//错误计数
 // }CCD_Status_Struct;
+typedef struct 
+{
+	char LeftLineArr[50];
+	char RightLineArr[50];
+	char LeftPoint;
+	char RightPoint;
+	char MidPoint;
+	char MidSet;
+	char LeftSet;
+	char RightSet;
+	char SearchBegin;
+	char Left_LostFlag;
+	char Right_LostFlag;
+	unsigned char PointCnt;
+}CCD_SLave_Status_Struct;
+
 
 typedef struct
 {
@@ -61,11 +78,14 @@ typedef struct
 	char Road;//道路类型
 }CCD_Status_Struct;
 extern CCD_Status_Struct CCDMain_Status;
-
+void CCDLineInit(void);
 char CCD_Deal_Main(unsigned char *CCDArr);
+void CCD_Deal_Slave(unsigned char *CCDArr);
 
-void ImageCapture(unsigned char *carry);
-void StartIntegration(void);
+void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2);
+void ImageCapture_S(unsigned char * ImageData);
+void StartIntegration_M(void);
+void StartIntegration_S(void);
 void ccd_exposure(void);
 void CalculateIntegrationTime(void);
 unsigned char PixelAverage(unsigned char len, unsigned char *data);

@@ -74,7 +74,8 @@ void Init_ADC(void)
 	Init_ADC_CCD_Struct.ADC_Adcx = ADC0;
 	Init_ADC_CCD_Struct.ADC_BitMode = SE_12BIT;
 	LPLD_ADC_Init(Init_ADC_CCD_Struct);
-	LPLD_ADC_Chn_Enable(ADC0, AD12); //CCD的AD端口 PTB0
+	LPLD_ADC_Chn_Enable(ADC0, AD14); //CCDM的AD端口 PTc0
+	LPLD_ADC_Chn_Enable(ADC0, AD15);//CCDS的AD端口 PTC1
 }
 void Init_GPIO(void)
 {
@@ -92,6 +93,18 @@ void Init_GPIO(void)
 
 	Init_GPIO_Struct.GPIO_PTx = PTA;
 	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin29;
+	Init_GPIO_Struct.GPIO_Dir = DIR_OUTPUT;
+	Init_GPIO_Struct.GPIO_Output = OUTPUT_H;
+	LPLD_GPIO_Init(Init_GPIO_Struct);
+
+	Init_GPIO_Struct.GPIO_PTx = PTA;
+	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin26;
+	Init_GPIO_Struct.GPIO_Dir = DIR_OUTPUT;
+	Init_GPIO_Struct.GPIO_Output = OUTPUT_H;
+	LPLD_GPIO_Init(Init_GPIO_Struct);
+
+	Init_GPIO_Struct.GPIO_PTx = PTA;
+	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin27;
 	Init_GPIO_Struct.GPIO_Dir = DIR_OUTPUT;
 	Init_GPIO_Struct.GPIO_Output = OUTPUT_H;
 	LPLD_GPIO_Init(Init_GPIO_Struct);

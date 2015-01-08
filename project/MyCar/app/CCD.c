@@ -8,6 +8,11 @@ void SamplingDelay(void);
 #define CLK_SetVal_M() LPLD_GPIO_Output_b(PTA, 29, 1)
 #define CLK_ClrVal_M() LPLD_GPIO_Output_b(PTA, 29, 0)
 
+#define SI_SetVal_S() LPLD_GPIO_Output_b(PTA, 26, 1)
+#define SI_ClrVal_S() LPLD_GPIO_Output_b(PTA, 26, 0)
+#define CLK_SetVal_S() LPLD_GPIO_Output_b(PTA, 27, 1)
+#define CLK_ClrVal_S() LPLD_GPIO_Output_b(PTA, 27, 0)
+
 
 
 //SI--PTA28
@@ -19,6 +24,7 @@ void SamplingDelay(void);
 
 
 CCD_Status_Struct CCDMain_Status;
+CCD_SLave_Status_Struct CCDSlave_Status;
 
 uint8 u32_trans_uint8(uint16 data); //只有本地用
 
@@ -29,13 +35,13 @@ uint8 IntegrationTime = 10;
 unsigned char CCDM_Arr[128] = { 0 };
 unsigned char CCDS_Arr[128] = { 0 };
 extern short SpeedControlPeriod, DirectionConrtolPeriod;
-char TimeFlag_4Ms, TimeFlag_80Ms, TimeFlag_20Ms,TimeFlag_2Ms;
+char TimeFlag_5Ms, TimeFlag_40Ms, TimeFlag_20Ms,TimeFlag_2Ms;
 char TimerMsCnt = 0;
-#define CONTROL_PERIOD	4
-#define SPEED_CONTROL_COUNT 20
-#define SPEED_CONTROL_PERIOD (SPEED_CONTROL_COUNT * CONTROL_PERIOD)
-#define DIRECTION_CONTROL_COUNT			5
-#define DIRECTION_CONTROL_PERIOD		(DIRECTION_CONTROL_COUNT * CONTROL_PERIOD)
+// #define CONTROL_PERIOD	5
+// #define SPEED_CONTROL_COUNT 20
+// #define SPEED_CONTROL_PERIOD (SPEED_CONTROL_COUNT * CONTROL_PERIOD)
+// #define DIRECTION_CONTROL_COUNT			5
+// #define DIRECTION_CONTROL_PERIOD		(DIRECTION_CONTROL_COUNT * CONTROL_PERIOD)
 
 void ccd_exposure(void)
 {
@@ -48,7 +54,10 @@ void ccd_exposure(void)
 	if (integration_piont >= 2)
 	{
 		if (integration_piont == CCDTimeMs)
-			StartIntegration();
+		{
+			//StartIntegration_S();
+			StartIntegration_M();
+		}
 	}
 	if (CCDTimeMs >= 20)
 	{
@@ -59,17 +68,17 @@ void ccd_exposure(void)
 	{
 		TimeFlag_2Ms = 1;
 	}
-	if (TimerMsCnt % 4 == 0)
+	if (TimerMsCnt % 5 == 0)
 	{
-		TimeFlag_4Ms = 1;
+		TimeFlag_5Ms = 1;
 	}
 	if (TimerMsCnt % 20 == 0)
 	{
 		TimeFlag_20Ms = 1;
 	}
-	if (TimerMsCnt >= 80)
+	if (TimerMsCnt >= 40)
 	{
-		TimeFlag_80Ms = 1;
+		TimeFlag_40Ms = 1;
 		TimerMsCnt = 0;
 		SpeedControlPeriod = 0;
 		DirectionConrtolPeriod = 0;
@@ -78,80 +87,183 @@ void ccd_exposure(void)
 
 
 
-void StartIntegration(void)
+void StartIntegration_M(void)
 {
 
 	unsigned char i;
 
 	SI_SetVal_M();            /* SI  = 1 */
+	SI_SetVal_S();            /* SI  = 1 */
 	SamplingDelay();
 	CLK_SetVal_M();           /* CLK = 1 */
+	CLK_SetVal_S();           /* CLK = 1 */
 	SamplingDelay();
-	SI_ClrVal_M();            /* SI  = 0 */
+	SI_ClrVal_M(); 
+	SI_ClrVal_S(); /* SI  = 0 */
 	SamplingDelay();
-	CLK_ClrVal_M();           /* CLK = 0 */
-
-	for (i = 0; i < 127; i++) {
+	CLK_ClrVal_M();  
+	CLK_ClrVal_S(); /* CLK = 0 */
+	SamplingDelay(); 
+	SamplingDelay();
+	for (i = 0; i < 127; i++) 
+	{
 		SamplingDelay();
 		SamplingDelay();
-		CLK_SetVal_M();       /* CLK = 1 */
+		CLK_SetVal_M();  
+		CLK_SetVal_S();/* CLK = 1 */
 		SamplingDelay();
 		SamplingDelay();
-		CLK_ClrVal_M();       /* CLK = 0 */
+		CLK_ClrVal_M(); 
+		CLK_ClrVal_S();  /* CLK = 0 */
 	}
 	SamplingDelay();
 	SamplingDelay();
-	CLK_SetVal_M();           /* CLK = 1 */
+	CLK_SetVal_M(); 
+	CLK_SetVal_S();/* CLK = 1 */
 	SamplingDelay();
 	SamplingDelay();
-	CLK_ClrVal_M();           /* CLK = 0 */
+	CLK_ClrVal_M();  
+	CLK_ClrVal_S();  /* CLK = 0 */
 }
 
 
-void ImageCapture(unsigned char * ImageData)
+// void StartIntegration_S(void)
+// {
+// 
+// 	unsigned char i;
+// 
+// 	SI_SetVal_S();            /* SI  = 1 */
+// 	SamplingDelay();
+// 	CLK_SetVal_S();           /* CLK = 1 */
+// 	SamplingDelay();
+// 	SI_ClrVal_S();            /* SI  = 0 */
+// 	SamplingDelay();
+// 	CLK_ClrVal_S();           /* CLK = 0 */
+// 	SamplingDelay(); SamplingDelay();
+// 	for (i = 0; i < 127; i++) {
+// 		SamplingDelay();
+// 		SamplingDelay();
+// 		CLK_SetVal_S();       /* CLK = 1 */
+// 		SamplingDelay();
+// 		SamplingDelay();
+// 		CLK_ClrVal_S();       /* CLK = 0 */
+// 	}
+// 	SamplingDelay();
+// 	SamplingDelay();
+// 	CLK_SetVal_S();           /* CLK = 1 */
+// 	SamplingDelay();
+// 	SamplingDelay();
+// 	CLK_ClrVal_S();           /* CLK = 0 */
+// }
+// 
+
+
+void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2)
 {
 
 	unsigned char i;
 	extern uint8 AtemP;
 
-	SI_SetVal_M();            /* SI  = 1 */
+	SI_SetVal_M(); 
+	SI_SetVal_S();  /* SI  = 1 */
 	SamplingDelay();
-	CLK_SetVal_M();           /* CLK = 1 */
+	CLK_SetVal_M();
+	CLK_SetVal_S();     /* CLK = 1 */
 	SamplingDelay();
-	SI_ClrVal_M();            /* SI  = 0 */
+	SI_ClrVal_M(); 
+	SI_ClrVal_S();  /* SI  = 0 */
 	SamplingDelay();
 
 	//Delay 10us for sample the first pixel
 	/**/
-	for (i = 0; i < 250; i++) {                    //更改250，让CCD的图像看上去比较平滑，
+	for (i = 0; i < 200; i++) {                    //更改250，让CCD的图像看上去比较平滑，
 		SamplingDelay();  //200ns                  //把该值改大或者改小达到自己满意的结果。
 	}
 
 	//Sampling Pixel 1
 
-	*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD12));
+	*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD14));
+	*ImageData2 = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD15));
 	ImageData++;
-	CLK_ClrVal_M();           /* CLK = 0 */
-
-	for (i = 0; i < 127; i++) {
+	ImageData2++;
+	CLK_ClrVal_M();   
+	CLK_ClrVal_S();/* CLK = 0 */
+	SamplingDelay();
+	SamplingDelay();
+	SamplingDelay();
+	for (i = 0; i < 127; i++) 
+	{
 		SamplingDelay();
 		SamplingDelay();
-		CLK_SetVal_M();       /* CLK = 1 */
+		CLK_SetVal_M();  
+		CLK_SetVal_S(); /* CLK = 1 */
 		SamplingDelay();
 		SamplingDelay();
 		//Sampling Pixel 2~128
 
-		*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD12));
+		*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD14));
+		*ImageData2 = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD15));
 		ImageData++;
-		CLK_ClrVal_M();       /* CLK = 0 */
+		ImageData2++;
+		CLK_ClrVal_M();  
+		CLK_ClrVal_S(); /* CLK = 0 */
 	}
 	SamplingDelay();
 	SamplingDelay();
-	CLK_SetVal_M();           /* CLK = 1 */
+	CLK_SetVal_M(); 
+	CLK_SetVal_S(); /* CLK = 1 */
 	SamplingDelay();
 	SamplingDelay();
-	CLK_ClrVal_M();           /* CLK = 0 */
+	CLK_ClrVal_M();
+	CLK_ClrVal_S();/* CLK = 0 */
 }
+
+
+// void ImageCapture_S(unsigned char * ImageData)
+// {
+// 
+// 	unsigned char i;
+// 	extern uint8 AtemP;
+// 
+// 	SI_SetVal_S();            /* SI  = 1 */
+// 	SamplingDelay();
+// 	CLK_SetVal_S();           /* CLK = 1 */
+// 	SamplingDelay();
+// 	SI_ClrVal_S();            /* SI  = 0 */
+// 	SamplingDelay();
+// 
+// 	//Delay 10us for sample the first pixel
+// 	for (i = 0; i < 200; i++) {                    //更改250，让CCD的图像看上去比较平滑，
+// 		SamplingDelay();  //200ns                  //把该值改大或者改小达到自己满意的结果。
+// 	}
+// 
+// 	//Sampling Pixel 1
+// 
+// 	*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD15));
+// 	ImageData++;
+// 	CLK_ClrVal_S();           /* CLK = 0 */
+// 	SamplingDelay();
+// 	SamplingDelay();
+// 	SamplingDelay();
+// 	for (i = 0; i < 127; i++) {
+// 		SamplingDelay();
+// 		SamplingDelay();
+// 		CLK_SetVal_S();       /* CLK = 1 */
+// 		SamplingDelay();
+// 		SamplingDelay();
+// 		//Sampling Pixel 2~128
+// 
+// 		*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD15));
+// 		ImageData++;
+// 		CLK_ClrVal_S();       /* CLK = 0 */
+// 	}
+// 	SamplingDelay();
+// 	SamplingDelay();
+// 	CLK_SetVal_S();           /* CLK = 1 */
+// 	SamplingDelay();
+// 	SamplingDelay();
+// 	CLK_ClrVal_S();           /* CLK = 0 */
+// }
 
 
 
@@ -278,8 +390,8 @@ uint8 u32_trans_uint8(uint16 data)
 #define LeftBoundary 8 //去掉开始的10个点
 #define RightBoundary 119//去掉后面的10个点
 #define CCD_Threshold 40//40  //这是两组两组差的阈值//实际使用的时候取
-#define LeftLostPrepare 23
-#define RightLostPrepare 105 //左右准备丢线的阈值
+#define LeftLostPrepare 15
+#define RightLostPrepare 113 //左右准备丢线的阈值
 #define LeftMode -1
 #define RightMode 1
 #define MidMode 0
@@ -432,27 +544,124 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 	{
 		CCDMain_Status.ControlValue /= 2;
 	}
-	if (CCDMain_Status.InitOK == 0)
-	{
-		CCDLineInit();
-		CCDMain_Status.ControlValue = 0;
-	}
+// 	if (CCDMain_Status.InitOK == 0)
+// 	{
+// 		CCDLineInit();
+// 		CCDMain_Status.ControlValue = 0;
+// 	}
 
+	CCDMain_Status.PointCnt++;
+	//2015年1月8日 01:46:35  根据上次的情况来判断黑线的位置是否合理..如果有一边非正常丢线..那么就需要判断是否是没检测出
 	return 0;
 }
 
 void CCDLineInit(void)
 {
-	CCDInitLine_Left += CCDMain_Status.LeftPoint;
-	CCDInitLine_Right += CCDMain_Status.RightPoint;
-	CCDInitCnt++;
-	if (CCDInitCnt >= 20);
+// 	CCDInitLine_Left += CCDMain_Status.LeftPoint;
+// 	CCDInitLine_Right += CCDMain_Status.RightPoint;
+// 	CCDInitCnt++;
+// 	if (CCDInitCnt >= 20);
+// 	{
+// 		CCDInitLine_Left /= CCDInitCnt;
+// 		CCDInitLine_Right /= CCDInitCnt;
+// 		CCDMain_Status.RightSet = 64 + (CCDInitLine_Left + CCDInitLine_Right) / 2;
+// 		CCDMain_Status.LeftSet = 64 - (CCDInitLine_Left + CCDInitLine_Right) / 2;
+// 		CCDMain_Status.MidSet = 64;
+// 		CCDMain_Status.InitOK = 1;
+// 	}
+	//if ()
+}
+
+void CCD_Deal_Slave(unsigned char *CCDArr)
+{
+	int i, j;
+	short SumTemp1_short = 0;
+	short SumTemp2_short = 0;
+	char LeftTempArr[50];
+	char RightTempArr[50];
+	unsigned char Counter_R = 0;
+	unsigned char Counter_L = 0;
+	unsigned char LineLenCnt = 0;
+	if (CCDMain_Status.InitOK == 0)
 	{
-		CCDInitLine_Left /= CCDInitCnt;
-		CCDInitLine_Right /= CCDInitCnt;
-		CCDMain_Status.RightSet = 64 + (CCDInitLine_Left + CCDInitLine_Right) / 2;
-		CCDMain_Status.LeftSet = 64 - (CCDInitLine_Left + CCDInitLine_Right) / 2;
-		CCDMain_Status.MidSet = 64;
-		CCDMain_Status.InitOK = 1;
+		CCDSlave_Status.SearchBegin = 64;
 	}
+	for (i = CCDSlave_Status.SearchBegin; i < RightBoundary; i++)
+	{
+		SumTemp1_short = CCDArr[i] + CCDArr[i + 1];
+		SumTemp2_short = CCDArr[i + 4] + CCDArr[i + 5];//110011来检测
+		if (SumTemp1_short - SumTemp2_short >= CCD_Threshold)//表示下降的特别快
+		{
+			RightTempArr[Counter_R] = i + 2;
+			Counter_R++;
+		}
+	}
+	for (i = CCDSlave_Status.SearchBegin; i > LeftBoundary; i--)
+	{
+		SumTemp1_short = CCDArr[i] + CCDArr[i - 1];
+		SumTemp2_short = CCDArr[i - 4] + CCDArr[i - 5];
+		if (SumTemp1_short - SumTemp2_short >= CCD_Threshold)//表示下降的特别快
+		{
+			LeftTempArr[Counter_L] = i - 2; //为了新想法,需要判断这个点是否为坏点
+			Counter_L++;
+		}  //找到一个跳变点...两个两个一对得比较..从中间向两边比较得出下降沿,将位置放出临时数组里面,以后再做 处理;
+	}
+
+	CCDSlave_Status.Left_LostFlag = 1;
+	CCDSlave_Status.Right_LostFlag = 1;
+	CCDSlave_Status.LeftLineArr[CCDSlave_Status.PointCnt] = 0;
+	CCDSlave_Status.RightLineArr[CCDSlave_Status.PointCnt] = 127;
+// 	CCDSlave_Status.LeftPoint = 0;
+// 	CCDSlave_Status.RightPoint = 0;
+	LineLenCnt = 0;
+	for (i = 0; i < Counter_L; i++)
+	{
+		if ((CCDArr[LeftTempArr[i]]) - ((CCDArr[LeftTempArr[i] - 1] + CCDArr[LeftTempArr[i] + 1]) / 2) < CCD_Threshold / 2)
+		{
+			SumTemp1_short = CCDArr[LeftTempArr[i]] + CCDArr[LeftTempArr[i] + 1];
+			for (j = 1; j < 8; j++)
+			{
+				SumTemp2_short = CCDArr[LeftTempArr[i] - j] + CCDArr[LeftTempArr[i] - j - 1];
+				if (SumTemp1_short - SumTemp2_short >CCD_Threshold)
+					LineLenCnt++;
+			}
+			if (LineLenCnt > 3)
+			{
+				CCDSlave_Status.LeftLineArr[CCDSlave_Status.PointCnt] = LeftTempArr[i];
+				CCDSlave_Status.Left_LostFlag = 0;
+				CCDSlave_Status.LeftPoint = LeftTempArr[i];
+				break;
+			}
+		}
+	}
+	LineLenCnt = 0;
+	for (i = 0; i < Counter_R; i++)
+	{
+		if ((CCDArr[RightTempArr[i]]) - ((CCDArr[RightTempArr[i] - 1] + CCDArr[RightTempArr[i] + 1]) / 2) < CCD_Threshold)
+		{
+			SumTemp1_short = CCDArr[RightTempArr[i]] + CCDArr[RightTempArr[i] + 1];
+			for (j = 1; j < 8; j++)
+			{
+				SumTemp2_short = CCDArr[RightTempArr[i] + j] + CCDArr[RightTempArr[i] + j + 1];
+				if (SumTemp1_short - SumTemp2_short >CCD_Threshold)
+					LineLenCnt++;
+			}
+			if (LineLenCnt > 3)
+			{
+				CCDSlave_Status.RightLineArr[CCDSlave_Status.PointCnt] = RightTempArr[i];
+				CCDSlave_Status.Right_LostFlag = 0;
+				CCDSlave_Status.RightPoint = RightTempArr[i];
+				break;
+			}
+		}
+	}
+	if (CCDSlave_Status.Right_LostFlag == 1 && CCDSlave_Status.Left_LostFlag == 1)
+	{
+		//判断是否为直角弯
+	}
+	else
+	{
+		//根据找到的线更新搜寻起点和判断道路类型和是否初始化完成
+	}
+	CCDSlave_Status.PointCnt++;
 }

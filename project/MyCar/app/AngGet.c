@@ -27,16 +27,8 @@ void AngleGet(void)
 {
 	acc_x = LPLD_MMA8451_GetResult(MMA8451_STATUS_Y_READY,
 			MMA8451_REG_OUTY_MSB);
-
-//		acc_y = LPLD_MMA8451_GetResult(MMA8451_STATUS_Y_READY,
-//				MMA8451_REG_OUTY_MSB);
-//	acc_z = LPLD_MMA8451_GetResult(MMA8451_STATUS_X_READY,
-//			MMA8451_REG_OUTZ_MSB);
-	//gyro_1 = LPLD_ADC_Get(ADC1, AD14);
-	//gyro_2 = MPU6050_GetResult(GYRO_YOUT_H)*0.5;
-	
-	//GyroscopeAngleSpeed = (float) gyro_2 * GYROSCOPE_ANGLE_RATIO;
-        GyroscopeAngleSpeed=MPU6050_GetResult(GYRO_YOUT_H)*0.25;
+   GyroscopeAngleSpeed=MPU6050_GetResult(GYRO_YOUT_H)*0.25;//这里的比例因子是随便给的..准确值应该是16.4
+	//GyroscopeAngleSpeed = MPU6050_GetResult(GYRO_YOUT_H)/(16.4);
 	GravityAngle =acc_x*(180.0/(4096.0*2));
 
 	complement_filter(GravityAngle, -GyroscopeAngleSpeed);
