@@ -40,42 +40,42 @@ extern unsigned char CCDTimeMs;
 // }CCD_Status_Struct;
 typedef struct 
 {
-	char LeftLineArr[50];
-	char RightLineArr[50];
-	char LeftPoint;
-	char RightPoint;
-	char MidPoint;
-	char MidSet;
-	char LeftSet;
-	char RightSet;
-	char SearchBegin;
-	char Left_LostFlag;
-	char Right_LostFlag;
+	signed char LeftLineArr[50];
+	signed char RightLineArr[50];
+	signed char LeftPoint;
+	signed char RightPoint;
+	signed char MidPoint;
+	signed char MidSet;
+	signed char LeftSet;
+	signed char RightSet;
+	signed char SearchBegin;
+	signed char Left_LostFlag;
+	signed char Right_LostFlag;
 	unsigned char PointCnt;
 }CCD_SLave_Status_Struct;
 
 
 typedef struct
 {
-	char LeftLineArr[50];
-	char RightLineArr[50];
-	char SearchBegin;
-	char LeftPoint;
-	char RightPoint;
-	char MidPoint;
-	char MidSet;
-	char LeftSet;
-	char RightSet;
-	char InitOK;
+	signed char LeftLineArr[50];
+	signed char RightLineArr[50];
+	signed char SearchBegin;
+	signed char LeftPoint;
+	signed char RightPoint;
+	signed char MidPoint;
+	signed char MidSet;
+	signed char LeftSet;
+	signed char RightSet;
+	signed char InitOK;
 	short ControlValue;
 	unsigned int ErrorCnt;
 	int Mode;//-1为左线引导,0为中线引导,1为右线引导
 	unsigned char PointCnt;
-	char Left_LostFlag;
-	char Right_LostFlag;
-	char LostAllLine;
+	signed char Left_LostFlag;
+	signed char Right_LostFlag;
+	signed char LostAllLine;
 	unsigned short LostLineCnt;//丢线周期计数
-	char Road;//道路类型
+	signed char Road;//道路类型
 }CCD_Status_Struct;
 extern CCD_Status_Struct CCDMain_Status;
 void CCDLineInit(void);

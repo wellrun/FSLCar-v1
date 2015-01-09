@@ -21,8 +21,8 @@ uint8 MPU6050_Init(void)
   i2c_init_param.I2C_I2Cx = I2C1;       //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_IntEnable = FALSE;
   i2c_init_param.I2C_ICR = 0x20;  //可根据实际电路更改SCL频率
-  i2c_init_param.I2C_SclPin = PTC10;   //在DEV_MMA8451.h中修改该值
-  i2c_init_param.I2C_SdaPin = PTC11;   //在DEV_MMA8451.h中修改该值
+  i2c_init_param.I2C_SclPin = PTC10;   //MPU
+  i2c_init_param.I2C_SdaPin = PTC11;   //MPU
   i2c_init_param.I2C_Isr = NULL;
 //i2c_init_param.I2C_OpenDrainEnable=TRUE;
  LPLD_I2C_Init(i2c_init_param);

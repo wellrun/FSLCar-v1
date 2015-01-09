@@ -74,8 +74,8 @@ void Init_ADC(void)
 	Init_ADC_CCD_Struct.ADC_Adcx = ADC0;
 	Init_ADC_CCD_Struct.ADC_BitMode = SE_12BIT;
 	LPLD_ADC_Init(Init_ADC_CCD_Struct);
-	LPLD_ADC_Chn_Enable(ADC0, AD14); //CCDM的AD端口 PTc0
-	LPLD_ADC_Chn_Enable(ADC0, AD15);//CCDS的AD端口 PTC1
+	LPLD_ADC_Chn_Enable(ADC0, AD14); //CCD1的AD端口 PTc0
+	LPLD_ADC_Chn_Enable(ADC0, AD15);//CCD2的AD端口 PTC1
 }
 void Init_GPIO(void)
 {
@@ -149,7 +149,7 @@ void Init_FTM(void)
 	Init_FTM_Struct.FTM_Mode= FTM_MODE_QD;
 	Init_FTM_Struct.FTM_QdMode=QD_MODE_PHAB;
 	LPLD_FTM_Init(Init_FTM_Struct);
-	LPLD_FTM_QD_Enable(FTM1, PTB0, PTB1); //FTM1是左电机,FTM2是右电机
+	LPLD_FTM_QD_Enable(FTM1, PTB0, PTB1); //正交解码FTM1是左电机,FTM2是右电机
 
 	Init_FTM_Struct.FTM_Ftmx=FTM2;
 	Init_FTM_Struct.FTM_Mode= FTM_MODE_QD;

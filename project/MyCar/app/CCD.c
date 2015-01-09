@@ -409,11 +409,17 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 	short SumTemp1_short = 0;
 	short SumTemp2_short = 0;
 	short SearchBeginTemp = 0;
-	char LeftTempArr[50];
-	char RightTempArr[50];
+	signed char LeftTempArr[50];
+	signed char RightTempArr[50];
 	unsigned char Counter_R = 0;
 	unsigned char Counter_L = 0;
 	unsigned char LineLenCnt = 0;
+	//防止溢出
+	if (CCDMain_Status.SearchBegin < 0)
+		CCDMain_Status.SearchBegin = 0;
+	if (CCDMain_Status.SearchBegin > 127)
+		CCDMain_Status.SearchBegin = 127;
+	
 	if (CCDMain_Status.InitOK == 0)
 	{
 		CCDMain_Status.SearchBegin = 64;//初始化起始中点,其他的可以不初始化
@@ -569,7 +575,18 @@ void CCDLineInit(void)
 // 		CCDMain_Status.MidSet = 64;
 // 		CCDMain_Status.InitOK = 1;
 // 	}
-	//if ()
+	signed short MidTemp = 0;
+	if (CCDMain_Status.Right_LostFlag ==0)
+		if (CCDMain_Status.Left_LostFlag ==0)
+			if (CCDSlave_Status.Left_LostFlag==0)
+				if (CCDSlave_Status.Right_LostFlag == 0)
+				{
+					MidTemp = CCDSlave_Status.MidPoint - CCDMain_Status.MidPoint;//获得中点的差值
+					if (MidTemp<3 && MidTemp>-3)
+					{
+						CCDMain_Status.InitOK = 1;
+					}
+				}
 }
 
 void CCD_Deal_Slave(unsigned char *CCDArr)
@@ -582,6 +599,14 @@ void CCD_Deal_Slave(unsigned char *CCDArr)
 	unsigned char Counter_R = 0;
 	unsigned char Counter_L = 0;
 	unsigned char LineLenCnt = 0;
+	if (CCDSlave_Status.SearchBegin < 0)
+	{
+		CCDSlave_Status.SearchBegin = 0;
+	}
+	if (CCDSlave_Status.SearchBegin > 127)
+	{
+		CCDSlave_Status.SearchBegin = 127;
+	}
 	if (CCDMain_Status.InitOK == 0)
 	{
 		CCDSlave_Status.SearchBegin = 64;
@@ -657,11 +682,27 @@ void CCD_Deal_Slave(unsigned char *CCDArr)
 	}
 	if (CCDSlave_Status.Right_LostFlag == 1 && CCDSlave_Status.Left_LostFlag == 1)
 	{
-		//判断是否为直角弯
+		//需要判断是否为直角弯?
+
 	}
 	else
-	{
-		//根据找到的线更新搜寻起点和判断道路类型和是否初始化完成
+	{//根据找到的线更新搜寻起点和判断道路类型和是否初始化完成
+		if (CCDSlave_Status.Right_LostFlag == 0 && CCDSlave_Status.Left_LostFlag == 0)
+		{
+			CCDSlave_Status.SearchBegin = (CCDSlave_Status.RightPoint + CCDSlave_Status.LeftPoint) / 2;
+			CCDSlave_Status.MidPoint = CCDSlave_Status.SearchBegin;
+		}
+		else if (CCDSlave_Status.Right_LostFlag == 0)
+		{
+			CCDSlave_Status.SearchBegin = CCDSlave_Status.RightPoint - 10;
+			CCDSlave_Status.MidPoint = 0;
+		}
+		else if (CCDSlave_Status.Left_LostFlag == 0)
+		{
+			CCDSlave_Status.SearchBegin = CCDSlave_Status.LeftPoint + 10;
+			CCDSlave_Status.MidPoint = 0;
+		}
+		
 	}
 	CCDSlave_Status.PointCnt++;
 }
