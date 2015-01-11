@@ -21,7 +21,7 @@ uint8 LPLD_MMA8451_Init(void)
   //初始化MMA8451_I2CX
   i2c_init_param.I2C_I2Cx = I2C0;       //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_IntEnable = FALSE;
-  i2c_init_param.I2C_ICR = MMA8451_SCL_300KHZ;  //可根据实际电路更改SCL频率
+  i2c_init_param.I2C_ICR = MMA8451_SCL_200KHZ;  //可根据实际电路更改SCL频率
   i2c_init_param.I2C_SclPin = PTD8;   //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_SdaPin = PTD9;   //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_Isr = NULL;
@@ -36,7 +36,7 @@ uint8 LPLD_MMA8451_Init(void)
   LPLD_MMA8451_WriteReg(MMA8451_REG_SYSMOD, 0x00);       //默认模式Standby Mode
   LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG2, 0x02);    //High Resolution
   LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG1, 0x01);    //主动模式,800HZ
-  LPLD_MMA8451_WriteReg(0x0f, 0x23);//开启低通滤波器
+  //LPLD_MMA8451_WriteReg(0x0f, 0x23);//开启低通滤波器
   
   return device_id;
 }

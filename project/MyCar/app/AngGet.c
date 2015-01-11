@@ -5,7 +5,7 @@
 #include "datastructure.h"
 #include "Kalman.h"
 #include "MPU6050.h"
-float GYROSCOPE_ANGLE_RATIO = 0.2;// 0.1336// (3300/4096)/(0.67*6) //陀螺仪当前的静态为2360  //这个是放大9倍
+float GYROSCOPE_ANGLE_RATIO = 0.20;// 0.1336// (3300/4096)/(0.67*6) //陀螺仪当前的静态为2360  //这个是放大9倍
 
 extern CarInfo_TypeDef CarInfo_Now; //当前车子的信息
 extern CarControl_TypeDef MotorControl; //电机控制的值
@@ -19,7 +19,7 @@ float GravityAngle, GyroscopeAngleSpeed;
 float AngleIntegraed = 0;//对角速度的积分值
 
 float temp_x;
-int gyro_avg = 2360; //角速度AD平均值
+/*int gyro_avg = 2360; //角速度AD平均值*/
 
 void AngleIntegration(float Anglespeed);
 
@@ -27,12 +27,13 @@ void AngleGet(void)
 {
 	acc_x = LPLD_MMA8451_GetResult(MMA8451_STATUS_Y_READY,
 			MMA8451_REG_OUTY_MSB);
-   GyroscopeAngleSpeed=MPU6050_GetResult(GYRO_YOUT_H)*0.25;//这里的比例因子是随便给的..准确值应该是16.4
+	GyroscopeAngleSpeed = MPU6050_GetResult(GYRO_YOUT_H)*GYROSCOPE_ANGLE_RATIO;//这里的比例因子是随便给的..准确值应该是16.4
 	//GyroscopeAngleSpeed = MPU6050_GetResult(GYRO_YOUT_H)/(16.4);
 	GravityAngle =acc_x*(180.0/(4096.0*2));
 
-	complement_filter(GravityAngle, -GyroscopeAngleSpeed);
-	AngleIntegration((float)(-(angle_dot_com/GYROSCOPE_ANGLE_RATIO)));//确定了当前的值合适
+complement_filter(GravityAngle, -GyroscopeAngleSpeed);
+  //  complement2(GravityAngle, -GyroscopeAngleSpeed);
+	AngleIntegration((float)(-(angle_dot_com)));//确定了当前的值合适
 	CarInfo_Now.CarAngle = angle_com;
 	CarInfo_Now.CarAngSpeed = angle_dot_com;
 // 	Kalman_Filter(GravityAngle, -GyroscopeAngleSpeed);
@@ -43,9 +44,9 @@ void AngleGet(void)
 
 void AngleIntegration(float Anglespeed)//对角速度积分得到角度确定GYROSCOPE_ANGLE_RATIO的值
 {
-	float dt = 0.004;
+	float dt = 0.005;
     
-	AngleIntegraed += Anglespeed*dt*GYROSCOPE_ANGLE_RATIO;
+	AngleIntegraed += Anglespeed*dt;
 }
 
 //函数说明：将单精度浮点数据转成4字节数据并存入指定地址 //gittest

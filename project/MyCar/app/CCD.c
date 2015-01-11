@@ -417,7 +417,7 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 	//·ÀÖ¹Òç³ö
 	if (CCDMain_Status.SearchBegin < 0)
 		CCDMain_Status.SearchBegin = 0;
-	if (CCDMain_Status.SearchBegin > 127)
+	if (CCDMain_Status.SearchBegin > 126)
 		CCDMain_Status.SearchBegin = 127;
 	
 	if (CCDMain_Status.InitOK == 0)
@@ -603,7 +603,7 @@ void CCD_Deal_Slave(unsigned char *CCDArr)
 	{
 		CCDSlave_Status.SearchBegin = 0;
 	}
-	if (CCDSlave_Status.SearchBegin > 127)
+	if (CCDSlave_Status.SearchBegin > 126)
 	{
 		CCDSlave_Status.SearchBegin = 127;
 	}

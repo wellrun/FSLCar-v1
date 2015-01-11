@@ -147,24 +147,28 @@ void MotorControl_Out(void)
 
 	if (MotorControl.LeftMotorOutValue >= 0)
 	{
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, MotorControl.LeftMotorOutValue+DeathValue);
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
+		LPLD_SYSTICK_DelayUs(2);//手动插入死区时间
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, MotorControl.LeftMotorOutValue + DeathValue);
 	}
 	else
 	{
 		MotorControl.LeftMotorOutValue = -MotorControl.LeftMotorOutValue; //为负值取反
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
+		LPLD_SYSTICK_DelayUs(2);
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, MotorControl.LeftMotorOutValue + DeathValue);
 	}
 	if (MotorControl.RightMotorOutValue >= 0)
 	{
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, MotorControl.RightMotorOutValue + DeathValue);
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
+		LPLD_SYSTICK_DelayUs(2);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, MotorControl.RightMotorOutValue + DeathValue);
 	}
 	else
 	{
 		MotorControl.RightMotorOutValue = -MotorControl.RightMotorOutValue;
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
+		LPLD_SYSTICK_DelayUs(2);//
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, MotorControl.RightMotorOutValue + DeathValue);
 	}
 }
