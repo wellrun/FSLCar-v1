@@ -8,13 +8,13 @@
 #define ANGLE_CONTROL_OUT_MIN			MOTOR_OUT_MIN
 #define CoderResolution 500 //编码器的线数
 #define TyreCircumference 41//轮胎周长CM
-#define DeathValue 200//死区电压 2%的占空比
+#define DeathValue 300//死区电压 2%的占空比
 
-#define CONTROL_PERIOD	5 //电机的输出周期
-#define SPEED_CONTROL_COUNT 8 //速度控制的分割次数
-#define SPEED_CONTROL_PERIOD (SPEED_CONTROL_COUNT * CONTROL_PERIOD) //速度控制的总时间
-#define DIRECTION_CONTROL_COUNT			4  //方向控制是20Ms一次
-#define DIRECTION_CONTROL_PERIOD		(DIRECTION_CONTROL_COUNT * CONTROL_PERIOD)//方向控制的总时间
+// #define CONTROL_PERIOD	5 //电机的输出周期
+// #define SPEED_CONTROL_COUNT 8 //速度控制的分割次数
+#define SPEED_CONTROL_PERIOD 40 //速度控制的总时间40ms
+//#define DIRECTION_CONTROL_COUNT			4  //方向控制是20Ms一次
+#define DIRECTION_CONTROL_PERIOD		20//方向控制的总时间
 
 extern float Ang_dt;//控制周期,在主函数定义,20ms
 extern float Speed_Dt;//速度的周期,0.08ms
@@ -69,7 +69,10 @@ void SpeedGet(void)
 void SpeedControlValueCalc(void)
 {
 /*	float ControlValue = 0;*/
+	//2015年1月12日 00:39:37  积分参数大概给150
+#define INTEGRAL_MAX 1200
 	short Index = 0;
+	float TempIntegral = 0;
 	SpeedGet();
 	Speed_PID.ThisError = Speed_PID.SpeedSet - CarInfo_Now.CarSpeed;
 	if (Speed_PID.OutValue >= Speed_PID.OutMax)
@@ -88,8 +91,13 @@ void SpeedControlValueCalc(void)
 	}
 	else
 		Index = 1;
-	Speed_PID.IntegralSum += Speed_PID.ThisError;//;*Index;//抗饱和//先取消抗饱和..因为Index的判断可能有问题
-	Speed_PID.OutValue = Speed_PID.Kp*Speed_PID.ThisError + Speed_PID.Ki*Speed_PID.IntegralSum;
+	Speed_PID.IntegralSum += Speed_PID.Ki*Speed_PID.ThisError;//;*Index;//抗饱和//先取消抗饱和..因为Index的判断可能有问题
+	TempIntegral = Speed_PID.IntegralSum;
+	if (TempIntegral >= INTEGRAL_MAX)
+		TempIntegral = INTEGRAL_MAX;
+	else if (TempIntegral <= -INTEGRAL_MAX)
+		TempIntegral = -INTEGRAL_MAX;
+	Speed_PID.OutValue = Speed_PID.Kp*Speed_PID.ThisError + TempIntegral;
 	Speed_PID.OutValue /= 100;//比例因子,转换为PWM占空比
 	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
 	TempValue.New_SpeedOutValue = Speed_PID.OutValue;

@@ -373,6 +373,7 @@ void main(void)
 					{
 						CarStop = 1;
 						LPLD_UART_PutChar(UART5, 0x4f);
+						Speed_PID.IntegralSum = 0;
 					}
 				}
 				else if (Temp1B == 0xdf)

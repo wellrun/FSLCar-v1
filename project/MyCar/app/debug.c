@@ -48,8 +48,8 @@ void Timer_ReSet(void)
 
 void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 {
-	Ang_PID.Kp = 80; //比例
-	Ang_PID.Kd = 40; //微分
+	Ang_PID.Kp = 190; //比例
+	Ang_PID.Kd = 95; //微分
 	Ang_PID.AngSet = 76.5; //调试时调试这一行
 	Ang_PID.AngSpeedSet = 0.00;
 

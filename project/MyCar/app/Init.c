@@ -58,14 +58,15 @@ void Init_PIT(void)
 
 void Init_ADC(void)
 {
-	Init_ADC_Struct.ADC_Adcx = ADC1;
+	/*Init_ADC_Struct.ADC_Adcx = ADC1;
 	Init_ADC_Struct.ADC_BitMode = SE_12BIT;
 	Init_ADC_Struct.ADC_SampleTimeCfg = SAMTIME_SHORT;
 	Init_ADC_Struct.ADC_HwAvgSel = HW_4AVG;
 	Init_ADC_Struct.ADC_CalEnable = TRUE;
 	LPLD_ADC_Init(Init_ADC_Struct);
 	LPLD_ADC_Chn_Enable(ADC1, AD14);
-	LPLD_ADC_Chn_Enable(ADC1, AD15);
+	LPLD_ADC_Chn_Enable(ADC1, AD15);*/   
+	//不再需要AD来读数据
 	//开启四个通道的ADC,
 
 //	 *      |__AD14          --单端(ADC1_SE14--PTB10)  //Gyro_1

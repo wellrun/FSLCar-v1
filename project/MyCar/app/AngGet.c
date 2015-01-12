@@ -5,7 +5,7 @@
 #include "datastructure.h"
 #include "Kalman.h"
 #include "MPU6050.h"
-float GYROSCOPE_ANGLE_RATIO = 0.20;// 0.1336// (3300/4096)/(0.67*6) //陀螺仪当前的静态为2360  //这个是放大9倍
+float GYROSCOPE_ANGLE_RATIO = 0.23;// 0.1336// (3300/4096)/(0.67*6) //陀螺仪当前的静态为2360  //这个是放大9倍
 
 extern CarInfo_TypeDef CarInfo_Now; //当前车子的信息
 extern CarControl_TypeDef MotorControl; //电机控制的值

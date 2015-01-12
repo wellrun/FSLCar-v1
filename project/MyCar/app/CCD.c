@@ -75,13 +75,13 @@ void ccd_exposure(void)
 	if (TimerMsCnt % 20 == 0)
 	{
 		TimeFlag_20Ms = 1;
+		DirectionConrtolPeriod = 0;
 	}
 	if (TimerMsCnt >= 40)
 	{
 		TimeFlag_40Ms = 1;
 		TimerMsCnt = 0;
 		SpeedControlPeriod = 0;
-		DirectionConrtolPeriod = 0;
 	}
 }
 
