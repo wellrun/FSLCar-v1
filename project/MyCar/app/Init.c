@@ -2,6 +2,7 @@
 #include "datastructure.h"
 #include "DEV_MMA8451.h"
 #include "mpu6050.h"
+#include "ccd.h"
 ADC_InitTypeDef Init_ADC_Struct;
 ADC_InitTypeDef Init_ADC_CCD_Struct;
 GPIO_InitTypeDef Init_GPIO_Struct;
@@ -30,6 +31,7 @@ extern void UART5_RxIsr(void);
 // 	}
 // }
 
+
 void Init_PIT(void)
 {
 // 	Init_PIT_Struct.PIT_Pitx = PIT2;
@@ -37,7 +39,6 @@ void Init_PIT(void)
 // 	Init_PIT_Struct.PIT_Isr = PIT2_ISR;
 // 	LPLD_PIT_Init(Init_PIT_Struct); //用PIT0来做1MS的中断
 // 	LPLD_PIT_EnableIrq(Init_PIT_Struct); //开启PIT0的中断
-
 	Init_PIT_Struct.PIT_Pitx=PIT0;
 	Init_PIT_Struct.PIT_PeriodMs=1;
 	Init_PIT_Struct.PIT_Isr=ccd_exposure;

@@ -115,9 +115,9 @@ void DirControlValueCale(void)
 {
 	float Dir_Diff;	
 	Dir_PID.LastError = Dir_PID.iError;
-	Dir_PID.iError = CCDMain_Status.ControlValue;
+	Dir_PID.iError = Dir_PID.ControlValue;
 	Dir_Diff = Dir_PID.LastError-Dir_PID.iError;//为了迎合微分项的负号
-	Dir_PID.OutValue = Dir_PID.iError*Dir_PID.Kp - Dir_PID.Kd*Dir_Diff;
+	Dir_PID.OutValue = -Dir_PID.iError*Dir_PID.Kp + Dir_PID.Kd*Dir_Diff;
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
 }

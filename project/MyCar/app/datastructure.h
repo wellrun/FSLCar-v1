@@ -53,6 +53,7 @@ typedef struct
 	float iError;
 	float LastError;
 	float OutValue;
+	int ControlValue;
 }DirPID_TypeDef;
 
 typedef struct

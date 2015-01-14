@@ -123,6 +123,7 @@ void main(void)
 				}
 				else
 				{
+					CCD_ControlValueCale();
 					DirControlValueCale();//·½Ïò¿ØÖÆ
 				}
 				CCDDataSendStart = 1;

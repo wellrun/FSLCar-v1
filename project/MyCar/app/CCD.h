@@ -1,6 +1,7 @@
 #ifndef _CCD_H_
 #define _CCD_H_
 #include "common.h"
+#include "datastructure.h"
 #define CCD_DataLen 50
 extern unsigned char CCDM_Arr[128]; //外部调用的时候用
 extern unsigned char CCDS_Arr[128];
@@ -40,14 +41,14 @@ extern unsigned char CCDTimeMs;
 // }CCD_Status_Struct;
 typedef struct 
 {
-	signed char LeftLineArr[50];
-	signed char RightLineArr[50];
+	//signed char LeftLineArr[60];
+	//signed char RightLineArr[60];
 	signed char LeftPoint;
 	signed char LastLeftPoint;
 	signed char LastRightPoint;
 	signed char RightPoint;
 	signed char MidPoint;
-	signed char MidSet;
+	
 	signed char LeftSet;
 	signed char RightSet;
 	signed char SearchBegin;
@@ -60,13 +61,14 @@ typedef struct
 	signed char Road;//道路类型
 	unsigned int ErrorCntLeft;
 	unsigned int ErrorCntRight;
+	signed short MidSet;
 }CCD_SLave_Status_Struct;
 
 
 typedef struct
 {
-	signed char LeftLineArr[50];
-	signed char RightLineArr[50];
+	//signed char LeftLineArr[60];
+	//signed char RightLineArr[60];
 	signed char SearchBegin;
 	signed char LeftPoint;
 	signed char RightPoint;
@@ -90,6 +92,8 @@ typedef struct
 	signed char Road;//道路类型
 }CCD_Status_Struct;
 extern CCD_Status_Struct CCDMain_Status;
+extern CCD_SLave_Status_Struct CCDSlave_Status;
+extern DirPID_TypeDef Dir_PID;
 void CCDLineInit(void);
 char CCD_Deal_Main(unsigned char *CCDArr);
 void CCD_Deal_Slave(unsigned char *CCDArr);
@@ -103,6 +107,7 @@ void CalculateIntegrationTime(void);
 unsigned char PixelAverage(unsigned char len, unsigned char *data);
 void SendImageData(unsigned char *ImageData);
 void SendHex(unsigned char hex);
+void CCD_ControlValueCale(void);
 
 #endif
 
