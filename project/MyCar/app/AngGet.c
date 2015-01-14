@@ -32,11 +32,11 @@ void AngleGet(void)
 	GravityAngle =acc_x*(180.0/(4096.0*2));
 
 complement_filter(GravityAngle, -GyroscopeAngleSpeed);
-  //  complement2(GravityAngle, -GyroscopeAngleSpeed);
+    //complement2(GravityAngle, -GyroscopeAngleSpeed);
 	AngleIntegration((float)(-(angle_dot_com)));//确定了当前的值合适
 	CarInfo_Now.CarAngle = angle_com;
 	CarInfo_Now.CarAngSpeed = angle_dot_com;
-// 	Kalman_Filter(GravityAngle, -GyroscopeAngleSpeed);
+ //	Kalman_Filter(GravityAngle, -GyroscopeAngleSpeed);
 // 	CarInfo_Now.CarAngSpeed = angle_dot;
 // 	CarInfo_Now.CarAngle = angle;
 

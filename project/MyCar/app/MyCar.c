@@ -25,8 +25,8 @@ PC16-CCDReady(20Ms);
 #define Scope40Ms 15
 #define ScopeCCDReady 16
 #define CCD2
-#define CAR_STAND_ANG_MAX 89
-#define CAR_STAND_ANG_MIN 44
+#define CAR_STAND_ANG_MAX 75
+#define CAR_STAND_ANG_MIN 20
 char CarStandFlag = 1;
 CarInfo_TypeDef CarInfo_Now;
 CarControl_TypeDef MotorControl; //存储电机控制的值
@@ -52,11 +52,6 @@ extern float AngleIntegraed;//对角速度积分的角度值
  uint8 CCDSendImage = 0;
  uint8 AngleCale = 1;
  uint8 AngDataSend = 0;
-// uint8 Debuger = 0;
-// uint8 CCDOn = 0;
-// uint8 CCDSendImage = 0;
-// uint8 AngleCale = 1;
-// uint8 AngDataSend = 1;
 //控制区结束
 char WhichCCD=0;
 uint8 AngSendCount = 0; //控制角度的发送次数
@@ -100,12 +95,13 @@ void main(void)
 	short DebugDataPointCnt = 0;
 	Struct_Init(); //初始各种结构体的值
 	CarInit();
-	LPLD_Flash_Init(); //初始化EEPROM,所有的初始化数据保存在EEPROM的第60个扇区
+	//LPLD_Flash_Init(); //初始化EEPROM,所有的初始化数据保存在EEPROM的第60个扇区
 	//	Flash_WriteTest(); 测试flash区
 
 	//Timer_Init(); //初始化程序时间计数器
-	//Flash_ReadAllData(); //从Flash中读取所有的数据
-	Struct_Init();
+        //Struct_Init();
+        Struct_Init();
+
 	while (1)
 	{
 		//更改了时间片的模式
@@ -119,8 +115,8 @@ void main(void)
 				ImageCapture_M(CCDM_Arr,CCDS_Arr);
 				//ImageCapture_S(CCDS_Arr);
 				//CCD_Deal_Main(CCDM_Arr);
-				CCD_Deal_Main(CCDM_Arr);
 				CCD_Deal_Slave(CCDS_Arr);
+				CCD_Deal_Main(CCDM_Arr);			
 				if (CCDMain_Status.InitOK == 0)
 				{
 					CCDLineInit();

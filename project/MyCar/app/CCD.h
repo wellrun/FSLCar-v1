@@ -43,6 +43,8 @@ typedef struct
 	signed char LeftLineArr[50];
 	signed char RightLineArr[50];
 	signed char LeftPoint;
+	signed char LastLeftPoint;
+	signed char LastRightPoint;
 	signed char RightPoint;
 	signed char MidPoint;
 	signed char MidSet;
@@ -52,6 +54,12 @@ typedef struct
 	signed char Left_LostFlag;
 	signed char Right_LostFlag;
 	unsigned char PointCnt;
+	short ControlValue;
+	int Mode;
+	signed char SearchMode;
+	signed char Road;//道路类型
+	unsigned int ErrorCntLeft;
+	unsigned int ErrorCntRight;
 }CCD_SLave_Status_Struct;
 
 
@@ -62,14 +70,18 @@ typedef struct
 	signed char SearchBegin;
 	signed char LeftPoint;
 	signed char RightPoint;
+	signed char LastLeftPoint;
+	signed char LastRightPoint;
 	signed char MidPoint;
 	signed char MidSet;
 	signed char LeftSet;
 	signed char RightSet;
 	signed char InitOK;
 	short ControlValue;
-	unsigned int ErrorCnt;
+	unsigned int ErrorCntLeft;
+	unsigned int ErrorCntRight;
 	int Mode;//-1为左线引导,0为中线引导,1为右线引导
+	signed char SearchMode;
 	unsigned char PointCnt;
 	signed char Left_LostFlag;
 	signed char Right_LostFlag;

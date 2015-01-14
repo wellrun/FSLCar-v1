@@ -24,6 +24,7 @@ void SamplingDelay(void);
 
 
 CCD_Status_Struct CCDMain_Status;
+
 CCD_SLave_Status_Struct CCDSlave_Status;
 
 uint8 u32_trans_uint8(uint16 data); //只有本地用
@@ -390,13 +391,27 @@ uint8 u32_trans_uint8(uint16 data)
 #define LeftBoundary 8 //去掉开始的10个点
 #define RightBoundary 119//去掉后面的10个点
 #define CCD_Threshold 40//40  //这是两组两组差的阈值//实际使用的时候取
-#define LeftLostPrepare 15
-#define RightLostPrepare 113 //左右准备丢线的阈值
+#define LeftLostPrepare 12
+#define RightLostPrepare 116 //左右准备丢线的阈值
 #define LeftMode -1
 #define RightMode 1
 #define MidMode 0
+#define SearchMode_Left -1
+#define SearchMode_Right 1 //往右边寻线
+#define SearchMode_Double 0 //双边寻线
+#define CCDSlaveModeChangeModeValueLeft 45//左线大于30的时候切换模式
+#define CCDSlaveModeChangeModeValueRight 85//右线小于90的时候切换模式
+#define Msg_UseMainCCD 0
+#define Msg_UseSlaveCCD 1
+#define Road_TurnRight 0
+#define Road_TurnLeft 1
+#define Road_Cross 2
+#define Road_Straight 3
+#define CCDMain_LeftSet 30
+#define CCDMain_RightSet 100
 void CCDLineInit(void);
 unsigned short CCDInitCnt = 0;//用来初始化左右线的计数,,每次启动重新初始化左右线位置
+signed char CCDMsg = 0;
 short CCDInitLine_Left = 0;
 short CCDInitLine_Right = 0;
 /*#define LostLineDiffValue 20 //准备丢线的差分值*/
@@ -408,7 +423,7 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 	int i = 0, j = 0;
 	short SumTemp1_short = 0;
 	short SumTemp2_short = 0;
-	short SearchBeginTemp = 0;
+	//short SearchBeginTemp = 0;
 	signed char LeftTempArr[50];
 	signed char RightTempArr[50];
 	unsigned char Counter_R = 0;
@@ -425,77 +440,111 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 		CCDMain_Status.SearchBegin = 64;//初始化起始中点,其他的可以不初始化
 		CCDMain_Status.Mode = 0;//初始状态用中线引导
 		CCDMain_Status.PointCnt = 0;
+		CCDMain_Status.LastLeftPoint = -1;
+		CCDMain_Status.LastRightPoint = -1;
 	}
 	if (CCDMain_Status.PointCnt > (CCD_DataLen - 1))
 		CCDMain_Status.PointCnt = 0;
 
-	for (i = CCDMain_Status.SearchBegin; i < RightBoundary; i++)
+	if (CCDSlave_Status.Road == Road_TurnLeft)
 	{
-		SumTemp1_short = CCDArr[i] + CCDArr[i + 1];
-		SumTemp2_short = CCDArr[i + 4] + CCDArr[i + 5];//110011来检测
-		if (SumTemp1_short - SumTemp2_short >= CCD_Threshold)//表示下降的特别快
+		for (i = CCDMain_Status.SearchBegin; i < RightBoundary; i++)
 		{
-			RightTempArr[Counter_R] = i + 2;
-			Counter_R++;
+			SumTemp1_short = CCDArr[i] + CCDArr[i + 1];
+			SumTemp2_short = CCDArr[i + 4] + CCDArr[i + 5];//110011来检测
+			if (SumTemp1_short - SumTemp2_short >= CCD_Threshold)//表示下降的特别快
+			{
+				RightTempArr[Counter_R] = i + 2;
+				Counter_R++;
+			}
 		}
 	}
-	for (i = CCDMain_Status.SearchBegin; i > LeftBoundary; i--)
+	if (CCDSlave_Status.Road == Road_TurnRight)
 	{
-		SumTemp1_short = CCDArr[i] + CCDArr[i - 1];
-		SumTemp2_short = CCDArr[i - 4] + CCDArr[i - 5];
-		if (SumTemp1_short - SumTemp2_short >= CCD_Threshold)//表示下降的特别快
+		for (i = CCDMain_Status.SearchBegin; i > LeftBoundary; i--)
 		{
-			LeftTempArr[Counter_L] = i - 2; //为了新想法,需要判断这个点是否为坏点
-			Counter_L++;
-		}  //找到一个跳变点...两个两个一对得比较..从中间向两边比较得出下降沿,将位置放出临时数组里面,以后再做 处理;
+			SumTemp1_short = CCDArr[i] + CCDArr[i - 1];
+			SumTemp2_short = CCDArr[i - 4] + CCDArr[i - 5];
+			if (SumTemp1_short - SumTemp2_short >= CCD_Threshold)//表示下降的特别快
+			{
+				LeftTempArr[Counter_L] = i - 2; //为了新想法,需要判断这个点是否为坏点
+				Counter_L++;
+			}  //找到一个跳变点...两个两个一对得比较..从中间向两边比较得出下降沿,将位置放出临时数组里面,以后再做 处理;
+		}
 	}
 	CCDMain_Status.Left_LostFlag = 1;
 	CCDMain_Status.Right_LostFlag = 1;
 	CCDMain_Status.LeftLineArr[CCDMain_Status.PointCnt] = 0;
+	CCDMain_Status.RightPoint = 127;
+	CCDMain_Status.LeftPoint = 0;
 	CCDMain_Status.RightLineArr[CCDMain_Status.PointCnt] = 127;
 	LineLenCnt = 0;
-	for (i = 0; i < Counter_L; i++)
+	if (CCDSlave_Status.Road == Road_TurnRight)
 	{
-		if ((CCDArr[LeftTempArr[i]]) - ((CCDArr[LeftTempArr[i] - 1] + CCDArr[LeftTempArr[i] + 1]) / 2) < CCD_Threshold/2)
+		for (i = 0; i < Counter_L; i++)
 		{
-			SumTemp1_short = CCDArr[LeftTempArr[i]] + CCDArr[LeftTempArr[i] + 1];
-			for (j = 1; j < 8; j++)
+			if ((CCDArr[LeftTempArr[i]]) - ((CCDArr[LeftTempArr[i] - 1] + CCDArr[LeftTempArr[i] + 1]) / 2) < CCD_Threshold / 2)
 			{
-				SumTemp2_short = CCDArr[LeftTempArr[i] - j] + CCDArr[LeftTempArr[i] - j - 1];
-				if (SumTemp1_short - SumTemp2_short >CCD_Threshold)
-					LineLenCnt++;
-			}
-			if (LineLenCnt > 3)
-			{
-				CCDMain_Status.LeftLineArr[CCDMain_Status.PointCnt] = LeftTempArr[i];
-				CCDMain_Status.Left_LostFlag = 0;
-				CCDMain_Status.LeftPoint = LeftTempArr[i];
-				break;
+				if (CCDMain_Status.LastLeftPoint >= 0)
+				{
+					if (LeftTempArr[i] - CCDMain_Status.LastLeftPoint > 20 || LeftTempArr[i] - CCDMain_Status.LastLeftPoint < -20)
+						continue;
+				}
+				else
+				{
+					SumTemp1_short = CCDArr[LeftTempArr[i]] + CCDArr[LeftTempArr[i] + 1];
+					for (j = 1; j < 8; j++)
+					{
+						SumTemp2_short = CCDArr[LeftTempArr[i] - j] + CCDArr[LeftTempArr[i] - j - 1];
+						if (SumTemp1_short - SumTemp2_short >CCD_Threshold)
+							LineLenCnt++;
+					}
+					if (LineLenCnt > 3)
+					{
+						CCDMain_Status.LeftLineArr[CCDMain_Status.PointCnt] = LeftTempArr[i];
+						CCDMain_Status.Left_LostFlag = 0;
+						CCDMain_Status.LastLeftPoint = CCDMain_Status.LeftPoint;
+						CCDMain_Status.LeftPoint = LeftTempArr[i];
+						break;
+					}
+				}
 			}
 		}
 	}
 	LineLenCnt = 0;
-	for (i = 0; i < Counter_R; i++)
+	if (CCDSlave_Status.Road == Road_TurnLeft)
 	{
-		if ((CCDArr[RightTempArr[i]]) - ((CCDArr[RightTempArr[i] - 1] + CCDArr[RightTempArr[i] + 1]) / 2) < CCD_Threshold)
+		for (i = 0; i < Counter_R; i++)
 		{
-			SumTemp1_short = CCDArr[RightTempArr[i]] + CCDArr[RightTempArr[i] + 1];
-			for (j = 1; j < 8; j++)
+			if ((CCDArr[RightTempArr[i]]) - ((CCDArr[RightTempArr[i] - 1] + CCDArr[RightTempArr[i] + 1]) / 2) < CCD_Threshold)
 			{
-				SumTemp2_short = CCDArr[RightTempArr[i] + j] + CCDArr[RightTempArr[i] + j + 1];
-				if (SumTemp1_short - SumTemp2_short >CCD_Threshold)
-					LineLenCnt++;
-			}
-			if (LineLenCnt > 3)
-			{
-				CCDMain_Status.RightLineArr[CCDMain_Status.PointCnt] = RightTempArr[i];
-				CCDMain_Status.Right_LostFlag = 0;
-				CCDMain_Status.RightPoint = RightTempArr[i];
-				break;
+				if (CCDMain_Status.LastRightPoint >= 0)
+				{
+					if (RightTempArr[i] - CCDMain_Status.LastRightPoint > 20 || RightTempArr[i] - CCDMain_Status.LastRightPoint < -20)
+						continue;
+				}
+				else
+				{
+					SumTemp1_short = CCDArr[RightTempArr[i]] + CCDArr[RightTempArr[i] + 1];
+					for (j = 1; j < 8; j++)
+					{
+						SumTemp2_short = CCDArr[RightTempArr[i] + j] + CCDArr[RightTempArr[i] + j + 1];
+						if (SumTemp1_short - SumTemp2_short >CCD_Threshold)
+							LineLenCnt++;
+					}
+					if (LineLenCnt > 3)
+					{
+						CCDMain_Status.RightLineArr[CCDMain_Status.PointCnt] = RightTempArr[i];
+						CCDMain_Status.Right_LostFlag = 0;
+						CCDMain_Status.LastRightPoint = CCDMain_Status.RightPoint;
+						CCDMain_Status.RightPoint = RightTempArr[i];
+						break;
+					}
+				}
 			}
 		}
 	}
-	if (CCDMain_Status.Left_LostFlag == 1 && CCDMain_Status.Right_LostFlag == 1)
+	/*if (CCDMain_Status.Left_LostFlag == 1 && CCDMain_Status.Right_LostFlag == 1)
 		CCDMain_Status.LostAllLine = 1;
 	else
 		CCDMain_Status.LostAllLine = 0;
@@ -549,6 +598,41 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 	else
 	{
 		CCDMain_Status.ControlValue /= 2;
+	}*/
+	if (CCDSlave_Status.Road == Road_TurnLeft)
+	{
+		if (CCDMain_Status.RightPoint > 126)
+		{
+			CCDMain_Status.SearchBegin = 64;
+		}
+		else
+		{
+			if (CCDMain_Status.RightPoint < 30)
+			{
+				CCDMain_Status.SearchBegin = 20;
+			}
+			else
+				CCDMain_Status.SearchBegin = CCDMain_Status.RightPoint - 20;	
+		}
+		CCDMain_Status.ControlValue = CCDMain_Status.RightSet - CCDMain_Status.RightPoint;
+	}
+	else if (CCDSlave_Status.Road == Road_TurnRight)
+	{
+		CCDMain_Status.ControlValue = CCDMain_Status.LeftSet - CCDMain_Status.LeftPoint;
+		if (CCDMain_Status.LeftPoint < 1)
+		{
+			CCDMain_Status.SearchBegin = 64;
+		}
+		else
+		{
+			if (CCDMain_Status.LeftPoint > 100)
+			{
+				CCDMain_Status.SearchBegin = 110;
+			}
+			else
+				CCDMain_Status.SearchBegin = CCDMain_Status.LeftPoint + 20;
+		}
+		CCDMain_Status.ControlValue = CCDMain_Status.LeftSet - CCDMain_Status.LeftPoint;
 	}
 // 	if (CCDMain_Status.InitOK == 0)
 // 	{
@@ -563,21 +647,9 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 
 void CCDLineInit(void)
 {
-// 	CCDInitLine_Left += CCDMain_Status.LeftPoint;
-// 	CCDInitLine_Right += CCDMain_Status.RightPoint;
-// 	CCDInitCnt++;
-// 	if (CCDInitCnt >= 20);
-// 	{
-// 		CCDInitLine_Left /= CCDInitCnt;
-// 		CCDInitLine_Right /= CCDInitCnt;
-// 		CCDMain_Status.RightSet = 64 + (CCDInitLine_Left + CCDInitLine_Right) / 2;
-// 		CCDMain_Status.LeftSet = 64 - (CCDInitLine_Left + CCDInitLine_Right) / 2;
-// 		CCDMain_Status.MidSet = 64;
-// 		CCDMain_Status.InitOK = 1;
-// 	}
 	signed short MidTemp = 0;
-	if (CCDMain_Status.Right_LostFlag ==0)
-		if (CCDMain_Status.Left_LostFlag ==0)
+	//if (CCDMain_Status.Right_LostFlag ==0)
+		//if (CCDMain_Status.Left_LostFlag ==0)
 			if (CCDSlave_Status.Left_LostFlag==0)
 				if (CCDSlave_Status.Right_LostFlag == 0)
 				{
@@ -607,102 +679,219 @@ void CCD_Deal_Slave(unsigned char *CCDArr)
 	{
 		CCDSlave_Status.SearchBegin = 127;
 	}
+	if (CCDMain_Status.PointCnt > (CCD_DataLen - 1))
+		CCDMain_Status.PointCnt = 0;
 	if (CCDMain_Status.InitOK == 0)
 	{
 		CCDSlave_Status.SearchBegin = 64;
+		CCDSlave_Status.LastLeftPoint = -1;
+		CCDSlave_Status.LastRightPoint = -1;
+		CCDSlave_Status.PointCnt = 0;
 	}
-	for (i = CCDSlave_Status.SearchBegin; i < RightBoundary; i++)
+	if (CCDSlave_Status.Mode == SearchMode_Right || CCDSlave_Status.Mode == SearchMode_Double)
 	{
-		SumTemp1_short = CCDArr[i] + CCDArr[i + 1];
-		SumTemp2_short = CCDArr[i + 4] + CCDArr[i + 5];//110011来检测
-		if (SumTemp1_short - SumTemp2_short >= CCD_Threshold)//表示下降的特别快
+		for (i = CCDSlave_Status.SearchBegin; i < RightBoundary; i++)
 		{
-			RightTempArr[Counter_R] = i + 2;
-			Counter_R++;
+			SumTemp1_short = CCDArr[i] + CCDArr[i + 1];
+			SumTemp2_short = CCDArr[i + 4] + CCDArr[i + 5];//110011来检测
+			if (SumTemp1_short - SumTemp2_short >= CCD_Threshold)//表示下降的特别快
+			{
+				RightTempArr[Counter_R] = i + 2;
+				Counter_R++;
+			}
 		}
 	}
-	for (i = CCDSlave_Status.SearchBegin; i > LeftBoundary; i--)
+	if (CCDSlave_Status.Mode == SearchMode_Left || CCDSlave_Status.Mode == SearchMode_Double)
 	{
-		SumTemp1_short = CCDArr[i] + CCDArr[i - 1];
-		SumTemp2_short = CCDArr[i - 4] + CCDArr[i - 5];
-		if (SumTemp1_short - SumTemp2_short >= CCD_Threshold)//表示下降的特别快
+		for (i = CCDSlave_Status.SearchBegin; i > LeftBoundary; i--)
 		{
-			LeftTempArr[Counter_L] = i - 2; //为了新想法,需要判断这个点是否为坏点
-			Counter_L++;
-		}  //找到一个跳变点...两个两个一对得比较..从中间向两边比较得出下降沿,将位置放出临时数组里面,以后再做 处理;
+			SumTemp1_short = CCDArr[i] + CCDArr[i - 1];
+			SumTemp2_short = CCDArr[i - 4] + CCDArr[i - 5];
+			if (SumTemp1_short - SumTemp2_short >= CCD_Threshold)//表示下降的特别快
+			{
+				LeftTempArr[Counter_L] = i - 2; //为了新想法,需要判断这个点是否为坏点
+				Counter_L++;
+			}  //找到一个跳变点...两个两个一对得比较..从中间向两边比较得出下降沿,将位置放出临时数组里面,以后再做 处理;
+		}
 	}
 
 	CCDSlave_Status.Left_LostFlag = 1;
 	CCDSlave_Status.Right_LostFlag = 1;
 	CCDSlave_Status.LeftLineArr[CCDSlave_Status.PointCnt] = 0;
 	CCDSlave_Status.RightLineArr[CCDSlave_Status.PointCnt] = 127;
-// 	CCDSlave_Status.LeftPoint = 0;
-// 	CCDSlave_Status.RightPoint = 0;
+ 	CCDSlave_Status.LeftPoint = 0;
+ 	CCDSlave_Status.RightPoint = 127;
 	LineLenCnt = 0;
-	for (i = 0; i < Counter_L; i++)
+	if (CCDSlave_Status.Mode == SearchMode_Left || CCDSlave_Status.Mode == SearchMode_Double)
 	{
-		if ((CCDArr[LeftTempArr[i]]) - ((CCDArr[LeftTempArr[i] - 1] + CCDArr[LeftTempArr[i] + 1]) / 2) < CCD_Threshold / 2)
+		for (i = 0; i < Counter_L; i++)
 		{
-			SumTemp1_short = CCDArr[LeftTempArr[i]] + CCDArr[LeftTempArr[i] + 1];
-			for (j = 1; j < 8; j++)
+			if ((CCDArr[LeftTempArr[i]]) - ((CCDArr[LeftTempArr[i] - 1] + CCDArr[LeftTempArr[i] + 1]) / 2) < CCD_Threshold / 2)
 			{
-				SumTemp2_short = CCDArr[LeftTempArr[i] - j] + CCDArr[LeftTempArr[i] - j - 1];
-				if (SumTemp1_short - SumTemp2_short >CCD_Threshold)
-					LineLenCnt++;
-			}
-			if (LineLenCnt > 3)
-			{
-				CCDSlave_Status.LeftLineArr[CCDSlave_Status.PointCnt] = LeftTempArr[i];
-				CCDSlave_Status.Left_LostFlag = 0;
-				CCDSlave_Status.LeftPoint = LeftTempArr[i];
-				break;
+				//到了这一行表示确定这是一条黑线但是不确定是不是上一个回合连续的黑线
+				if (CCDSlave_Status.LastLeftPoint >= 0)
+				{
+					if (LeftTempArr[i] - CCDSlave_Status.LastLeftPoint > 20 || LeftTempArr[i] - CCDSlave_Status.LastLeftPoint < -20)
+					{
+						CCDSlave_Status.ErrorCntLeft++;
+						if (CCDSlave_Status.ErrorCntLeft > 10)
+						{
+							CCDSlave_Status.ErrorCntLeft = 0;
+							CCDSlave_Status.LastLeftPoint = -1;
+						}
+						else
+							continue;
+					}
+				}
+				else
+				{
+					SumTemp1_short = CCDArr[LeftTempArr[i]] + CCDArr[LeftTempArr[i] + 1];
+					for (j = 1; j < 8; j++)
+					{
+						SumTemp2_short = CCDArr[LeftTempArr[i] - j] + CCDArr[LeftTempArr[i] - j - 1];
+						if (SumTemp1_short - SumTemp2_short >CCD_Threshold)
+							LineLenCnt++;
+					}
+					if (LineLenCnt > 3)
+					{
+						CCDSlave_Status.LeftLineArr[CCDSlave_Status.PointCnt] = LeftTempArr[i];
+						CCDSlave_Status.Left_LostFlag = 0;
+						CCDSlave_Status.LastLeftPoint = CCDSlave_Status.LeftPoint;
+						CCDSlave_Status.LeftPoint = LeftTempArr[i];
+						break;
+					}
+				}
 			}
 		}
 	}
 	LineLenCnt = 0;
-	for (i = 0; i < Counter_R; i++)
+	if (CCDSlave_Status.Mode == SearchMode_Right || CCDSlave_Status.Mode == SearchMode_Double)
 	{
-		if ((CCDArr[RightTempArr[i]]) - ((CCDArr[RightTempArr[i] - 1] + CCDArr[RightTempArr[i] + 1]) / 2) < CCD_Threshold)
+		for (i = 0; i < Counter_R; i++)
 		{
-			SumTemp1_short = CCDArr[RightTempArr[i]] + CCDArr[RightTempArr[i] + 1];
-			for (j = 1; j < 8; j++)
+			if ((CCDArr[RightTempArr[i]]) - ((CCDArr[RightTempArr[i] - 1] + CCDArr[RightTempArr[i] + 1]) / 2) < CCD_Threshold)
 			{
-				SumTemp2_short = CCDArr[RightTempArr[i] + j] + CCDArr[RightTempArr[i] + j + 1];
-				if (SumTemp1_short - SumTemp2_short >CCD_Threshold)
-					LineLenCnt++;
-			}
-			if (LineLenCnt > 3)
-			{
-				CCDSlave_Status.RightLineArr[CCDSlave_Status.PointCnt] = RightTempArr[i];
-				CCDSlave_Status.Right_LostFlag = 0;
-				CCDSlave_Status.RightPoint = RightTempArr[i];
-				break;
+				if (CCDSlave_Status.LastRightPoint >= 0)
+				{
+					if (RightTempArr[i] - CCDSlave_Status.LastRightPoint > 20 || RightTempArr[i] - CCDSlave_Status.LastRightPoint < -20)
+					{
+						CCDSlave_Status.ErrorCntRight++;
+						if (CCDSlave_Status.ErrorCntRight > 10)
+						{
+							CCDSlave_Status.ErrorCntRight = 0;
+							CCDSlave_Status.LastRightPoint = -1;
+						}
+						else
+							continue;
+					}
+				}
+				else
+				{
+					SumTemp1_short = CCDArr[RightTempArr[i]] + CCDArr[RightTempArr[i] + 1];
+					for (j = 1; j < 8; j++)
+					{
+						SumTemp2_short = CCDArr[RightTempArr[i] + j] + CCDArr[RightTempArr[i] + j + 1];
+						if (SumTemp1_short - SumTemp2_short >CCD_Threshold)
+							LineLenCnt++;
+					}
+					if (LineLenCnt > 3)
+					{
+						CCDSlave_Status.RightLineArr[CCDSlave_Status.PointCnt] = RightTempArr[i];
+						CCDSlave_Status.Right_LostFlag = 0;
+						CCDSlave_Status.RightPoint = RightTempArr[i];
+						break;
+					}
+				}
 			}
 		}
 	}
 	if (CCDSlave_Status.Right_LostFlag == 1 && CCDSlave_Status.Left_LostFlag == 1)
 	{
 		//需要判断是否为直角弯?
-
+		//CCDSlave_Status.ControlValue /= CCDSlave_Status.ControlValue;
+		CCDSlave_Status.SearchMode = SearchMode_Double;
 	}
 	else
 	{//根据找到的线更新搜寻起点和判断道路类型和是否初始化完成
-		if (CCDSlave_Status.Right_LostFlag == 0 && CCDSlave_Status.Left_LostFlag == 0)
+		if (CCDSlave_Status.Right_LostFlag == 0 && CCDSlave_Status.Left_LostFlag == 0)//如果两条线都在
 		{
 			CCDSlave_Status.SearchBegin = (CCDSlave_Status.RightPoint + CCDSlave_Status.LeftPoint) / 2;
 			CCDSlave_Status.MidPoint = CCDSlave_Status.SearchBegin;
+			CCDSlave_Status.Mode = MidMode;
+			CCDSlave_Status.ControlValue = CCDSlave_Status.MidSet - CCDSlave_Status.MidPoint;
+			CCDSlave_Status.Road = Road_Straight;
 		}
-		else if (CCDSlave_Status.Right_LostFlag == 0)
+		else if (CCDSlave_Status.Right_LostFlag == 0 && CCDSlave_Status.Right_LostFlag==1)//如果右边丢线
 		{
-			CCDSlave_Status.SearchBegin = CCDSlave_Status.RightPoint - 10;
+			CCDSlave_Status.LastRightPoint = -1;
+			if (CCDSlave_Status.RightPoint >= 30)
+			{
+				CCDSlave_Status.SearchBegin = CCDSlave_Status.RightPoint - 15;
+				CCDSlave_Status.SearchMode = SearchMode_Double;
+			}
+			else
+			{
+				CCDSlave_Status.SearchBegin = 20;
+				CCDSlave_Status.SearchMode = SearchMode_Right;
+			}
 			CCDSlave_Status.MidPoint = 0;
+			CCDSlave_Status.Mode = LeftMode;
+			CCDSlave_Status.ControlValue = CCDSlave_Status.LeftSet - CCDSlave_Status.LeftPoint;
 		}
-		else if (CCDSlave_Status.Left_LostFlag == 0)
+		else if (CCDSlave_Status.Left_LostFlag == 0 && CCDSlave_Status.Right_LostFlag==1)
 		{
-			CCDSlave_Status.SearchBegin = CCDSlave_Status.LeftPoint + 10;
+			CCDSlave_Status.LastLeftPoint = -1;
+			if (CCDSlave_Status.LeftPoint <= 100)
+			{
+				CCDSlave_Status.SearchBegin = CCDSlave_Status.LeftPoint + 15;
+				CCDSlave_Status.SearchMode = SearchMode_Double;
+			}
+			else
+			{
+				CCDSlave_Status.SearchBegin = 110;
+				CCDSlave_Status.SearchMode = SearchMode_Left;
+			}
 			CCDSlave_Status.MidPoint = 0;
+			CCDSlave_Status.Mode = RightMode;
+			CCDSlave_Status.ControlValue = CCDSlave_Status.RightSet - CCDSlave_Status.RightPoint;
 		}
-		
+		if (CCDSlave_Status.LeftPoint > CCDSlaveModeChangeModeValueLeft )
+		{
+			CCDSlave_Status.Road = Road_TurnRight;
+			if (CCDMsg != Msg_UseMainCCD)
+			{
+				CCDMsg = Msg_UseMainCCD;
+				CCDMain_Status.SearchBegin = 80;
+			}
+		}
+		else if (CCDSlave_Status.RightPoint < CCDSlaveModeChangeModeValueRight)
+		{
+			CCDSlave_Status.Road = Road_TurnLeft;
+			if (CCDMsg != Msg_UseMainCCD)
+			{
+				CCDMsg = Msg_UseMainCCD;
+				CCDMain_Status.SearchBegin = 40;
+			}
+		}
+		if (CCDMain_Status.LeftPoint<CCDSlaveModeChangeModeValueLeft)
+		{
+			if (CCDMsg != Msg_UseSlaveCCD)
+			{
+				CCDMsg = Msg_UseSlaveCCD;
+			}
+		}
+		if (CCDMain_Status.RightPoint > CCDSlaveModeChangeModeValueRight)
+		{
+			if (CCDMsg != Msg_UseSlaveCCD)
+			{
+				CCDMsg = Msg_UseSlaveCCD;
+			}
+		}
 	}
 	CCDSlave_Status.PointCnt++;
+}
+
+void CCD_ControlValueCale(void)
+{
+	
 }

@@ -2,13 +2,13 @@
 #include "CCD.h"
 
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
-#define MOTOR_OUT_MAX       8000
-#define MOTOR_OUT_MIN       -8000
+#define MOTOR_OUT_MAX       6000
+#define MOTOR_OUT_MIN       -6000
 #define ANGLE_CONTROL_OUT_MAX			MOTOR_OUT_MAX
 #define ANGLE_CONTROL_OUT_MIN			MOTOR_OUT_MIN
 #define CoderResolution 500 //编码器的线数
 #define TyreCircumference 41//轮胎周长CM
-#define DeathValue 300//死区电压 2%的占空比
+#define DeathValue 400//死区电压 2%的占空比S
 
 // #define CONTROL_PERIOD	5 //电机的输出周期
 // #define SPEED_CONTROL_COUNT 8 //速度控制的分割次数
@@ -70,7 +70,7 @@ void SpeedControlValueCalc(void)
 {
 /*	float ControlValue = 0;*/
 	//2015年1月12日 00:39:37  积分参数大概给150
-#define INTEGRAL_MAX 1200
+/*#define INTEGRAL_MAX 1200
 	short Index = 0;
 	float TempIntegral = 0;
 	SpeedGet();
@@ -100,7 +100,15 @@ void SpeedControlValueCalc(void)
 	Speed_PID.OutValue = Speed_PID.Kp*Speed_PID.ThisError + TempIntegral;
 	Speed_PID.OutValue /= 100;//比例因子,转换为PWM占空比
 	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
-	TempValue.New_SpeedOutValue = Speed_PID.OutValue;
+	TempValue.New_SpeedOutValue = Speed_PID.OutValue;*/
+	static float LastSpeed;
+	SpeedGet();
+	Speed_PID.ThisError = Speed_PID.SpeedSet - CarInfo_Now.CarSpeed;
+	Speed_PID.OutValue = Speed_PID.Kp*Speed_PID.ThisError - Speed_PID.Ki*(CarInfo_Now.CarSpeed-LastSpeed);
+	LastSpeed = CarInfo_Now.CarAngSpeed;
+	Speed_PID.OutValue /= 100;//比例因子,转换为PWM占空比
+	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
+	TempValue.New_SpeedOutValue = Speed_PID.OutValue; 
 }
 
 void DirControlValueCale(void)
