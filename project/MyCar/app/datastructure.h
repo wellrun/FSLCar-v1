@@ -1,7 +1,6 @@
 #ifndef _DATASTRUCTURE_H
 #define _DATASTRUCTURE_H
 #include "common.h"
-
 #define NumOfFloat	8
 #define DATA_SIZE	NumOfFloat*4
 #define FLASH_SECTOR   (60)
@@ -11,6 +10,7 @@ extern uint8 FlashReadBuffer[DATA_SIZE];
 extern uint8 FlashWriteBuffer[DATA_SIZE];
 extern float FlashFloatBuffer[NumOfFloat];
 extern int FlashIntBuffer[NumOfInt];
+
 
 typedef struct
 {
@@ -28,20 +28,34 @@ typedef struct
 
 typedef struct
 {
-	float SpeedSet; //设定的速度
-
+	float SpeedSet; //设定的速度]
+	float SpeedSetTemp;
 	float Kp;
 	float Ki;
 	float Kd;
+	float IntegralSum_Left;//积分的误差
+	float OutValue_Left;//本次的输出控制量
+	float IntegralSum_Right;//积分的误差
+	float OutValue_Right;//本次的输出控制量
+	//float OutMax;//积分饱和值
+	//float OutMin;//积分饱和值
 
-	float IntegralSum;//积分的误差
+	float ThisError_Left;
+	float LastError_Left;
+	float PreError_Left;
+	float OutValueSum_Left;//增量和
+
 	float ThisError;
-	/*float LastError;*/
+	float LastError;
+	float PreError;
+	float OutValueSum;//增量和
+	float IntegralSum;//积分的误差
 	float OutValue;//本次的输出控制量
-//	float LastOutValue;//上次的输出控制量
 
-	float OutMax;//积分饱和值
-	float OutMin;//积分饱和值
+	float ThisError_Right;
+	float LastError_Right;
+	float PreError_Right;
+	float OutValueSum_Right;//增量和
 
 }SpeedPID_TypeDef;
 
@@ -50,7 +64,7 @@ typedef struct
 	float Kp;
 	float Kd;
 
-	float iError;
+	float ThisError;
 	float LastError;
 	float OutValue;
 	int ControlValue;
@@ -71,6 +85,8 @@ typedef struct
 	float CarSpeed;//车子的速度
 	float CarAngle;
 	float CarAngSpeed;
+	float SpeedSet;
+	float SpeedSetTemp;
 } CarInfo_TypeDef; //存当前车的信息
 
 typedef struct
@@ -81,9 +97,16 @@ typedef struct
 	float DirOutValue;
 	float DirOutValue_New;
 	float DirOutValue_Old;
+	float SpeedOutValueRight;//
+	float SpeedOutValueLeft;
+	float New_SpeedOutValueRight;//
+	float New_SpeedOutValueLeft;
+	float Old_SpeedOutValueRight;//
+	float Old_SpeedOutValueLeft;
+
 	float SpeedOutValue;//
-	float New_SpeedOutValue;//
-	float Old_SpeedOutValue;//
+	float New_SpeedOutValue;
+	float Old_SpeedOutValue;
 } TempOfMotor_TypeDef;
 
 typedef struct

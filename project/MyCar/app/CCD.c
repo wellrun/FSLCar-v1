@@ -80,7 +80,7 @@ void ccd_exposure(void)
 		TimeFlag_20Ms = 1;
 		DirectionConrtolPeriod = 0;
 	}
-	if (TimerMsCnt >= 40)
+	if (TimerMsCnt >= SPEED_CONTROL_PERIOD)
 	{
 		TimeFlag_40Ms = 1;
 		TimerMsCnt = 0;
@@ -392,7 +392,7 @@ uint8 u32_trans_uint8(uint16 data)
 
 #define LeftBoundary 6 //去掉开始的10个点
 #define RightBoundary 122//去掉后面的10个点
-#define CCD_Threshold 40//40  //这是两组两组差的阈值//实际使用的时候取
+#define CCD_Threshold 35//40  //这是两组两组差的阈值//实际使用的时候取
 #define LeftLostPrepare 10
 #define RightLostPrepare 118 //左右准备丢线的阈值
 #define LeftMode -1
@@ -425,7 +425,7 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 	int i = 0, j = 0;
 	short SumTemp1_short = 0;
 	short SumTemp2_short = 0;
-	//short SearchBeginTemp = 0;
+	short SearchBeginTemp = 0;
 	signed char LeftTempArr[50];
 	signed char RightTempArr[50];
 	unsigned char Counter_R = 0;
@@ -448,8 +448,8 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 	if (CCDMain_Status.PointCnt >= (CCD_DataLen - 1))
 		CCDMain_Status.PointCnt = 0;
 
-	if (CCDSlave_Status.Road != Road_TurnRight)
-	{
+	/*if (CCDSlave_Status.Road != Road_TurnRight)
+	{*/
 		for (i = CCDMain_Status.SearchBegin; i < RightBoundary; i++)
 		{
 			SumTemp1_short = CCDArr[i] + CCDArr[i + 1];
@@ -460,9 +460,9 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 				Counter_R++;
 			}
 		}
-	}
-	if (CCDSlave_Status.Road != Road_TurnLeft)
-	{
+	//}
+	/*if (CCDSlave_Status.Road != Road_TurnLeft)
+	{*/
 		for (i = CCDMain_Status.SearchBegin; i > LeftBoundary; i--)
 		{
 			SumTemp1_short = CCDArr[i] + CCDArr[i - 1];
@@ -473,7 +473,7 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 				Counter_L++;
 			}  //找到一个跳变点...两个两个一对得比较..从中间向两边比较得出下降沿,将位置放出临时数组里面,以后再做 处理;
 		}
-	}
+	//}
 	CCDMain_Status.Left_LostFlag = 1;
 	CCDMain_Status.Right_LostFlag = 1;
 	//CCDMain_Status.LeftLineArr[CCDMain_Status.PointCnt] = 0;
@@ -573,7 +573,7 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 		}
 		else if (CCDMain_Status.Mode == LeftMode)
 		{
-		SearchBeginTemp = CCDMain_Status.LeftPoint + 8;
+		SearchBeginTemp = CCDMain_Status.LeftPoint + 12;
 		CCDMain_Status.SearchBegin = SearchBeginTemp;
 		CCDMain_Status.ControlValue = CCDMain_Status.LeftSet - CCDMain_Status.LeftPoint;
 		//CCDMain_Status.MidPoint = CCDMain_Status.LeftPoint - CCDMain_Status.ControlValue;
@@ -581,21 +581,21 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 		}
 		else if (CCDMain_Status.Mode == RightMode)
 		{
-		CCDMain_Status.SearchBegin = CCDMain_Status.RightPoint - 8;
+		CCDMain_Status.SearchBegin = CCDMain_Status.RightPoint - 12;
 		CCDMain_Status.ControlValue = CCDMain_Status.RightSet - CCDMain_Status.RightPoint;
 		//CCDMain_Status.MidPoint = CCDMain_Status.RightPoint - CCDMain_Status.ControlValue;
 		CCDMain_Status.LeftPoint = 0;
 		}
 		else
 		{
-		CCDMain_Status.ErrorCnt++;
+		//	CCDMain_Status.ErrorCnt++;
 		}
 		}
 		else
 		{
 		CCDMain_Status.ControlValue /= 2;
 		}*/
-	if (CCDMain_Status.Left_LostFlag == 0 && CCDMain_Status.LeftPoint > 20)
+/*	if (CCDMain_Status.Left_LostFlag == 0 && CCDMain_Status.LeftPoint > 20)
 	{
 
 	}
@@ -637,24 +637,17 @@ char CCD_Deal_Main(unsigned char *CCDArr)
 				CCDMain_Status.SearchBegin = CCDMain_Status.LeftPoint + 20;
 		}
 		CCDMain_Status.ControlValue = CCDMain_Status.LeftSet - CCDMain_Status.LeftPoint;
-	}
-	// 	if (CCDMain_Status.InitOK == 0)
-	// 	{
-	// 		CCDLineInit();
-	// 		CCDMain_Status.ControlValue = 0;
-	// 	}
+	}*/
+	/*CCDMain_Status.SearchBegin = 20;
+	CCDMain_Status.ControlValue = 70 - CCDMain_Status.RightPoint;*/
 
-	//CCDMain_Status.PointCnt++;
-	//2015年1月8日 01:46:35  根据上次的情况来判断黑线的位置是否合理..如果有一边非正常丢线..那么就需要判断是否是没检测出
 	return 0;
 }
 
 void CCDLineInit(void)
 {
-	signed short MidTemp = 0;
-	//if (CCDMain_Status.Right_LostFlag ==0)
-	//if (CCDMain_Status.Left_LostFlag ==0)
-	if (CCDSlave_Status.Left_LostFlag == 0)
+	//signed short MidTemp = 0;
+	/*if (CCDSlave_Status.Left_LostFlag == 0)
 		if (CCDSlave_Status.Right_LostFlag == 0)
 		{
 			MidTemp = CCDSlave_Status.MidPoint - CCDSlave_Status.MidPoint;//获得中点的差值
@@ -668,7 +661,11 @@ void CCDLineInit(void)
 				CCDMain_Status.LeftSet = 0;
 				CCDMain_Status.RightSet = 127;
 			}
-		}
+		}*/
+	if (CCDMain_Status.Left_LostFlag == 0 || CCDMain_Status.Right_LostFlag == 0)
+	{
+		CCDMain_Status.InitOK = 1;
+	}
 }
 
 void CCD_Deal_Slave(unsigned char *CCDArr)
@@ -903,12 +900,13 @@ void CCD_Deal_Slave(unsigned char *CCDArr)
 
 void CCD_ControlValueCale(void)
 {
-	if (CCDMsg == Msg_UseSlaveCCD)
-	{
-		Dir_PID.ControlValue = CCDSlave_Status.ControlValue;
-	}
-	else if (CCDMsg == Msg_UseMainCCD)
-	{
-		Dir_PID.ControlValue = CCDMain_Status.ControlValue;
-	}
+// 	if (CCDMsg == Msg_UseSlaveCCD)
+// 	{
+// 		Dir_PID.ControlValue = CCDSlave_Status.ControlValue;
+// 	}
+// 	else if (CCDMsg == Msg_UseMainCCD)
+// 	{
+// 		Dir_PID.ControlValue = CCDMain_Status.ControlValue;
+// 	}
+	Dir_PID.ControlValue = CCDMain_Status.ControlValue;
 }

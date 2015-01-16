@@ -2,19 +2,17 @@
 #include "CCD.h"
 
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
-#define MOTOR_OUT_MAX       6000
-#define MOTOR_OUT_MIN       -6000
-#define ANGLE_CONTROL_OUT_MAX			MOTOR_OUT_MAX
-#define ANGLE_CONTROL_OUT_MIN			MOTOR_OUT_MIN
+#define MOTOR_OUT_MAX       8000
+#define MOTOR_OUT_MIN       -8000
+#define ANGLE_CONTROL_OUT_MAX			5000
+#define ANGLE_CONTROL_OUT_MIN			-5000
+#define SPEED_CONTROL_OUT_MAX			3000
+#define SPPED_CONTROL_OUT_MIN			-3000
 #define CoderResolution 500 //编码器的线数
 #define TyreCircumference 41//轮胎周长CM
-#define DeathValue 400//死区电压 2%的占空比S
+int  DeathValueLeft=400;//死区电压 2%的占空比S
+int DeathValueRight=250;//右轮的死区电压 
 
-// #define CONTROL_PERIOD	5 //电机的输出周期
-// #define SPEED_CONTROL_COUNT 8 //速度控制的分割次数
-#define SPEED_CONTROL_PERIOD 40 //速度控制的总时间40ms
-//#define DIRECTION_CONTROL_COUNT			4  //方向控制是20Ms一次
-#define DIRECTION_CONTROL_PERIOD		20//方向控制的总时间
 
 extern float Ang_dt;//控制周期,在主函数定义,20ms
 extern float Speed_Dt;//速度的周期,0.08ms
@@ -57,10 +55,10 @@ void SpeedGet(void)
 		CarInfo_Now.MotorCounterRight -= 65535;
 	}
 	CarInfo_Now.MotorCounterRight = -CarInfo_Now.MotorCounterRight;
-	CarInfo_Now.LeftSpeed = (CarInfo_Now.MotorCounterLeft / CoderResolution*TyreCircumference) / Speed_Dt;//计算出速度,是准确的cm/s
-	CarInfo_Now.RightSpeed = (CarInfo_Now.MotorCounterRight / CoderResolution*TyreCircumference) / Speed_Dt;//计算出速度,是准确的cm/s
+	//CarInfo_Now.LeftSpeed = (CarInfo_Now.MotorCounterLeft / CoderResolution*TyreCircumference) / Speed_Dt;//计算出速度,是准确的cm/s
+	//CarInfo_Now.RightSpeed = (CarInfo_Now.MotorCounterRight / CoderResolution*TyreCircumference) / Speed_Dt;//计算出速度,是准确的cm/s
 	//CarInfo_Now.CarSpeed = (CarInfo_Now.LeftSpeed + CarInfo_Now.RightSpeed) / 2;//车子的速度用左右轮速度平均值,不准确
-	CarInfo_Now.CarSpeed = (CarInfo_Now.MotorCounterLeft + CarInfo_Now.MotorCounterRight) / 2;
+	CarInfo_Now.CarSpeed = (CarInfo_Now.MotorCounterLeft + CarInfo_Now.MotorCounterRight) / 20;
 
 	/*printf("QD Counter1 = %d\r\n", CarInfo_Now.MotorCounterLeft);
 	printf("QD Counter2 = %d\r\n", CarInfo_Now.MotorCounterRight);*/
@@ -68,9 +66,10 @@ void SpeedGet(void)
 
 void SpeedControlValueCalc(void)
 {
-/*	float ControlValue = 0;*/
-	//2015年1月12日 00:39:37  积分参数大概给150
-/*#define INTEGRAL_MAX 1200
+	static SpeedPID_TypeDef *p = &Speed_PID;
+	//static SpeedPID_TypeDef *Pr = &Speed_PID_Right;
+	//PI
+/*#define INTEGRAL_MAX 200000
 	short Index = 0;
 	float TempIntegral = 0;
 	SpeedGet();
@@ -101,23 +100,86 @@ void SpeedControlValueCalc(void)
 	Speed_PID.OutValue /= 100;//比例因子,转换为PWM占空比
 	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
 	TempValue.New_SpeedOutValue = Speed_PID.OutValue;*/
-	static float LastSpeed;
+	//PD控制
+	/*static float LastSpeed;
 	SpeedGet();
 	Speed_PID.ThisError = Speed_PID.SpeedSet - CarInfo_Now.CarSpeed;
 	Speed_PID.OutValue = Speed_PID.Kp*Speed_PID.ThisError - Speed_PID.Ki*(CarInfo_Now.CarSpeed-LastSpeed);
 	LastSpeed = CarInfo_Now.CarAngSpeed;
 	Speed_PID.OutValue /= 100;//比例因子,转换为PWM占空比
 	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
-	TempValue.New_SpeedOutValue = Speed_PID.OutValue; 
+	TempValue.New_SpeedOutValue = Speed_PID.OutValue; */
+	//增量PID
+	
+	//左右分开
+	/*CarInfo_Now.MotorCounterLeft /= 10;
+	CarInfo_Now.MotorCounterRight /= 10;
+	p->ThisError_Left = p->SpeedSet - CarInfo_Now.MotorCounterLeft;
+	if (p->ThisError_Left > 40)
+		p->ThisError_Left = 40;
+	else if (p->ThisError_Left < -40)
+		p->ThisError_Left = -40;
+	p->OutValue_Left = p->Kp*(p->ThisError_Left - p->LastError_Left) \
+		+ (p->Ki/10.0)*p->ThisError_Left \
+		+ p->Kd*(p->ThisError_Left - 2 * p->LastError_Left + p->PreError_Left);
+	p->PreError_Left = p->LastError_Left;
+	p->LastError_Left = p->ThisError_Left;
+	p->OutValueSum_Left += p->OutValue_Left;
+	if (p->OutValueSum_Left > SPEED_CONTROL_OUT_MAX)
+		p->OutValueSum_Left = SPEED_CONTROL_OUT_MAX;
+	else if (p->OutValueSum_Left < SPPED_CONTROL_OUT_MIN)
+		p->OutValueSum_Left = SPPED_CONTROL_OUT_MIN;
+	TempValue.Old_SpeedOutValueLeft = TempValue.New_SpeedOutValueLeft;
+	TempValue.New_SpeedOutValueLeft = p->OutValueSum_Left;
+
+
+	p->ThisError_Right = p->SpeedSet - CarInfo_Now.MotorCounterRight;
+	if (p->ThisError_Right > 40)
+		p->ThisError_Right = 40;
+	else if (p->ThisError_Right < -40)
+		p->ThisError_Right = -40;
+	p->OutValue_Right = p->Kp*(p->ThisError_Right - p->LastError_Right) \
+		+ (p->Ki/10.0)*p->ThisError_Right \
+		+ p->Kd*(p->ThisError_Right - 2 * p->LastError_Right + p->PreError_Right);
+	p->PreError_Right = p->LastError_Right;
+	p->LastError_Right = p->ThisError_Right;
+	p->OutValueSum_Right += p->OutValueSum_Right;
+	if (p->OutValueSum_Right > SPEED_CONTROL_OUT_MAX)
+		p->OutValueSum_Right = SPEED_CONTROL_OUT_MAX;
+	else if (p->OutValueSum_Right < SPPED_CONTROL_OUT_MIN)
+		p->OutValueSum_Right= SPPED_CONTROL_OUT_MIN;
+	TempValue.Old_SpeedOutValueRight = TempValue.New_SpeedOutValueRight;
+	TempValue.New_SpeedOutValueRight = p->OutValueSum_Right;*/
+
+
+	SpeedGet();
+	p->ThisError = p->SpeedSet - CarInfo_Now.MotorCounterLeft;
+	if (p->ThisError > 40)
+		p->ThisError = 40;
+	else if (p->ThisError < -40)
+		p->ThisError = -40;
+	p->OutValue = p->Kp*(p->ThisError - p->LastError) \
+		+ (p->Ki / 10.0)*p->ThisError \
+		+ p->Kd*(p->ThisError - 2 * p->LastError + p->PreError);
+	p->PreError = p->LastError;
+	p->LastError = p->ThisError;
+	p->OutValueSum += p->OutValue;
+	if (p->OutValueSum > SPEED_CONTROL_OUT_MAX)
+		p->OutValueSum = SPEED_CONTROL_OUT_MAX;
+	else if (p->OutValueSum < SPPED_CONTROL_OUT_MIN)
+		p->OutValueSum = SPPED_CONTROL_OUT_MIN;
+	TempValue.Old_SpeedOutValue= TempValue.New_SpeedOutValue;
+	TempValue.New_SpeedOutValue = p->OutValueSum;
+
 }
 
 void DirControlValueCale(void)
 {
 	float Dir_Diff;	
-	Dir_PID.LastError = Dir_PID.iError;
-	Dir_PID.iError = Dir_PID.ControlValue;
-	Dir_Diff = Dir_PID.LastError-Dir_PID.iError;//为了迎合微分项的负号
-	Dir_PID.OutValue = -Dir_PID.iError*Dir_PID.Kp + Dir_PID.Kd*Dir_Diff;
+	Dir_PID.LastError = Dir_PID.ThisError;
+	Dir_PID.ThisError = Dir_PID.ControlValue;
+	Dir_Diff = Dir_PID.LastError-Dir_PID.ThisError;//为了迎合微分项的负号
+	Dir_PID.OutValue = -Dir_PID.ThisError*Dir_PID.Kp + Dir_PID.Kd*Dir_Diff;
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
 }
@@ -125,8 +187,15 @@ void DirControlValueCale(void)
 void ControlSmooth(void)
 {
 	static float TempF = 0;
+// 	TempF = TempValue.New_SpeedOutValueRight - TempValue.Old_SpeedOutValueRight;
+// 	TempValue.SpeedOutValueRight = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValueRight;
+// 
+// 	TempF = TempValue.New_SpeedOutValueLeft - TempValue.Old_SpeedOutValueLeft;
+// 	TempValue.SpeedOutValueLeft = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValueLeft;
+
 	TempF = TempValue.New_SpeedOutValue - TempValue.Old_SpeedOutValue;
 	TempValue.SpeedOutValue = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValue;
+
 
 	TempF = TempValue.DirOutValue_New - TempValue.DirOutValue_Old;
 	TempValue.DirOutValue = TempF*(DirectionConrtolPeriod + 1) / DIRECTION_CONTROL_PERIOD + TempValue.DirOutValue_Old;
@@ -164,28 +233,28 @@ void MotorControl_Out(void)
 	if (MotorControl.LeftMotorOutValue >= 0)
 	{
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
-		LPLD_SYSTICK_DelayUs(2);//手动插入死区时间
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, MotorControl.LeftMotorOutValue + DeathValue);
+		LPLD_SYSTICK_DelayUs(1);//手动插入死区时间
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, MotorControl.LeftMotorOutValue + DeathValueLeft);
 	}
 	else
 	{
 		MotorControl.LeftMotorOutValue = -MotorControl.LeftMotorOutValue; //为负值取反
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
-		LPLD_SYSTICK_DelayUs(2);
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, MotorControl.LeftMotorOutValue + DeathValue);
+		LPLD_SYSTICK_DelayUs(1);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, MotorControl.LeftMotorOutValue + DeathValueLeft);
 	}
 	if (MotorControl.RightMotorOutValue >= 0)
 	{
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
-		LPLD_SYSTICK_DelayUs(2);
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, MotorControl.RightMotorOutValue + DeathValue);
+		LPLD_SYSTICK_DelayUs(1);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, MotorControl.RightMotorOutValue + DeathValueRight);
 	}
 	else
 	{
 		MotorControl.RightMotorOutValue = -MotorControl.RightMotorOutValue;
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
-		LPLD_SYSTICK_DelayUs(2);//
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, MotorControl.RightMotorOutValue + DeathValue);
+		LPLD_SYSTICK_DelayUs(1);//
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, MotorControl.RightMotorOutValue + DeathValueRight);
 	}
 }
 
