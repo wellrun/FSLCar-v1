@@ -7,8 +7,8 @@ float angle_com, angle_dot_com; //外部需要引用的变量
 extern float CarAngle, CarAngSpeed;
 //-------------------------------------------------------
 static float bias_cf = 0.2;
-static const float Ang_dt = 0.005;
-static  float ComFilter_t = 0.2;
+static  float Ang_dt = 0.005;
+static  float ComFilter_t = 0.19;
 //-------------------------------------------------------
 void complement_filter(float angle_m_cf, float gyro_m_cf)
 {
@@ -25,7 +25,7 @@ void complement_filter(float angle_m_cf, float gyro_m_cf)
 //	CarAngle=angle_com;
 }
 
-float K2 = 0.01; // 对加速度计取值的权重
+float K2 = 0.35; // 对加速度计取值的权重
 float x1, x2, y1;
 
 void complement2(float angle_m, float gyro_m)//采集后计算的角度和角加速度

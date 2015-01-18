@@ -2,16 +2,16 @@
 #include "CCD.h"
 
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
-#define MOTOR_OUT_MAX       8000
-#define MOTOR_OUT_MIN       -8000
-#define ANGLE_CONTROL_OUT_MAX			5000
-#define ANGLE_CONTROL_OUT_MIN			-5000
-#define SPEED_CONTROL_OUT_MAX			3000
-#define SPPED_CONTROL_OUT_MIN			-3000
+#define MOTOR_OUT_MAX       9000
+#define MOTOR_OUT_MIN       -9000
+#define ANGLE_CONTROL_OUT_MAX			8000
+#define ANGLE_CONTROL_OUT_MIN			-8000
+#define SPEED_CONTROL_OUT_MAX			4000
+#define SPPED_CONTROL_OUT_MIN			-4000
 #define CoderResolution 500 //编码器的线数
 #define TyreCircumference 41//轮胎周长CM
-int  DeathValueLeft=400;//死区电压 2%的占空比S
-int DeathValueRight=250;//右轮的死区电压 
+int  DeathValueLeft=00;//死区电压 2%的占空比S
+int DeathValueRight=0;//右轮的死区电压 
 
 
 extern float Ang_dt;//控制周期,在主函数定义,20ms
@@ -153,11 +153,11 @@ void SpeedControlValueCalc(void)
 
 
 	SpeedGet();
-	p->ThisError = p->SpeedSet - CarInfo_Now.MotorCounterLeft;
-	if (p->ThisError > 40)
-		p->ThisError = 40;
-	else if (p->ThisError < -40)
-		p->ThisError = -40;
+	p->ThisError = p->SpeedSet - CarInfo_Now.CarSpeed ;
+	if (p->ThisError > 80)
+		p->ThisError = 80;
+	else if (p->ThisError < -80)
+		p->ThisError = -80;
 	p->OutValue = p->Kp*(p->ThisError - p->LastError) \
 		+ (p->Ki / 10.0)*p->ThisError \
 		+ p->Kd*(p->ThisError - 2 * p->LastError + p->PreError);

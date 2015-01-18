@@ -48,16 +48,16 @@ void Timer_ReSet(void)
 
 void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 {
-	Ang_PID.Kp = 350; //比例
-	Ang_PID.Kd = 150; //微分
-	Ang_PID.AngSet = 58.2; //调试时调试这一行
+	Ang_PID.Kp = 860; //比例
+	Ang_PID.Kd = 27; //微分
+	Ang_PID.AngSet = 50.2; //调试时调试这一行
 	Ang_PID.AngSpeedSet = 0.00;
 
-	Speed_PID.SpeedSet = 0;
+	Speed_PID.SpeedSet = 150;
 	Speed_PID.Kp = 0;
 	Speed_PID.Ki = 0;
 	CarInfo_Now.SpeedSet = 0;
-	Dir_PID.Kp = 0;
+	Dir_PID.Kp = 20;
 	Dir_PID.Kd = 0.000;
 
 	TempValue.AngControl_OutValue = 0;
@@ -72,6 +72,8 @@ void PagePrepare(void)
 
 void UART5_RxIsr(void)
 {
+
+
 }
 
 void SaveAllDateToFlash(void)

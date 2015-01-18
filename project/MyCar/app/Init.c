@@ -31,7 +31,7 @@ extern void UART5_RxIsr(void);
 // 	}
 // }
 
-
+extern void AngleCon_Isr(void);
 void Init_PIT(void)
 {
 // 	Init_PIT_Struct.PIT_Pitx = PIT2;
@@ -44,6 +44,15 @@ void Init_PIT(void)
 	Init_PIT_Struct.PIT_Isr=ccd_exposure;
 	LPLD_PIT_Init(Init_PIT_Struct);
 	LPLD_PIT_EnableIrq(Init_PIT_Struct); //CCD的毫秒定时器
+
+
+	Init_PIT_Struct.PIT_Pitx = PIT1;
+	Init_PIT_Struct.PIT_PeriodMs = 5;
+	Init_PIT_Struct.PIT_Isr = AngleCon_Isr;
+	LPLD_PIT_Init(Init_PIT_Struct);
+	LPLD_PIT_EnableIrq(Init_PIT_Struct); //CCD的毫秒定时器
+
+
 }
 
 //void Init_I2C(void)
@@ -59,14 +68,14 @@ void Init_PIT(void)
 
 void Init_ADC(void)
 {
-	/*Init_ADC_Struct.ADC_Adcx = ADC1;
+	Init_ADC_Struct.ADC_Adcx = ADC1;
 	Init_ADC_Struct.ADC_BitMode = SE_12BIT;
 	Init_ADC_Struct.ADC_SampleTimeCfg = SAMTIME_SHORT;
 	Init_ADC_Struct.ADC_HwAvgSel = HW_4AVG;
 	Init_ADC_Struct.ADC_CalEnable = TRUE;
 	LPLD_ADC_Init(Init_ADC_Struct);
 	LPLD_ADC_Chn_Enable(ADC1, AD14);
-	LPLD_ADC_Chn_Enable(ADC1, AD15);*/   
+	LPLD_ADC_Chn_Enable(ADC1, AD15);   
 	//不再需要AD来读数据
 	//开启四个通道的ADC,
 

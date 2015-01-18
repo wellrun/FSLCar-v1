@@ -25,8 +25,8 @@ PC16-CCDReady(20Ms);
 #define Scope40Ms 15
 #define ScopeCCDReady 16
 #define CCD2
-#define CAR_STAND_ANG_MAX 76
-#define CAR_STAND_ANG_MIN 50
+#define CAR_STAND_ANG_MAX 75
+#define CAR_STAND_ANG_MIN 35
 char CarStandFlag = 1;
 CarInfo_TypeDef CarInfo_Now;
 CarControl_TypeDef MotorControl; //存储电机控制的值
@@ -51,7 +51,7 @@ extern float AngleIntegraed;//对角速度积分的角度值
  uint8 CCDOn = 1;
  uint8 CCDSendImage = 0;
  uint8 AngleCale = 1;
- uint8 AngDataSend = 0;
+ uint8 AngDataSend =0;
 //控制区结束
 char WhichCCD=0;
 uint8 AngSendCount = 0; //控制角度的发送次数
@@ -87,6 +87,78 @@ char CarStop = 0;//强制停车的标志
 int DebugerErrorCnt = 0;
 
 uint8 DebugerByte36[PageDateLen];
+
+
+void AngleCon_Isr(void)
+{
+	
+	if (AngleCale == 1)
+	{
+		LPLD_GPIO_Toggle_b(PTC, Scope4Ms);
+		//if (CarStandFlag == 1)
+		//{
+		AngleGet();
+		AngleControlValueCalc();
+		//MotorControl_Out();
+		if (((CarInfo_Now.CarAngle < CAR_STAND_ANG_MIN) || (CarInfo_Now.CarAngle > CAR_STAND_ANG_MAX)))
+		{
+			CarStandFlag = 0;
+			Speed_PID.OutValueSum = 0;
+		}
+           else
+                  CarStandFlag=1;
+	}
+	AngData_Ready = 1;
+	if (CarStandFlag == 1 && CarStop == 0)
+	{
+		//CarStandFlag = 1;
+		//MotorControl_Out();//计算角度以后立即输出一次电机值
+		MotorControl_Out(); //输出电机控制的值
+                LPLD_GPIO_Toggle_b(PTC, Scope20Ms);
+	}
+	else
+	{
+		if (CarStandFlag != 0)
+		{
+			CarStandFlag = 0;
+			LPLD_SYSTICK_DelayMs(1000);
+		}
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
+		AngleGet();
+		if (CarInfo_Now.CarAngle > (CAR_STAND_ANG_MIN + 10) && CarInfo_Now.CarAngle < (CAR_STAND_ANG_MAX - 10))
+		{
+			CarStandFlag = 1;
+		}
+	}
+}
+
+
+void CCDCP(void)
+{
+	//CCDReady = 0;
+	LPLD_GPIO_Toggle_b(PTC, ScopeCCDReady);
+	//Timer_ReSet();  //重置程序时间计数器
+	if (CCDOn == 1)
+	{
+		ImageCapture_M(CCDM_Arr, CCDS_Arr);
+		CCD_Deal_Main(CCDM_Arr);
+		//CCD_Deal_Slave(CCDS_Arr);			
+		if (CCDMain_Status.InitOK == 0)
+		{
+			CCDLineInit();
+		}
+		else
+		{
+			CCD_ControlValueCale();
+			DirControlValueCale();//方向控制
+		}
+		CCDDataSendStart = 1;
+	}
+}
+
 /**********************/
 void main(void)
 {
@@ -102,71 +174,14 @@ void main(void)
 
 	//Timer_Init(); //初始化程序时间计数器
         //Struct_Init();
-    Struct_Init();
+        Struct_Init();
 	EnableInterrupts;
 	while (1)
 	{
 		//更改了时间片的模式
 		if (CCDReady == 1)
 		{
-			CCDReady = 0;
-			LPLD_GPIO_Toggle_b(PTC, ScopeCCDReady);
-			//Timer_ReSet();  //重置程序时间计数器
-			if (CCDOn == 1)
-			{
-				ImageCapture_M(CCDM_Arr,CCDS_Arr);
-				//ImageCapture_S(CCDS_Arr);
-				//CCD_Deal_Main(CCDM_Arr);
-				//CCD_Deal_Slave(CCDS_Arr);
-				//CCD_Deal_Main(CCDM_Arr);			
-				if (CCDMain_Status.InitOK == 0)
-				{
-					//CCDLineInit();
-				}
-				else
-				{
-					CCD_ControlValueCale();
-					DirControlValueCale();//方向控制
-				}
-				CCDDataSendStart = 1;
-			}
-		}
-		if (TimeFlag_5Ms == 1)
-		{
-			TimeFlag_5Ms = 0;
-			LPLD_GPIO_Toggle_b(PTC, Scope4Ms);
-			if (AngleCale == 1)
-			{
-				if (CarStandFlag == 1)
-				{
-					AngleGet();
-					AngleControlValueCalc();
-				}
-				AngData_Ready = 1;
-				if (CarStandFlag==1 && CarStop==0 &&(CarInfo_Now.CarAngle > CAR_STAND_ANG_MIN && CarInfo_Now.CarAngle < CAR_STAND_ANG_MAX))
-				{
-					//CarStandFlag = 1;
-					//MotorControl_Out();//计算角度以后立即输出一次电机值
-					MotorControl_Out(); //输出电机控制的值
-				}
-				else
-				{
-					if (CarStandFlag != 0)
-					{
-						CarStandFlag = 0;
-						LPLD_SYSTICK_DelayMs(1000);
-					}
-					LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
-					LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
-					LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
-					LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
-					AngleGet();
-					if (CarInfo_Now.CarAngle >(CAR_STAND_ANG_MIN + 20) && CarInfo_Now.CarAngle < (CAR_STAND_ANG_MAX - 10))
-					{
-						CarStandFlag = 1;
-					}
-				}
-			}
+
 		}
 		if (TimeFlag_40Ms == 1)
 		{
@@ -249,22 +264,22 @@ void main(void)
 				{
 					AngDataSendOK = 0;
 					//调直立用
-					/*Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
+					Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
 					tempfloat = CarInfo_Now.CarAngSpeed;
 					Float2Byte(&tempfloat, OUTDATA, 10);
 					Float2Byte(&GravityAngle, OUTDATA, 6);
 					tempfloat = -(float)AngleIntegraed;
-					Float2Byte(&tempfloat, OUTDATA, 14);*/
+					Float2Byte(&tempfloat, OUTDATA, 14);
 
 					//调速度PI
-					tempfloat = (float)Speed_PID.SpeedSet;
-					Float2Byte(&tempfloat, OUTDATA, 2);
-					tempfloat = (float)TempValue.SpeedOutValue;
-					Float2Byte(&tempfloat, OUTDATA, 6);
-					tempfloat = (float)CarInfo_Now.CarSpeed;
-					Float2Byte(&tempfloat, OUTDATA, 10);
-					tempfloat = 0;
-					Float2Byte(&tempfloat, OUTDATA, 14);
+// 					tempfloat = (float)Speed_PID.SpeedSet;
+// 					Float2Byte(&tempfloat, OUTDATA, 2);
+// 					tempfloat = (float)TempValue.SpeedOutValue;
+// 					Float2Byte(&tempfloat, OUTDATA, 6);
+// 					tempfloat = (float)CarInfo_Now.CarSpeed;
+// 					Float2Byte(&tempfloat, OUTDATA, 10);
+// 					tempfloat = Speed_PID.OutValueSum;
+// 					Float2Byte(&tempfloat, OUTDATA, 14);
 				}
 				LPLD_UART_PutChar(UART5, OUTDATA[ScopeSendPointCnt]);
 				ScopeSendPointCnt++;
@@ -373,7 +388,7 @@ void main(void)
 						LPLD_UART_PutChar(UART5, 0x5f);
                         Speed_PID.IntegralSum_Left=0;
 						Speed_PID.IntegralSum_Right = 0;
-						Speed_PID.IntegralSum = 0;
+						Speed_PID.OutValueSum = 0;
 					}
 					else
 					{
@@ -381,7 +396,7 @@ void main(void)
 						LPLD_UART_PutChar(UART5, 0x4f);
 						Speed_PID.IntegralSum_Left = 0;
 						Speed_PID.IntegralSum_Right = 0;
-						Speed_PID.IntegralSum = 0;
+						Speed_PID.OutValueSum = 0;
 					}
 				}
 				else if (Temp1B == 0xdf)

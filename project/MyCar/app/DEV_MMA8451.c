@@ -36,7 +36,9 @@ uint8 LPLD_MMA8451_Init(void)
   LPLD_MMA8451_WriteReg(MMA8451_REG_SYSMOD, 0x00);       //默认模式Standby Mode
   LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG2, 0x02);    //High Resolution
   LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG1, 0x01);    //主动模式,800HZ
-  LPLD_MMA8451_WriteReg(0x0f, 0x23);//开启低通滤波器
+  //LPLD_MMA8451_WriteReg(0x0f, 0x33);//绕过高通滤波对冲击的响应,开启对于冲击的低通
+ // LPLD_MMA8451_WriteReg(0x0e, 0x00);//开启高通滤波....截止频率2Hz,
+ // LPLD_MMA8451_WriteReg(0x0f, 0x23);//开启低通滤波器
   
   return device_id;
 }

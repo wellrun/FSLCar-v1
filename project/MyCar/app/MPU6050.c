@@ -20,9 +20,9 @@ uint8 MPU6050_Init(void)
   //初始化I2C1
   i2c_init_param.I2C_I2Cx = I2C1;       //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_IntEnable = FALSE;
-  i2c_init_param.I2C_ICR = 0x20;  //可根据实际电路更改SCL频率
-  i2c_init_param.I2C_SclPin = PTC10;   //MPU
-  i2c_init_param.I2C_SdaPin = PTC11;   //MPU
+  i2c_init_param.I2C_ICR = 0x23;  //可根据实际电路更改SCL频率
+  i2c_init_param.I2C_SclPin = PTE1;   //MPU
+  i2c_init_param.I2C_SdaPin = PTE0;   //MPU
   i2c_init_param.I2C_Isr = NULL;
 //i2c_init_param.I2C_OpenDrainEnable=TRUE;
  LPLD_I2C_Init(i2c_init_param);
@@ -33,10 +33,10 @@ uint8 MPU6050_Init(void)
 	LPLD_SYSTICK_DelayMs(20);
 	MPU6050_WriteReg(PWR_MGMT_1, 0x00); //解除休眠状态
 	LPLD_SYSTICK_DelayMs(20);
-	MPU6050_WriteReg(SMPLRT_DIV, 0x07);
-	MPU6050_WriteReg(CONFIG, 0x06);
-	MPU6050_WriteReg(GYRO_CONFIG, 0x18);
-	MPU6050_WriteReg(ACCEL_CONFIG, 0x01);
+	MPU6050_WriteReg(SMPLRT_DIV, 0x04);
+	MPU6050_WriteReg(CONFIG, 0x02);//低通的值..低通频率不能太低了..
+	MPU6050_WriteReg(GYRO_CONFIG, 0x10);
+	MPU6050_WriteReg(ACCEL_CONFIG, 0x00);
         device_id = MPU6050_ReadReg(WHO_AM_I);
 	return device_id;
 }
