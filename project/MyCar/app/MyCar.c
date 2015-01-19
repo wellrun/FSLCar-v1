@@ -52,13 +52,14 @@ extern float AngleIntegraed;//对角速度积分的角度值
  uint8 CCDSendImage = 0;
  uint8 AngleCale = 1;
  uint8 AngDataSend =0;
+ char CCDSendToDebuger = 0;//发送到调试器
 //控制区结束
 char WhichCCD=0;
 uint8 AngSendCount = 0; //控制角度的发送次数
 unsigned char testbyte[4];
 unsigned char TempArr[128];
 char CCDDataSendOK = 0;
-char CCDSendToDebuger = 0;//发送到调试器
+
 char CCDDataSendStart = 0;
 char AngData_Ready = 0;
 char AngDataSendOK = 1;
@@ -189,7 +190,7 @@ void main(void)
 			LPLD_GPIO_Toggle_b(PTC, Scope40Ms);
 			LPLD_GPIO_Toggle_b(PTA, 17);//一闪一闪亮晶晶
             //LPLD_GPIO_Output_b(PTA,17,0);
-			SpeedControlValueCalc();//速度闭环,先调直立,再调速度闭环
+			SpeedControlValueCalc();
 		}
 	/*	if (TimeFlag_2Ms == 1)
 		{

@@ -54,11 +54,12 @@ typedef struct
 	signed char SearchBegin;
 	signed char Left_LostFlag;
 	signed char Right_LostFlag;
-	unsigned char PointCnt;
+	//unsigned char PointCnt;
 	short ControlValue;
 	int Mode;
 	signed char SearchMode;
 	signed char Road;//道路类型
+	signed char RoadConfirm;//是否确认了赛道
 	unsigned int ErrorCntLeft;
 	unsigned int ErrorCntRight;
 	signed short MidSet;
