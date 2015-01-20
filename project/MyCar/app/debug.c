@@ -45,24 +45,36 @@ void Timer_ReSet(void)
 {
 	Code_Count = 0;
 }
-
+extern float Dir_Kp_Correction[100];
 void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 {
-	Ang_PID.Kp = 860; //比例
-	Ang_PID.Kd = 27; //微分
+	int i;
+
+	Ang_PID.Kp = 455; //比例
+	Ang_PID.Kd = 15; //微分
 	Ang_PID.AngSet = 50.2; //调试时调试这一行
 	Ang_PID.AngSpeedSet = 0.00;
 
-	Speed_PID.SpeedSet = 150;
-	Speed_PID.Kp = 0;
-	Speed_PID.Ki = 0;
-	CarInfo_Now.SpeedSet = 0;
-	Dir_PID.Kp = 20;
-	Dir_PID.Kd = 0.000;
+	Speed_PID.SpeedSet = 250;
+	Speed_PID.Kp = 25;
+	Speed_PID.Ki = 2.5;
+	//CarInfo_Now.SpeedSet = 0;
+	Dir_PID.Kp = 24;
+	Dir_PID.Kd = 8.5;
 
 	TempValue.AngControl_OutValue = 0;
 	TempValue.Dir_RightOutValue = 0;
 	TempValue.Dir_LeftOutValue = 0;
+
+	for (i = 0; i < 50; i++)
+	{
+		Dir_Kp_Correction[i] = -(((0.007*i) + 0.65)*(i-50));
+	}
+	for (i = 50; i < 100; i++)
+	{
+		Dir_Kp_Correction[i] = -((1 - (0.007*(i - 50)))*(i-50));
+	}
+
 }
 
 void PagePrepare(void)

@@ -6,10 +6,11 @@
 #define MOTOR_OUT_MIN       -9000
 #define ANGLE_CONTROL_OUT_MAX			8000
 #define ANGLE_CONTROL_OUT_MIN			-8000
-#define SPEED_CONTROL_OUT_MAX			4000
-#define SPPED_CONTROL_OUT_MIN			-4000
+#define SPEED_CONTROL_OUT_MAX			2000
+#define SPPED_CONTROL_OUT_MIN			-2000
 #define CoderResolution 500 //编码器的线数
-#define TyreCircumference 41//轮胎周长CM
+#define TyreCircumference 20//轮胎周长CM
+//轮子转一圈..编码器增加5200
 int  DeathValueLeft=00;//死区电压 2%的占空比S
 int DeathValueRight=0;//右轮的死区电压 
 
@@ -24,6 +25,8 @@ extern TempOfMotor_TypeDef TempValue; //临时存储角度和速度控制浮点变量的结构体
 SpeedPID_TypeDef Speed_PID;
 DirPID_TypeDef Dir_PID;
 short SpeedControlPeriod, DirectionConrtolPeriod;
+
+
 
 void AngleControlValueCalc(void)
 {
@@ -41,6 +44,8 @@ void AngleControlValueCalc(void)
 
 void SpeedGet(void)
 {//FTM1是左电机,FTM2是右电机
+	static int LeftSum = 0;
+	static int RightSum = 0;
 	CarInfo_Now.MotorCounterLeft = LPLD_FTM_GetCounter(FTM1);
 	CarInfo_Now.MotorCounterRight = LPLD_FTM_GetCounter(FTM2);
 	LPLD_FTM_ClearCounter(FTM1);
@@ -60,6 +65,9 @@ void SpeedGet(void)
 	//CarInfo_Now.CarSpeed = (CarInfo_Now.LeftSpeed + CarInfo_Now.RightSpeed) / 2;//车子的速度用左右轮速度平均值,不准确
 	CarInfo_Now.CarSpeed = (CarInfo_Now.MotorCounterLeft + CarInfo_Now.MotorCounterRight) / 20;
 
+	LeftSum += CarInfo_Now.MotorCounterLeft;
+	RightSum += CarInfo_Now.MotorCounterRight;
+        RightSum=RightSum;
 	/*printf("QD Counter1 = %d\r\n", CarInfo_Now.MotorCounterLeft);
 	printf("QD Counter2 = %d\r\n", CarInfo_Now.MotorCounterRight);*/
 }
@@ -173,13 +181,41 @@ void SpeedControlValueCalc(void)
 
 }
 
+
+float Dir_Kp_Correction[100];
+
 void DirControlValueCale(void)
 {
-	float Dir_Diff;	
-	Dir_PID.LastError = Dir_PID.ThisError;
+	// 2  1
+ 	//50   40  30  20  10 
+	float Dir_Diff;
+	static float PreError=0;
+	static float temp = 0;
+	/*Dir_PID.LastError = Dir_PID.ThisError;
 	Dir_PID.ThisError = Dir_PID.ControlValue;
 	Dir_Diff = Dir_PID.LastError-Dir_PID.ThisError;//为了迎合微分项的负号
 	Dir_PID.OutValue = -Dir_PID.ThisError*Dir_PID.Kp + Dir_PID.Kd*Dir_Diff;
+	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
+	TempValue.DirOutValue_New = Dir_PID.OutValue;*/
+	/*static DirPID_TypeDef *p = &Dir_PID;
+	
+	p->ThisError = p->ControlValue;
+	p->OutValue = -p->Kp*(p->ThisError - p->LastError)\
+		+ p->Kd*(p->ThisError - 2 * p->LastError + p->PreError);
+	p->PreError = p->LastError;
+	p->LastError = p->ThisError;
+	p->OutValueSum += p->OutValue;
+	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
+	TempValue.DirOutValue_New = p->OutValueSum;*/
+
+	
+	PreError = Dir_PID.LastError;
+	Dir_PID.LastError = Dir_PID.ThisError;
+	Dir_PID.ThisError = Dir_PID.ControlValue;
+	Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;//为了迎合微分项的负号
+	temp = PreError*0.2 + Dir_PID.LastError*0.3 + Dir_PID.ThisError*0.5;
+	//Dir_PID.OutValue = -temp*Dir_PID.Kp + Dir_PID.Kd*Dir_Diff;
+	Dir_PID.OutValue = Dir_Kp_Correction[(int)temp+50]*Dir_PID.Kp + Dir_Diff*Dir_PID.Kd;
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
 }

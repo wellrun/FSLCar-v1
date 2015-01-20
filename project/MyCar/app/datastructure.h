@@ -33,17 +33,18 @@ typedef struct
 	float Kp;
 	float Ki;
 	float Kd;
-	float IntegralSum_Left;//积分的误差
-	float OutValue_Left;//本次的输出控制量
-	float IntegralSum_Right;//积分的误差
-	float OutValue_Right;//本次的输出控制量
+	float iError;
+	//float IntegralSum_Left;//积分的误差
+	//float OutValue_Left;//本次的输出控制量
+	//float IntegralSum_Right;//积分的误差
+	//float OutValue_Right;//本次的输出控制量
 	//float OutMax;//积分饱和值
 	//float OutMin;//积分饱和值
 
-	float ThisError_Left;
-	float LastError_Left;
-	float PreError_Left;
-	float OutValueSum_Left;//增量和
+	//float ThisError_Left;
+	//float LastError_Left;
+	//float PreError_Left;
+	//float OutValueSum_Left;//增量和
 
 	float ThisError;
 	float LastError;
@@ -52,10 +53,10 @@ typedef struct
 	float IntegralSum;//积分的误差
 	float OutValue;//本次的输出控制量
 
-	float ThisError_Right;
-	float LastError_Right;
-	float PreError_Right;
-	float OutValueSum_Right;//增量和
+//	float ThisError_Right;
+	//float LastError_Right;
+	//float PreError_Right;
+	//float OutValueSum_Right;//增量和
 
 }SpeedPID_TypeDef;
 
@@ -66,8 +67,11 @@ typedef struct
 
 	float ThisError;
 	float LastError;
+	float PreError;
 	float OutValue;
-	int ControlValue;
+	float OutValueSum;
+	float ControlValue;
+	//普通
 }DirPID_TypeDef;
 
 typedef struct

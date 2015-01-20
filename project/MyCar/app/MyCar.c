@@ -105,6 +105,7 @@ void AngleCon_Isr(void)
 		{
 			CarStandFlag = 0;
 			Speed_PID.OutValueSum = 0;
+			Dir_PID.OutValueSum = 0;
 		}
            else
                   CarStandFlag=1;
@@ -146,7 +147,7 @@ void CCDCP(void)
 	{
 		ImageCapture_M(CCDM_Arr, CCDS_Arr);
 		CCD_Deal_Main(CCDM_Arr);
-		//CCD_Deal_Slave(CCDS_Arr);			
+		CCD_Deal_Slave(CCDS_Arr);			
 		if (CCDMain_Status.InitOK == 0)
 		{
 			CCDLineInit();
@@ -174,8 +175,6 @@ void main(void)
 	//	Flash_WriteTest(); 测试flash区
 
 	//Timer_Init(); //初始化程序时间计数器
-        //Struct_Init();
-        Struct_Init();
 	EnableInterrupts;
 	while (1)
 	{
@@ -252,7 +251,7 @@ void main(void)
 					{
 						LPLD_UART_PutChar(UART5, CCDMain_Status.LeftPoint);
 						LPLD_UART_PutChar(UART5, CCDMain_Status.RightPoint);
-						LPLD_UART_PutChar(UART5, CCDMain_Status.ControlValue);
+						LPLD_UART_PutChar(UART5, (uint8)CCDMain_Status.ControlValue);
 					}
 				}
 			}
@@ -281,6 +280,17 @@ void main(void)
 // 					Float2Byte(&tempfloat, OUTDATA, 10);
 // 					tempfloat = Speed_PID.OutValueSum;
 // 					Float2Byte(&tempfloat, OUTDATA, 14);
+
+
+					//调方向
+					tempfloat = (float)Dir_PID.ControlValue;
+					Float2Byte(&tempfloat, OUTDATA, 2);
+					tempfloat = (float)CCDMain_Status.LeftPoint;
+					Float2Byte(&tempfloat, OUTDATA, 6);
+					tempfloat = (float)CCDMain_Status.RightPoint;
+					Float2Byte(&tempfloat, OUTDATA, 10);
+					tempfloat = (float)CCDMain_Status.ControlValue;
+					Float2Byte(&tempfloat, OUTDATA, 14);
 				}
 				LPLD_UART_PutChar(UART5, OUTDATA[ScopeSendPointCnt]);
 				ScopeSendPointCnt++;
@@ -387,17 +397,19 @@ void main(void)
 					{
 						CarStop = 0;
 						LPLD_UART_PutChar(UART5, 0x5f);
-                        Speed_PID.IntegralSum_Left=0;
-						Speed_PID.IntegralSum_Right = 0;
+                      //  Speed_PID.IntegralSum_Left=0;
+						//Speed_PID.IntegralSum_Right = 0;
 						Speed_PID.OutValueSum = 0;
+						Dir_PID.OutValueSum = 0;
 					}
 					else
 					{
 						CarStop = 1;
 						LPLD_UART_PutChar(UART5, 0x4f);
-						Speed_PID.IntegralSum_Left = 0;
-						Speed_PID.IntegralSum_Right = 0;
+						//Speed_PID.IntegralSum_Left = 0;
+						//Speed_PID.IntegralSum_Right = 0;
 						Speed_PID.OutValueSum = 0;
+						Dir_PID.OutValueSum = 0;
 					}
 				}
 				else if (Temp1B == 0xdf)
