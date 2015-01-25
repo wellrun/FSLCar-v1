@@ -9,7 +9,8 @@
 #include "Control.h"
 #include "CCD.h"
 #include "Communicate.h"
-#include "MPU6050.h"
+//#include "MPU6050.h"
+#include "L3G4200.h"
 //#include "DataScope_DP.h"
 /*选了几个引脚来判断时序是否正常
 PC12-2Ms;
@@ -25,8 +26,8 @@ PC16-CCDReady(20Ms);
 #define Scope40Ms 15
 #define ScopeCCDReady 16
 #define CCD2
-#define CAR_STAND_ANG_MAX 75
-#define CAR_STAND_ANG_MIN 35
+#define CAR_STAND_ANG_MAX -10
+#define CAR_STAND_ANG_MIN -55
 char CarStandFlag = 1;
 CarInfo_TypeDef CarInfo_Now;
 CarControl_TypeDef MotorControl; //存储电机控制的值
@@ -47,11 +48,11 @@ extern uint8 debugerConnected; //是否连接到调试器
 extern TempOfMotor_TypeDef TempValue; //临时存储角度和速度控制浮点变量的结构体
 extern float AngleIntegraed;//对角速度积分的角度值
 //--控制区
- uint8 Debuger = 1;
+ uint8 Debuger = 0;
  uint8 CCDOn = 1;
  uint8 CCDSendImage = 0;
  uint8 AngleCale = 1;
- uint8 AngDataSend =0;
+ uint8 AngDataSend =1;
  char CCDSendToDebuger = 0;//发送到调试器
 //控制区结束
 char WhichCCD=0;
@@ -283,14 +284,15 @@ void main(void)
 
 
 					//调方向
-					tempfloat = (float)Dir_PID.ControlValue;
-					Float2Byte(&tempfloat, OUTDATA, 2);
-					tempfloat = (float)CCDMain_Status.LeftPoint;
-					Float2Byte(&tempfloat, OUTDATA, 6);
-					tempfloat = (float)CCDMain_Status.RightPoint;
-					Float2Byte(&tempfloat, OUTDATA, 10);
-					tempfloat = (float)CCDMain_Status.ControlValue;
-					Float2Byte(&tempfloat, OUTDATA, 14);
+// 					tempfloat = (float)Dir_PID.ControlValue;
+// 					Float2Byte(&tempfloat, OUTDATA, 2);
+// 					tempfloat = (float)CCDMain_Status.LeftPoint;
+// 					Float2Byte(&tempfloat, OUTDATA, 6);
+// 					tempfloat = (float)CCDMain_Status.RightPoint;
+// 					Float2Byte(&tempfloat, OUTDATA, 10);
+// 					//tempfloat = (float)CCDMain_Status.ControlValue;
+// 					//tempfloat = Dir_Diff;
+// 					Float2Byte(&tempfloat, OUTDATA, 14);
 				}
 				LPLD_UART_PutChar(UART5, OUTDATA[ScopeSendPointCnt]);
 				ScopeSendPointCnt++;

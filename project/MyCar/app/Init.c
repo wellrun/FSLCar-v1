@@ -1,8 +1,9 @@
 #include "init.h"
 #include "datastructure.h"
 #include "DEV_MMA8451.h"
-#include "mpu6050.h"
+//#include "mpu6050.h"
 #include "ccd.h"
+#include "l3g4200.h"
 ADC_InitTypeDef Init_ADC_Struct;
 ADC_InitTypeDef Init_ADC_CCD_Struct;
 GPIO_InitTypeDef Init_GPIO_Struct;
@@ -32,6 +33,9 @@ extern void UART5_RxIsr(void);
 // }
 
 extern void AngleCon_Isr(void);
+
+
+
 void Init_PIT(void)
 {
 // 	Init_PIT_Struct.PIT_Pitx = PIT2;
@@ -123,6 +127,11 @@ void Init_GPIO(void)
 	Init_GPIO_Struct.GPIO_PTx = PTC;
 	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin12 | GPIO_Pin13 | GPIO_Pin14 | GPIO_Pin15 | GPIO_Pin16;
 	LPLD_GPIO_Init(Init_GPIO_Struct);//在示波器上面看时序是否正常
+
+	Init_GPIO_Struct.GPIO_PTx = PTE;
+	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin4 | GPIO_Pin5;
+	LPLD_GPIO_Init(Init_GPIO_Struct);//两个led
+
 }
 
 void CarInit(void)
@@ -135,14 +144,24 @@ void CarInit(void)
 	whoami = LPLD_MMA8451_Init();
 	if (whoami != 0x1a)
 	{
-		LPLD_GPIO_Output_b(PTA, 17, 0);
+		LPLD_GPIO_Output_b(PTE, 5, 1);
 		while (1);
 	}
+        else 
+           LPLD_GPIO_Output_b(PTE, 5, 0);
+	if(L3G4200_Init() != 0xd3)
+        {
+          LPLD_GPIO_Output_b(PTE,4,1);
+          while (1);
+        }
+        else
+          LPLD_GPIO_Output_b(PTE,4,0);
+/*
 	if (MPU6050_Init() != 0x68)
 	{
 		LPLD_GPIO_Output_b(PTA, 17, 0);
 		while (1);
-	}
+	}*/
 	//Init_I2C();
 }
 void Init_FTM(void)
@@ -155,6 +174,8 @@ void Init_FTM(void)
 	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch5, 0, PTD5, ALIGN_LEFT); //左边电机反转
 	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch6, 0, PTD6, ALIGN_LEFT); //右边电机正转
 	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch7, 0, PTD7, ALIGN_LEFT); //右边电机反转
+
+	//while (1);
 
 	Init_FTM_Struct.FTM_Ftmx=FTM1;
 	Init_FTM_Struct.FTM_Mode= FTM_MODE_QD;

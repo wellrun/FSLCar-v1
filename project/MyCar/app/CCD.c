@@ -9,10 +9,10 @@ void SamplingDelay(void);
 #define CLK_SetVal_M() LPLD_GPIO_Output_b(PTA, 29, 1)
 #define CLK_ClrVal_M() LPLD_GPIO_Output_b(PTA, 29, 0)
 
-#define SI_SetVal_S() LPLD_GPIO_Output_b(PTA, 26, 1)
+/*#define SI_SetVal_S() LPLD_GPIO_Output_b(PTA, 26, 1)
 #define SI_ClrVal_S() LPLD_GPIO_Output_b(PTA, 26, 0)
 #define CLK_SetVal_S() LPLD_GPIO_Output_b(PTA, 27, 1)
-#define CLK_ClrVal_S() LPLD_GPIO_Output_b(PTA, 27, 0)
+#define CLK_ClrVal_S() LPLD_GPIO_Output_b(PTA, 27, 0)*/
 
 
 
@@ -96,16 +96,16 @@ void StartIntegration_M(void)
 	unsigned char i;
 
 	SI_SetVal_M();            /* SI  = 1 */
-	SI_SetVal_S();            /* SI  = 1 */
+	//SI_SetVal_S();            /* SI  = 1 */
 	SamplingDelay();
 	CLK_SetVal_M();           /* CLK = 1 */
-	CLK_SetVal_S();           /* CLK = 1 */
+	//CLK_SetVal_S();           /* CLK = 1 */
 	SamplingDelay();
 	SI_ClrVal_M();
-	SI_ClrVal_S(); /* SI  = 0 */
+	//SI_ClrVal_S(); /* SI  = 0 */
 	SamplingDelay();
 	CLK_ClrVal_M();
-	CLK_ClrVal_S(); /* CLK = 0 */
+	//CLK_ClrVal_S(); /* CLK = 0 */
 	SamplingDelay();
 	SamplingDelay();
 	for (i = 0; i < 127; i++)
@@ -113,20 +113,20 @@ void StartIntegration_M(void)
 		SamplingDelay();
 		SamplingDelay();
 		CLK_SetVal_M();
-		CLK_SetVal_S();/* CLK = 1 */
+		//CLK_SetVal_S();/* CLK = 1 */
 		SamplingDelay();
 		SamplingDelay();
 		CLK_ClrVal_M();
-		CLK_ClrVal_S();  /* CLK = 0 */
+		//CLK_ClrVal_S();  /* CLK = 0 */
 	}
 	SamplingDelay();
 	SamplingDelay();
 	CLK_SetVal_M();
-	CLK_SetVal_S();/* CLK = 1 */
+	//CLK_SetVal_S();/* CLK = 1 */
 	SamplingDelay();
 	SamplingDelay();
 	CLK_ClrVal_M();
-	CLK_ClrVal_S();  /* CLK = 0 */
+	//CLK_ClrVal_S();  /* CLK = 0 */
 }
 
 
@@ -135,28 +135,28 @@ void StartIntegration_M(void)
 // 
 // 	unsigned char i;
 // 
-// 	SI_SetVal_S();            /* SI  = 1 */
+// 	//SI_SetVal_S();            /* SI  = 1 */
 // 	SamplingDelay();
-// 	CLK_SetVal_S();           /* CLK = 1 */
+// 	//CLK_SetVal_S();           /* CLK = 1 */
 // 	SamplingDelay();
-// 	SI_ClrVal_S();            /* SI  = 0 */
+// 	//SI_ClrVal_S();            /* SI  = 0 */
 // 	SamplingDelay();
-// 	CLK_ClrVal_S();           /* CLK = 0 */
+// 	//CLK_ClrVal_S();           /* CLK = 0 */
 // 	SamplingDelay(); SamplingDelay();
 // 	for (i = 0; i < 127; i++) {
 // 		SamplingDelay();
 // 		SamplingDelay();
-// 		CLK_SetVal_S();       /* CLK = 1 */
+// 		//CLK_SetVal_S();       /* CLK = 1 */
 // 		SamplingDelay();
 // 		SamplingDelay();
-// 		CLK_ClrVal_S();       /* CLK = 0 */
+// 		//CLK_ClrVal_S();       /* CLK = 0 */
 // 	}
 // 	SamplingDelay();
 // 	SamplingDelay();
-// 	CLK_SetVal_S();           /* CLK = 1 */
+// 	//CLK_SetVal_S();           /* CLK = 1 */
 // 	SamplingDelay();
 // 	SamplingDelay();
-// 	CLK_ClrVal_S();           /* CLK = 0 */
+// 	//CLK_ClrVal_S();           /* CLK = 0 */
 // }
 // 
 
@@ -168,13 +168,13 @@ void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2)
 	extern uint8 AtemP;
 
 	SI_SetVal_M();
-	SI_SetVal_S();  /* SI  = 1 */
+	//SI_SetVal_S();  /* SI  = 1 */
 	SamplingDelay();
 	CLK_SetVal_M();
-	CLK_SetVal_S();     /* CLK = 1 */
+	//CLK_SetVal_S();     /* CLK = 1 */
 	SamplingDelay();
 	SI_ClrVal_M();
-	SI_ClrVal_S();  /* SI  = 0 */
+	//SI_ClrVal_S();  /* SI  = 0 */
 	SamplingDelay();
 
 	//Delay 10us for sample the first pixel
@@ -190,7 +190,7 @@ void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2)
 	ImageData++;
 	ImageData2++;
 	CLK_ClrVal_M();
-	CLK_ClrVal_S();/* CLK = 0 */
+	//CLK_ClrVal_S();/* CLK = 0 */
 	SamplingDelay();
 	SamplingDelay();
 	SamplingDelay();
@@ -199,7 +199,7 @@ void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2)
 		SamplingDelay();
 		SamplingDelay();
 		CLK_SetVal_M();
-		CLK_SetVal_S(); /* CLK = 1 */
+		//CLK_SetVal_S(); /* CLK = 1 */
 		SamplingDelay();
 		SamplingDelay();
 		//Sampling Pixel 2~128
@@ -209,16 +209,16 @@ void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2)
 		ImageData++;
 		ImageData2++;
 		CLK_ClrVal_M();
-		CLK_ClrVal_S(); /* CLK = 0 */
+		//CLK_ClrVal_S(); /* CLK = 0 */
 	}
 	SamplingDelay();
 	SamplingDelay();
 	CLK_SetVal_M();
-	CLK_SetVal_S(); /* CLK = 1 */
+	//CLK_SetVal_S(); /* CLK = 1 */
 	SamplingDelay();
 	SamplingDelay();
 	CLK_ClrVal_M();
-	CLK_ClrVal_S();/* CLK = 0 */
+	//CLK_ClrVal_S();/* CLK = 0 */
 }
 
 
@@ -228,11 +228,11 @@ void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2)
 // 	unsigned char i;
 // 	extern uint8 AtemP;
 // 
-// 	SI_SetVal_S();            /* SI  = 1 */
+// 	//SI_SetVal_S();            /* SI  = 1 */
 // 	SamplingDelay();
-// 	CLK_SetVal_S();           /* CLK = 1 */
+// 	//CLK_SetVal_S();           /* CLK = 1 */
 // 	SamplingDelay();
-// 	SI_ClrVal_S();            /* SI  = 0 */
+// 	//SI_ClrVal_S();            /* SI  = 0 */
 // 	SamplingDelay();
 // 
 // 	//Delay 10us for sample the first pixel
@@ -244,28 +244,28 @@ void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2)
 // 
 // 	*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD15));
 // 	ImageData++;
-// 	CLK_ClrVal_S();           /* CLK = 0 */
+// 	//CLK_ClrVal_S();           /* CLK = 0 */
 // 	SamplingDelay();
 // 	SamplingDelay();
 // 	SamplingDelay();
 // 	for (i = 0; i < 127; i++) {
 // 		SamplingDelay();
 // 		SamplingDelay();
-// 		CLK_SetVal_S();       /* CLK = 1 */
+// 		//CLK_SetVal_S();       /* CLK = 1 */
 // 		SamplingDelay();
 // 		SamplingDelay();
 // 		//Sampling Pixel 2~128
 // 
 // 		*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD15));
 // 		ImageData++;
-// 		CLK_ClrVal_S();       /* CLK = 0 */
+// 		//CLK_ClrVal_S();       /* CLK = 0 */
 // 	}
 // 	SamplingDelay();
 // 	SamplingDelay();
-// 	CLK_SetVal_S();           /* CLK = 1 */
+// 	//CLK_SetVal_S();           /* CLK = 1 */
 // 	SamplingDelay();
 // 	SamplingDelay();
-// 	CLK_ClrVal_S();           /* CLK = 0 */
+// 	//CLK_ClrVal_S();           /* CLK = 0 */
 // }
 
 
@@ -936,11 +936,11 @@ void CCD_ControlValueCale(void)
 	{//主CCD两条线都丢了,可能为十字
 		if (CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1)
 		{
-			Dir_PID.ControlValue *= 0.7;
+			Dir_PID.ControlValue *= 0.3;
 		}
 		else if (CCDSlave_Status.Left_LostFlag == 1 || CCDSlave_Status.Right_LostFlag == 1)
 		{//如果主CCD丢线但是从CCD只丢了一条线,那么控制值由从CCD的一个权重确定
-			Dir_PID.ControlValue = CCDSlave_Status.ControlValue*0.4;
+			Dir_PID.ControlValue = CCDSlave_Status.ControlValue*0.2;
 		}
 		else
 		{
@@ -961,6 +961,8 @@ void CCD_ControlValueCale(void)
 	{
 		Dir_PID.ControlValue = CCDMain_Status.ControlValue * 0.6 + CCDSlave_Status.ControlValue*0.4;
 	}
+
+	//Dir_PID.ControlValue = CCDMain_Status.ControlValue;
 }
 
 
@@ -980,10 +982,10 @@ void CCDLineInit(void)
 		//{
 		CCDMain_Status.MidSet = 64;
 		CCDSlave_Status.MidSet = 64;
-		CCDMain_Status.LeftSet = 33;
+		CCDMain_Status.LeftSet = 36;
 		CCDMain_Status.RightSet = 94;
-		CCDSlave_Status.LeftSet = 33;
-		CCDSlave_Status.RightSet = 94;
+		CCDSlave_Status.LeftSet = 44;
+		CCDSlave_Status.RightSet = 83;
 		CCDMain_Status.InitOK = 1;
 
 		for (i = 0; i < 64; i++)

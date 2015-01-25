@@ -1,6 +1,6 @@
 #include "Control.h"
 #include "CCD.h"
-
+#include "mpu6050.h"
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
 #define MOTOR_OUT_MAX       9000
 #define MOTOR_OUT_MIN       -9000
@@ -26,7 +26,14 @@ SpeedPID_TypeDef Speed_PID;
 DirPID_TypeDef Dir_PID;
 short SpeedControlPeriod, DirectionConrtolPeriod;
 
-
+void DeathTime_Delay(void)
+{
+	int t = 600;
+	while (t>0)
+	{
+		t--;
+	}
+}
 
 void AngleControlValueCalc(void)
 {
@@ -44,8 +51,8 @@ void AngleControlValueCalc(void)
 
 void SpeedGet(void)
 {//FTM1是左电机,FTM2是右电机
-	static int LeftSum = 0;
-	static int RightSum = 0;
+	//static int LeftSum = 0;
+	//static int RightSum = 0;
 	CarInfo_Now.MotorCounterLeft = LPLD_FTM_GetCounter(FTM1);
 	CarInfo_Now.MotorCounterRight = LPLD_FTM_GetCounter(FTM2);
 	LPLD_FTM_ClearCounter(FTM1);
@@ -65,9 +72,9 @@ void SpeedGet(void)
 	//CarInfo_Now.CarSpeed = (CarInfo_Now.LeftSpeed + CarInfo_Now.RightSpeed) / 2;//车子的速度用左右轮速度平均值,不准确
 	CarInfo_Now.CarSpeed = (CarInfo_Now.MotorCounterLeft + CarInfo_Now.MotorCounterRight) / 20;
 
-	LeftSum += CarInfo_Now.MotorCounterLeft;
-	RightSum += CarInfo_Now.MotorCounterRight;
-        RightSum=RightSum;
+	//LeftSum += CarInfo_Now.MotorCounterLeft;
+	//RightSum += CarInfo_Now.MotorCounterRight;
+       // RightSum=RightSum;
 	/*printf("QD Counter1 = %d\r\n", CarInfo_Now.MotorCounterLeft);
 	printf("QD Counter2 = %d\r\n", CarInfo_Now.MotorCounterRight);*/
 }
@@ -188,7 +195,7 @@ void DirControlValueCale(void)
 {
 	// 2  1
  	//50   40  30  20  10 
-	float Dir_Diff;
+	
 	static float PreError=0;
 	static float temp = 0;
 	/*Dir_PID.LastError = Dir_PID.ThisError;
@@ -207,8 +214,8 @@ void DirControlValueCale(void)
 	p->OutValueSum += p->OutValue;
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = p->OutValueSum;*/
-
 	
+	float Dir_Diff;
 	PreError = Dir_PID.LastError;
 	Dir_PID.LastError = Dir_PID.ThisError;
 	Dir_PID.ThisError = Dir_PID.ControlValue;
@@ -235,8 +242,16 @@ void ControlSmooth(void)
 
 	TempF = TempValue.DirOutValue_New - TempValue.DirOutValue_Old;
 	TempValue.DirOutValue = TempF*(DirectionConrtolPeriod + 1) / DIRECTION_CONTROL_PERIOD + TempValue.DirOutValue_Old;
-	TempValue.Dir_LeftOutValue = TempValue.DirOutValue;
-	TempValue.Dir_RightOutValue = -TempValue.DirOutValue;
+	if (TempValue.DirOutValue > 0)
+	{
+		TempValue.Dir_LeftOutValue = TempValue.DirOutValue;
+		TempValue.Dir_RightOutValue = -TempValue.DirOutValue*0.7;
+	}
+	else
+	{
+		TempValue.Dir_LeftOutValue = TempValue.DirOutValue*0.7;
+		TempValue.Dir_RightOutValue = -TempValue.DirOutValue;
+	}
 }
 void MotorControl_Out(void)
 {
@@ -269,27 +284,27 @@ void MotorControl_Out(void)
 	if (MotorControl.LeftMotorOutValue >= 0)
 	{
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
-		LPLD_SYSTICK_DelayUs(1);//手动插入死区时间
+		DeathTime_Delay();//手动插入死区时间
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, MotorControl.LeftMotorOutValue + DeathValueLeft);
 	}
 	else
 	{
 		MotorControl.LeftMotorOutValue = -MotorControl.LeftMotorOutValue; //为负值取反
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
-		LPLD_SYSTICK_DelayUs(1);
+		DeathTime_Delay();
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, MotorControl.LeftMotorOutValue + DeathValueLeft);
 	}
 	if (MotorControl.RightMotorOutValue >= 0)
 	{
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
-		LPLD_SYSTICK_DelayUs(1);
+		DeathTime_Delay();
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, MotorControl.RightMotorOutValue + DeathValueRight);
 	}
 	else
 	{
 		MotorControl.RightMotorOutValue = -MotorControl.RightMotorOutValue;
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
-		LPLD_SYSTICK_DelayUs(1);//
+		DeathTime_Delay();//
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, MotorControl.RightMotorOutValue + DeathValueRight);
 	}
 }
