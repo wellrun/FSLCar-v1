@@ -6,8 +6,8 @@
 #define MOTOR_OUT_MIN       -9000
 #define ANGLE_CONTROL_OUT_MAX			8000
 #define ANGLE_CONTROL_OUT_MIN			-8000
-#define SPEED_CONTROL_OUT_MAX			2000
-#define SPPED_CONTROL_OUT_MIN			-2000
+#define SPEED_CONTROL_OUT_MAX			3000
+#define SPPED_CONTROL_OUT_MIN			-3000
 #define CoderResolution 500 //编码器的线数
 #define TyreCircumference 20//轮胎周长CM
 //轮子转一圈..编码器增加5200
@@ -28,7 +28,7 @@ short SpeedControlPeriod, DirectionConrtolPeriod;
 
 void DeathTime_Delay(void)
 {
-	int t = 600;
+	int t = 100;
 	while (t>0)
 	{
 		t--;
@@ -219,10 +219,11 @@ void DirControlValueCale(void)
 	PreError = Dir_PID.LastError;
 	Dir_PID.LastError = Dir_PID.ThisError;
 	Dir_PID.ThisError = Dir_PID.ControlValue;
-	Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;//为了迎合微分项的负号
-	temp = PreError*0.2 + Dir_PID.LastError*0.3 + Dir_PID.ThisError*0.5;
+	Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;
+	//temp = PreError*0.2 + Dir_PID.LastError*0.3 + Dir_PID.ThisError*0.5;
 	//Dir_PID.OutValue = -temp*Dir_PID.Kp + Dir_PID.Kd*Dir_Diff;
-	Dir_PID.OutValue = Dir_Kp_Correction[(int)temp+50]*Dir_PID.Kp + Dir_Diff*Dir_PID.Kd;
+	//Dir_PID.OutValue = Dir_Kp_Correction[(int)temp+50]*Dir_PID.Kp + Dir_Diff*Dir_PID.Kd;
+	Dir_PID.OutValue = Dir_PID.ThisError* Dir_PID.Kp - Dir_Diff*Dir_PID.Kd;
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
 }

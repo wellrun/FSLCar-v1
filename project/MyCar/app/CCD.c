@@ -53,31 +53,18 @@ void ccd_exposure(void)
 	TimerMsCnt++;
 	SpeedControlPeriod++;
 	DirectionConrtolPeriod++;
-	integration_piont = 17 - IntegrationTime;
+	integration_piont = 20 - IntegrationTime;
 	if (integration_piont >= 2)
 	{
 		if (integration_piont == CCDTimeMs)
 		{
-			//StartIntegration_S();
-			StartIntegration_M();
+			StartIntegration_M();	
 		}
 	}
-	if (CCDTimeMs >= 17)
+	if (CCDTimeMs >= 20)
 	{
 		CCDTimeMs = 0;
 		CCDCP();
-	}
-	if (TimerMsCnt % 2 == 0)
-	{
-		TimeFlag_2Ms = 1;
-	}
-	/*if (TimerMsCnt % 5 == 0)
-	{
-	TimeFlag_5Ms = 1;
-	}*/
-	if (TimerMsCnt % 20 == 0)
-	{
-		TimeFlag_20Ms = 1;
 		DirectionConrtolPeriod = 0;
 	}
 	if (TimerMsCnt >= SPEED_CONTROL_PERIOD)
@@ -179,12 +166,11 @@ void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2)
 
 	//Delay 10us for sample the first pixel
 	/**/
-	for (i = 0; i < 200; i++) {                    //更改250，让CCD的图像看上去比较平滑，
+	for (i = 0; i < 100; i++) {                    //更改250，让CCD的图像看上去比较平滑，
 		SamplingDelay();  //200ns                  //把该值改大或者改小达到自己满意的结果。
 	}
 
 	//Sampling Pixel 1
-
 	*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD14));
 	*ImageData2 = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD15));
 	ImageData++;
@@ -920,18 +906,7 @@ void CCD_Deal_Slave(unsigned char *CCDArr)
 
 void CCD_ControlValueCale(void)
 {
-	/*if (CCDMsg == Msg_UseMainCCD)
-	{
-		Dir_PID.ControlValue = CCDMain_Status.ControlValue;
-	}
-	else if (CCDMsg == Msg_UseSlaveCCD)
-	{
-		Dir_PID.ControlValue = CCDSlave_Status.ControlValue;
-	}
-	else if (CCDMsg == Msg_Lost)
-	{
-		Dir_PID.ControlValue *= 0.7;
-	}*/
+/*
 	if (CCDMain_Status.Left_LostFlag == 1 && CCDMain_Status.Right_LostFlag == 1)
 	{//主CCD两条线都丢了,可能为十字
 		if (CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1)
@@ -961,8 +936,9 @@ void CCD_ControlValueCale(void)
 	{
 		Dir_PID.ControlValue = CCDMain_Status.ControlValue * 0.6 + CCDSlave_Status.ControlValue*0.4;
 	}
+*/
 
-	//Dir_PID.ControlValue = CCDMain_Status.ControlValue;
+	Dir_PID.ControlValue = CCDMain_Status.ControlValue;
 }
 
 
@@ -982,10 +958,10 @@ void CCDLineInit(void)
 		//{
 		CCDMain_Status.MidSet = 64;
 		CCDSlave_Status.MidSet = 64;
-		CCDMain_Status.LeftSet = 36;
-		CCDMain_Status.RightSet = 94;
-		CCDSlave_Status.LeftSet = 44;
-		CCDSlave_Status.RightSet = 83;
+		CCDMain_Status.LeftSet = 34;
+		CCDMain_Status.RightSet = 93;
+		CCDSlave_Status.LeftSet = 12;
+		CCDSlave_Status.RightSet = 116;
 		CCDMain_Status.InitOK = 1;
 
 		for (i = 0; i < 64; i++)

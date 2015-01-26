@@ -20,7 +20,7 @@ uint8 L3G4200_Init(void)
   //初始化I2C1
   i2c_init_param.I2C_I2Cx = I2C1;       //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_IntEnable = FALSE;
-  i2c_init_param.I2C_ICR = 0x2B;  //可根据实际电路更改SCL频率
+  i2c_init_param.I2C_ICR = 0x21;  //可根据实际电路更改SCL频率
   i2c_init_param.I2C_SclPin = PTC10;   //MPU
   i2c_init_param.I2C_SdaPin = PTC11;   //MPU
   i2c_init_param.I2C_Isr = NULL;
@@ -37,11 +37,11 @@ uint8 L3G4200_Init(void)
 	L3G4200_WriteReg(CONFIG, 0x02);//低通的值..低通频率不能太低了..
 	L3G4200_WriteReg(GYRO_CONFIG, 0x10);
 	L3G4200_WriteReg(ACCEL_CONFIG, 0x00);*/
-	 L3G4200_WriteReg(CTRL_REG1, 0xa9);//ODR400Hz和BW50Hz
-	 L3G4200_WriteReg(CTRL_REG2, 0x08);   //高通普通模式,截止0.5Hz
+	 L3G4200_WriteReg(CTRL_REG1, 0xEa);//ODR400Hz和BW50Hz
+	 L3G4200_WriteReg(CTRL_REG2, 0x00);   //高通普通模式,截止0.5Hz
 	 L3G4200_WriteReg(CTRL_REG3, 0x08);   //
-	 L3G4200_WriteReg(CTRL_REG4, 0x30);  //+-2000dps
-	 L3G4200_WriteReg(CTRL_REG5, 0x02);//OUTREG开启高通滤波
+	 L3G4200_WriteReg(CTRL_REG4, 0xa0);  //+-2000dps
+	 L3G4200_WriteReg(CTRL_REG5, 0x00);//OUTREG开启高通滤波
     device_id = L3G4200_ReadReg(WHO_AM_I);
 	return device_id;
 }

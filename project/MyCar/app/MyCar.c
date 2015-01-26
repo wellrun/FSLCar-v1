@@ -26,7 +26,7 @@ PC16-CCDReady(20Ms);
 #define Scope40Ms 15
 #define ScopeCCDReady 16
 #define CCD2
-#define CAR_STAND_ANG_MAX -10
+#define CAR_STAND_ANG_MAX -5
 #define CAR_STAND_ANG_MIN -55
 char CarStandFlag = 1;
 CarInfo_TypeDef CarInfo_Now;
@@ -48,11 +48,11 @@ extern uint8 debugerConnected; //是否连接到调试器
 extern TempOfMotor_TypeDef TempValue; //临时存储角度和速度控制浮点变量的结构体
 extern float AngleIntegraed;//对角速度积分的角度值
 //--控制区
- uint8 Debuger = 0;
+ uint8 Debuger = 1;
  uint8 CCDOn = 1;
  uint8 CCDSendImage = 0;
  uint8 AngleCale = 1;
- uint8 AngDataSend =1;
+ uint8 AngDataSend =0;
  char CCDSendToDebuger = 0;//发送到调试器
 //控制区结束
 char WhichCCD=0;
@@ -97,27 +97,21 @@ void AngleCon_Isr(void)
 	if (AngleCale == 1)
 	{
 		LPLD_GPIO_Toggle_b(PTC, Scope4Ms);
-		//if (CarStandFlag == 1)
-		//{
 		AngleGet();
 		AngleControlValueCalc();
-		//MotorControl_Out();
 		if (((CarInfo_Now.CarAngle < CAR_STAND_ANG_MIN) || (CarInfo_Now.CarAngle > CAR_STAND_ANG_MAX)))
 		{
 			CarStandFlag = 0;
 			Speed_PID.OutValueSum = 0;
 			Dir_PID.OutValueSum = 0;
 		}
-           else
-                  CarStandFlag=1;
+        else
+            CarStandFlag=1;
 	}
 	AngData_Ready = 1;
 	if (CarStandFlag == 1 && CarStop == 0)
 	{
-		//CarStandFlag = 1;
-		//MotorControl_Out();//计算角度以后立即输出一次电机值
 		MotorControl_Out(); //输出电机控制的值
-                LPLD_GPIO_Toggle_b(PTC, Scope20Ms);
 	}
 	else
 	{
@@ -131,7 +125,7 @@ void AngleCon_Isr(void)
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
 		AngleGet();
-		if (CarInfo_Now.CarAngle > (CAR_STAND_ANG_MIN + 10) && CarInfo_Now.CarAngle < (CAR_STAND_ANG_MAX - 10))
+		if (CarInfo_Now.CarAngle > (CAR_STAND_ANG_MIN + 5) && CarInfo_Now.CarAngle < (CAR_STAND_ANG_MAX - 10))
 		{
 			CarStandFlag = 1;
 		}
@@ -141,9 +135,7 @@ void AngleCon_Isr(void)
 
 void CCDCP(void)
 {
-	//CCDReady = 0;
 	LPLD_GPIO_Toggle_b(PTC, ScopeCCDReady);
-	//Timer_ReSet();  //重置程序时间计数器
 	if (CCDOn == 1)
 	{
 		ImageCapture_M(CCDM_Arr, CCDS_Arr);
@@ -180,10 +172,7 @@ void main(void)
 	while (1)
 	{
 		//更改了时间片的模式
-		if (CCDReady == 1)
-		{
 
-		}
 		if (TimeFlag_40Ms == 1)
 		{
 			TimeFlag_40Ms = 0;

@@ -16,7 +16,7 @@
  * LPLD提示：MK60DZ10不推荐使用100MHz以上频率，可能引起不可修复的故障
  *           此列表为LPLD固件库列出的常用频率，可以满足各种功能、功耗需求
  */
-#define CORE_CLK_MHZ        PLL_100       
+#define CORE_CLK_MHZ        PLL_120       
    
 /*
  * 总线频率定义(BUS_CLK_MHZ)
