@@ -67,8 +67,10 @@ typedef struct
 
 typedef struct
 {
-	//signed char LeftLineArr[60];
-	//signed char RightLineArr[60];
+	signed char LeftLineArr[100];
+	signed char RightLineArr[100];
+	signed short Weighting[100];//加权值..放大10倍
+	signed short BendEndWeighting[30];//过弯完成以后的权值,放大10倍;
 	signed char SearchBegin;
 	signed char LeftPoint;
 	signed char RightPoint;
@@ -108,7 +110,8 @@ unsigned char PixelAverage(unsigned char len, unsigned char *data);
 void SendImageData(unsigned char *ImageData);
 void SendHex(unsigned char hex);
 void CCD_ControlValueCale(void);
-
+void CCD_GetLine(void);
+void CCD_Deal_Both(void);
 #endif
 
 

@@ -47,18 +47,24 @@ extern unsigned char CCDTimeMs;//时间片标志
 extern uint8 debugerConnected; //是否连接到调试器
 extern TempOfMotor_TypeDef TempValue; //临时存储角度和速度控制浮点变量的结构体
 extern float AngleIntegraed;//对角速度积分的角度值
+extern uint8 IntegrationTime;
+extern float IntSum;
 //--控制区
  uint8 Debuger = 1;
  uint8 CCDOn = 1;
  uint8 CCDSendImage = 0;
  uint8 AngleCale = 1;
  uint8 AngDataSend =0;
- char CCDSendToDebuger = 0;//发送到调试器
+ signed char CCDtoPC = 1;//为0发送到山外调试器,为1发送到蓝宙ccd或者调试器
+
+
+ signed char CCDSendToDebuger = 0;//发送到调试器
 //控制区结束
 char WhichCCD=0;
 uint8 AngSendCount = 0; //控制角度的发送次数
 unsigned char testbyte[4];
 unsigned char TempArr[128];
+unsigned char ShanWaiCCD[128 * 2];
 char CCDDataSendOK = 0;
 
 char CCDDataSendStart = 0;
@@ -103,10 +109,12 @@ void AngleCon_Isr(void)
 		{
 			CarStandFlag = 0;
 			Speed_PID.OutValueSum = 0;
-			Dir_PID.OutValueSum = 0;
+			IntSum=0;
 		}
-        else
-            CarStandFlag=1;
+		else
+		{
+			CarStandFlag = 1;
+		}
 	}
 	AngData_Ready = 1;
 	if (CarStandFlag == 1 && CarStop == 0)
@@ -124,11 +132,6 @@ void AngleCon_Isr(void)
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
-		AngleGet();
-		if (CarInfo_Now.CarAngle > (CAR_STAND_ANG_MIN + 5) && CarInfo_Now.CarAngle < (CAR_STAND_ANG_MAX - 10))
-		{
-			CarStandFlag = 1;
-		}
 	}
 }
 
@@ -138,9 +141,10 @@ void CCDCP(void)
 	LPLD_GPIO_Toggle_b(PTC, ScopeCCDReady);
 	if (CCDOn == 1)
 	{
-		ImageCapture_M(CCDM_Arr, CCDS_Arr);
 		CCD_Deal_Main(CCDM_Arr);
-		CCD_Deal_Slave(CCDS_Arr);			
+		CCD_Deal_Slave(CCDS_Arr);//现在这两个函数只负责找到线
+		CCD_Deal_Both();
+		//CCD_GetLine();
 		if (CCDMain_Status.InitOK == 0)
 		{
 			CCDLineInit();
@@ -149,6 +153,10 @@ void CCDCP(void)
 		{
 			CCD_ControlValueCale();
 			DirControlValueCale();//方向控制
+			if (CarStandFlag == 1)
+			{
+				MotorControl_Out();
+			}
 		}
 		CCDDataSendStart = 1;
 	}
@@ -158,6 +166,7 @@ void CCDCP(void)
 void main(void)
 {
 	int i = 0;
+	signed char KeyChanged = 0;
 	short CCDSendPointCnt = 0;
 	short ScopeSendPointCnt = 0;
 	short DebugDataPointCnt = 0;
@@ -165,7 +174,7 @@ void main(void)
 	Struct_Init(); //初始各种结构体的值
 	CarInit();
 	//LPLD_Flash_Init(); //初始化EEPROM,所有的初始化数据保存在EEPROM的第60个扇区
-	//	Flash_WriteTest(); 测试flash区
+	//Flash_WriteTest(); 测试flash区
 
 	//Timer_Init(); //初始化程序时间计数器
 	EnableInterrupts;
@@ -181,12 +190,13 @@ void main(void)
             //LPLD_GPIO_Output_b(PTA,17,0);
 			SpeedControlValueCalc();
 		}
-	/*	if (TimeFlag_2Ms == 1)
+		if (CCDReady==1)
 		{
-			TimeFlag_2Ms = 0;
-			LPLD_GPIO_Toggle_b(PTC, Scope5Ms);
-		}*/
-		if (CCDSendImage == 1)
+			CCDReady = 0;
+			CCDCP();
+		}
+
+		if (CCDSendImage == 1 &&CCDtoPC==1)//发送到调试器
 		{
 			if (CCDDataSendStart == 1)
 			{
@@ -246,6 +256,38 @@ void main(void)
 				}
 			}
 		}
+
+		if (CCDSendImage == 1 && CCDtoPC==0)//发送到山外调试器
+		{
+			if (CCDDataSendStart == 1)
+			{
+				if (CCDDataSendOK == 1)
+				{
+					CCDDataSendOK = 0;
+					for (i = 0; i < 128; i++)
+					{
+						ShanWaiCCD[i] = CCDM_Arr[i];
+					}
+					for (i = 0; i < 128; i++)
+					{
+						ShanWaiCCD[i+128] = CCDS_Arr[i];
+					}
+					LPLD_UART_PutChar(UART5, 0x02);
+					LPLD_UART_PutChar(UART5, 0xfd);
+					
+				}
+				LPLD_UART_PutChar(UART5, ShanWaiCCD[CCDSendPointCnt]);
+				CCDSendPointCnt++;
+				if (CCDSendPointCnt >= 256)
+				{
+					CCDSendPointCnt = 0;
+					LPLD_UART_PutChar(UART5, 0xfd);
+					LPLD_UART_PutChar(UART5, 0x02);
+					CCDDataSendOK = 1;
+					CCDDataSendStart = 0;
+				}
+			}
+		}
 		if (AngDataSend == 1 && AngSendToDebuger==0)
 		{
 			if (AngData_Ready == 1)
@@ -272,15 +314,23 @@ void main(void)
 // 					Float2Byte(&tempfloat, OUTDATA, 14);
 
 
-					//调方向
+					//调方向和速度
 // 					tempfloat = (float)Dir_PID.ControlValue;
 // 					Float2Byte(&tempfloat, OUTDATA, 2);
-// 					tempfloat = (float)CCDMain_Status.LeftPoint;
+// 					tempfloat = (float)CarInfo_Now.CarSpeed;
 // 					Float2Byte(&tempfloat, OUTDATA, 6);
-// 					tempfloat = (float)CCDMain_Status.RightPoint;
+// 					tempfloat = (float)Speed_PID.SpeedSet;
 // 					Float2Byte(&tempfloat, OUTDATA, 10);
-// 					//tempfloat = (float)CCDMain_Status.ControlValue;
-// 					//tempfloat = Dir_Diff;
+// 					tempfloat = (float)CarInfo_Now.CarAngle;
+// 					Float2Byte(&tempfloat, OUTDATA, 14);
+
+// 					tempfloat = (float)Dir_PID.ControlValue;
+// 					Float2Byte(&tempfloat, OUTDATA, 2);
+// 					tempfloat = (float)CCDSlave_Status.LeftPoint;
+// 					Float2Byte(&tempfloat, OUTDATA, 6);
+// 					tempfloat = (float)CCDSlave_Status.RightPoint;
+// 					Float2Byte(&tempfloat, OUTDATA, 10);
+// 					tempfloat = (float)CarInfo_Now.CarAngle;
 // 					Float2Byte(&tempfloat, OUTDATA, 14);
 				}
 				LPLD_UART_PutChar(UART5, OUTDATA[ScopeSendPointCnt]);
@@ -391,7 +441,7 @@ void main(void)
                       //  Speed_PID.IntegralSum_Left=0;
 						//Speed_PID.IntegralSum_Right = 0;
 						Speed_PID.OutValueSum = 0;
-						Dir_PID.OutValueSum = 0;
+						//Dir_PID.OutValueSum = 0;
 					}
 					else
 					{
@@ -400,7 +450,7 @@ void main(void)
 						//Speed_PID.IntegralSum_Left = 0;
 						//Speed_PID.IntegralSum_Right = 0;
 						Speed_PID.OutValueSum = 0;
-						Dir_PID.OutValueSum = 0;
+						//Dir_PID.OutValueSum = 0;
 					}
 				}
 				else if (Temp1B == 0xdf)
@@ -496,6 +546,53 @@ void main(void)
 					LPLD_UART_PutChar(UART5, 0x6f);
 				}
 			}
+		}
+		if (LPLD_GPIO_Input_b(PTB, 20) == 0)//发送数据到上位机切换模式
+		{
+			Debuger = 0;
+			KeyChanged = 0;
+			if (LPLD_GPIO_Input_b(PTB, 21) == 0)
+			{
+				CCDSendImage = 1;
+				AngDataSend = 0;//发送CCD图像
+				CCDtoPC = 0;
+			}
+			else
+			{
+				CCDSendImage = 0;
+				AngDataSend = 1;//发送角度图像
+				CCDtoPC = 1;
+			}
+			LPLD_GPIO_Output_b(PTE, 4, 1);
+		}
+		else
+		{
+
+			if (KeyChanged == 0)
+			{
+				AngDataSend = 0;
+				CCDSendImage = 0;
+				KeyChanged = 1;
+				CCDtoPC = 1;
+				Debuger = 1;
+			}
+			LPLD_GPIO_Output_b(PTE, 4, 0);
+		}
+		if (LPLD_GPIO_Input_b(PTB, 22) == 1 && LPLD_GPIO_Input_b(PTB, 23) == 1)//这段判定用于修改积分时间
+		{
+			IntegrationTime = 3;
+		}
+		else if (LPLD_GPIO_Input_b(PTB, 22) == 0 && LPLD_GPIO_Input_b(PTB, 23) == 0)
+		{
+			IntegrationTime = 6;
+		}
+		else if (LPLD_GPIO_Input_b(PTB, 22) == 1 && LPLD_GPIO_Input_b(PTB, 23) == 0)
+		{
+			IntegrationTime = 4;
+		}
+		else if (LPLD_GPIO_Input_b(PTB, 22) == 0 && LPLD_GPIO_Input_b(PTB, 23) == 1)
+		{
+			IntegrationTime = 5;
 		}
 
 	}

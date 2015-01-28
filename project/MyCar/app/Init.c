@@ -13,6 +13,7 @@ UART_InitTypeDef Init_UART_Struct;
 //I2C_InitTypeDef Init_I2C_Struct;
 DMA_InitTypeDef Init_DMA_Struct;
 NVIC_InitTypeDef Init_NVIC_Struct;
+SYSTICK_InitType Init_Systick_Struct;
 
 extern void ccd_exposure(void);
 extern void UART5_RxIsr(void);
@@ -35,17 +36,22 @@ extern void UART5_RxIsr(void);
 
 extern void AngleCon_Isr(void);
 
+void Init_Systick(void)
+{
+	Init_Systick_Struct.SYSTICK_PeriodUs = 1;
+	LPLD_SYSTICK_Init(Init_Systick_Struct);
+}
 
 void Init_NVIC(void)
 {
 	Init_NVIC_Struct.NVIC_IRQChannel = PIT0_IRQn;
 	Init_NVIC_Struct.NVIC_IRQChannelGroupPriority = NVIC_PriorityGroup_1;
-	Init_NVIC_Struct.NVIC_IRQChannelPreemptionPriority = 1;
+	Init_NVIC_Struct.NVIC_IRQChannelPreemptionPriority = 0;
 	LPLD_NVIC_Init(Init_NVIC_Struct);
 	//配置PIT1的NVIC分组
 	Init_NVIC_Struct.NVIC_IRQChannel = PIT1_IRQn;
 	Init_NVIC_Struct.NVIC_IRQChannelGroupPriority = NVIC_PriorityGroup_1;
-	Init_NVIC_Struct.NVIC_IRQChannelPreemptionPriority = 0;
+	Init_NVIC_Struct.NVIC_IRQChannelPreemptionPriority = 1;
 	LPLD_NVIC_Init(Init_NVIC_Struct);
 }
 void Init_PIT(void)
@@ -144,31 +150,42 @@ void Init_GPIO(void)
 	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin4 | GPIO_Pin5;
 	LPLD_GPIO_Init(Init_GPIO_Struct);//两个led
 
+	Init_GPIO_Struct.GPIO_PTx = PTB;
+	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin20 | GPIO_Pin21 | GPIO_Pin22 | GPIO_Pin23;
+	Init_GPIO_Struct.GPIO_Dir = DIR_INPUT;
+	LPLD_GPIO_Init(Init_GPIO_Struct);//4个拨码开关
+
 }
 
 void CarInit(void)
 {
 	char whoami = 1; //用來判斷寄存器正常不正常
-	//SInit_NVIC();
+	Init_NVIC();
+	Init_Systick();
+	Init_GPIO();
 	Init_ADC();
 	Init_PIT();
-	Init_GPIO();
 	Init_FTM();
+	
 	whoami = LPLD_MMA8451_Init();
 	if (whoami != 0x1a)
+	{
+		LPLD_GPIO_Output_b(PTE, 5, 1);
+		while (1)
+		{
+			LPLD_SYSTICK_DelayMs(500);
+			LPLD_GPIO_Toggle_b(PTE, 5);
+		}
+	}
+	else
+		LPLD_GPIO_Output_b(PTE, 5, 0);
+	if (L3G4200_Init() != 0xd3)
 	{
 		LPLD_GPIO_Output_b(PTE, 5, 1);
 		while (1);
 	}
 	else
 		LPLD_GPIO_Output_b(PTE, 5, 0);
-	if (L3G4200_Init() != 0xd3)
-	{
-		LPLD_GPIO_Output_b(PTE, 4, 1);
-		while (1);
-	}
-	else
-		LPLD_GPIO_Output_b(PTE, 4, 0);
 	/*
 	if (MPU6050_Init() != 0x68)
 	{

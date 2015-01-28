@@ -8,9 +8,9 @@
 #include "datastructure.h"
 // #define CONTROL_PERIOD	5 //电机的输出周期
 // #define SPEED_CONTROL_COUNT 8 //速度控制的分割次数
-#define SPEED_CONTROL_PERIOD 90 //速度控制的总时间40ms
+#define SPEED_CONTROL_PERIOD 89//速度控制的总时间40ms
 //#define DIRECTION_CONTROL_COUNT			4  //方向控制是20Ms一次
-#define DIRECTION_CONTROL_PERIOD		20//方向控制的总时间
+#define DIRECTION_CONTROL_PERIOD		18//方向控制的总时间
 
 
 extern CarInfo_TypeDef CarInfo_Now; //当前车子的信息

@@ -65,6 +65,8 @@ typedef struct
 	float Kp;
 	float Kd;
 
+	float Kp_Temp;
+	float Kd_Temp;
 	float ThisError;
 	float LastError;
 	float PreError;
