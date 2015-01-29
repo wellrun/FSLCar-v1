@@ -9,8 +9,8 @@
 #include "Control.h"
 #include "CCD.h"
 #include "Communicate.h"
-//#include "MPU6050.h"
-#include "L3G4200.h"
+#include "MPU6050.h"
+//#include "L3G4200.h"
 //#include "DataScope_DP.h"
 /*选了几个引脚来判断时序是否正常
 PC12-2Ms;
@@ -35,6 +35,8 @@ short acc_x, gyro_2;
 float tempfloat = 0;//临时变量,没有意义
 float Ang_dt = 0.005;//全局变量,所有需要周期的都是这个,一个周期20ms
 float Speed_Dt = 0.04;//速度的周期
+signed char Beep = 0;
+int Beep_TimeMs = 0;
 #define ScopeDataNum 4
 #define OutDataLen (ScopeDataNum*4+4)
 #define PageDateLen (4*9)
@@ -48,6 +50,7 @@ extern uint8 debugerConnected; //是否连接到调试器
 extern TempOfMotor_TypeDef TempValue; //临时存储角度和速度控制浮点变量的结构体
 extern float AngleIntegraed;//对角速度积分的角度值
 extern uint8 IntegrationTime;
+extern float SpeedSet_Variable ;
 extern float IntSum;
 //--控制区
  uint8 Debuger = 1;
@@ -109,6 +112,7 @@ void AngleCon_Isr(void)
 		{
 			CarStandFlag = 0;
 			Speed_PID.OutValueSum = 0;
+			Speed_PID.IntegralSum = 0;
 			IntSum=0;
 		}
 		else
@@ -173,6 +177,7 @@ void main(void)
 	DisableInterrupts;
 	Struct_Init(); //初始各种结构体的值
 	CarInit();
+	BeepBeepBeep(500);
 	//LPLD_Flash_Init(); //初始化EEPROM,所有的初始化数据保存在EEPROM的第60个扇区
 	//Flash_WriteTest(); 测试flash区
 
@@ -296,21 +301,21 @@ void main(void)
 				{
 					AngDataSendOK = 0;
 					//调直立用
-					Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
-					tempfloat = CarInfo_Now.CarAngSpeed;
-					Float2Byte(&tempfloat, OUTDATA, 10);
-					Float2Byte(&GravityAngle, OUTDATA, 6);
-					tempfloat = -(float)AngleIntegraed;
-					Float2Byte(&tempfloat, OUTDATA, 14);
+ 					Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
+ 					tempfloat = CarInfo_Now.CarAngSpeed;
+ 					Float2Byte(&tempfloat, OUTDATA, 10);
+ 					Float2Byte(&GravityAngle, OUTDATA, 6);
+ 					tempfloat = -(float)AngleIntegraed;
+ 					Float2Byte(&tempfloat, OUTDATA, 14);
 
 					//调速度PI
-// 					tempfloat = (float)Speed_PID.SpeedSet;
+// 					tempfloat = (float)SpeedSet_Variable;
 // 					Float2Byte(&tempfloat, OUTDATA, 2);
-// 					tempfloat = (float)TempValue.SpeedOutValue;
+// 					tempfloat = (float)TempValue.AngControl_OutValue;
 // 					Float2Byte(&tempfloat, OUTDATA, 6);
 // 					tempfloat = (float)CarInfo_Now.CarSpeed;
 // 					Float2Byte(&tempfloat, OUTDATA, 10);
-// 					tempfloat = Speed_PID.OutValueSum;
+// 					tempfloat = Speed_PID.OutValue;
 // 					Float2Byte(&tempfloat, OUTDATA, 14);
 
 
@@ -441,6 +446,7 @@ void main(void)
                       //  Speed_PID.IntegralSum_Left=0;
 						//Speed_PID.IntegralSum_Right = 0;
 						Speed_PID.OutValueSum = 0;
+						Speed_PID.IntegralSum = 0;
 						//Dir_PID.OutValueSum = 0;
 					}
 					else
@@ -450,6 +456,7 @@ void main(void)
 						//Speed_PID.IntegralSum_Left = 0;
 						//Speed_PID.IntegralSum_Right = 0;
 						Speed_PID.OutValueSum = 0;
+						Speed_PID.IntegralSum = 0;
 						//Dir_PID.OutValueSum = 0;
 					}
 				}

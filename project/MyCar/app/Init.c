@@ -1,9 +1,9 @@
 #include "init.h"
 #include "datastructure.h"
 #include "DEV_MMA8451.h"
-//#include "mpu6050.h"
+#include "mpu6050.h"
 #include "ccd.h"
-#include "l3g4200.h"
+//#include "l3g4200.h"
 ADC_InitTypeDef Init_ADC_Struct;
 ADC_InitTypeDef Init_ADC_CCD_Struct;
 GPIO_InitTypeDef Init_GPIO_Struct;
@@ -17,6 +17,7 @@ SYSTICK_InitType Init_Systick_Struct;
 
 extern void ccd_exposure(void);
 extern void UART5_RxIsr(void);
+extern void Beep_Isr(void);
 
 // void PIT2_ISR(void)
 // {
@@ -74,6 +75,12 @@ void Init_PIT(void)
 	LPLD_PIT_Init(Init_PIT_Struct);
 	LPLD_PIT_EnableIrq(Init_PIT_Struct); //CCD的毫秒定时器
 
+	Init_PIT_Struct.PIT_Pitx = PIT2;
+	Init_PIT_Struct.PIT_PeriodMs = 11;
+	Init_PIT_Struct.PIT_Isr = Beep_Isr;
+	LPLD_PIT_Init(Init_PIT_Struct);
+	LPLD_PIT_EnableIrq(Init_PIT_Struct); //蜂鸣器的毫秒定时器
+
 
 }
 
@@ -105,7 +112,7 @@ void Init_ADC(void)
 //	 *      |__AD15          --单端(ADC1_SE15--PTB11) //Gyro_2
 	//LPLD_ADC_Chn_Enable(ADC1,AD12);//线性CCD的AD端口
 	Init_ADC_CCD_Struct.ADC_Adcx = ADC0;
-	Init_ADC_CCD_Struct.ADC_BitMode = SE_12BIT;
+	Init_ADC_CCD_Struct.ADC_BitMode = SE_8BIT;
 	LPLD_ADC_Init(Init_ADC_CCD_Struct);
 	LPLD_ADC_Chn_Enable(ADC0, AD14); //CCD1的AD端口 PTc0
 	LPLD_ADC_Chn_Enable(ADC0, AD15);//CCD2的AD端口 PTC1
@@ -143,7 +150,8 @@ void Init_GPIO(void)
 	LPLD_GPIO_Init(Init_GPIO_Struct);
 
 	Init_GPIO_Struct.GPIO_PTx = PTC;
-	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin12 | GPIO_Pin13 | GPIO_Pin14 | GPIO_Pin15 | GPIO_Pin16;
+        Init_GPIO_Struct.GPIO_Output = OUTPUT_L;
+	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin17 | GPIO_Pin13 | GPIO_Pin14 | GPIO_Pin15 | GPIO_Pin16;
 	LPLD_GPIO_Init(Init_GPIO_Struct);//在示波器上面看时序是否正常
 
 	Init_GPIO_Struct.GPIO_PTx = PTE;
@@ -179,7 +187,7 @@ void CarInit(void)
 	}
 	else
 		LPLD_GPIO_Output_b(PTE, 5, 0);
-	if (L3G4200_Init() != 0xd3)
+	if (MPU6050_Init() != 0x68)
 	{
 		LPLD_GPIO_Output_b(PTE, 5, 1);
 		while (1);

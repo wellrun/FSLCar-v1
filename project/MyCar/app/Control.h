@@ -26,6 +26,7 @@ void MotorControl_Out(void);
 void AngleControlValueCalc(void);
 void SpeedControlValueCalc(void);
 void DirControlValueCale(void);
+void BeepBeepBeep(int Times);
 
 
 

@@ -169,8 +169,8 @@ void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2)
 	}
 
 	//Sampling Pixel 1
-	*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD14));
-	*ImageData2 = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD15));
+	*ImageData = LPLD_ADC_Get(ADC0, AD14);
+	*ImageData2 = LPLD_ADC_Get(ADC0, AD15);
 	ImageData++;
 	ImageData2++;
 	CLK_ClrVal_M();
@@ -188,8 +188,8 @@ void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2)
 		SamplingDelay();
 		//Sampling Pixel 2~128
 
-		*ImageData = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD14));
-		*ImageData2 = u32_trans_uint8(LPLD_ADC_Get(ADC0, AD15));
+		*ImageData = LPLD_ADC_Get(ADC0, AD14);
+		*ImageData2 = LPLD_ADC_Get(ADC0, AD15);
 		ImageData++;
 		ImageData2++;
 		CLK_ClrVal_M();
@@ -483,7 +483,7 @@ void CCD_GetLine(void)
 
 #define LeftBoundary 6 //去掉开始的10个点
 #define RightBoundary 122//去掉后面的10个点
-#define CCD_Threshold 45//40  //这是两组两组差的阈值//实际使用的时候取
+#define CCD_Threshold 50//40  //这是两组两组差的阈值//实际使用的时候取
 #define LeftLostPrepare 10
 #define RightLostPrepare 118 //左右准备丢线的阈值
 #define LeftMode -1
@@ -777,9 +777,119 @@ void CCD_Deal_Slave(unsigned char *CCDArr)
 	}
 
 }
+
 void CCD_Deal_Both(void)
 {
 	static int Cnt_TurnLeft = 0, Cnt_TurnRight = 0, Cnt_Straight=0;
+	static int Cnt_SpeedChange = 0, Cnt_Lost_Main_L = 0, Cnt_Lost_Main_R = 0, Cnt_Lost_Slave_L = 0, Cnt_Lost_Slave_R = 0;
+	static signed char Flag_Lost_Main_L = 0, Flag_Lost_Main_R = 0, Flag_Lost_Slave_R = 0, Flag_Lost_Slave_L= 0, Flag_Cross = 0;
+	static int Cnt_Cross = 0;
+	if (CCDSlave_Status.Left_LostFlag==1)
+	{
+		if (Flag_Lost_Slave_L == 0)
+		{
+			Cnt_Lost_Slave_L++;
+			if (Cnt_Lost_Slave_L > 2)
+			{
+				Flag_Lost_Slave_L = 1;
+			}
+			else
+			{
+				CCDSlave_Status.Left_LostFlag = 0;
+				CCDSlave_Status.LeftPoint = CCDSlave_Status.LastLeftPoint;
+			}
+		}
+	
+	}
+	else
+	{
+		Flag_Lost_Slave_L = 0;
+		Cnt_Lost_Slave_L = 0;
+	}
+	if (CCDSlave_Status.Right_LostFlag == 1)
+	{
+		if (Flag_Lost_Slave_R == 0)
+		{
+			Cnt_Lost_Slave_R++;
+			
+			if (Cnt_Lost_Slave_R>2)
+			{
+				Flag_Lost_Slave_R = 1;
+			}
+			else
+			{
+				CCDSlave_Status.Right_LostFlag = 0;
+				CCDSlave_Status.RightPoint = CCDSlave_Status.LastRightPoint;
+			}
+			
+		}
+	}
+	else
+	{
+		Flag_Lost_Slave_R = 0;
+		Cnt_Lost_Slave_R = 0;
+	}
+	if (Flag_Lost_Slave_R==1 && Flag_Lost_Slave_L==1 &&(CCDMain_Status.MidPoint-CCDMain_Status.MidSet<6 || CCDMain_Status.MidPoint-CCDMain_Status.MidSet>-6))
+	{
+		if (Flag_Cross == 0)
+		{
+			Cnt_Cross++;
+			if (Cnt_Cross > 2)
+			{
+				Flag_Cross = 1;
+			}
+		}
+	}
+	else
+	{
+		Flag_Cross = 0;
+		Cnt_Cross = 0;
+	}
+	if (CCDMain_Status.Left_LostFlag == 1)
+	{
+		if (Flag_Lost_Main_L == 0)
+		{
+			Cnt_Lost_Main_L++;
+			if (Cnt_Lost_Main_L > 2)
+			{
+				Flag_Lost_Main_L = 1;
+			}
+			else
+			{
+				CCDMain_Status.Left_LostFlag = 0;
+				CCDMain_Status.LeftPoint = CCDMain_Status.LastLeftPoint;
+			}
+		}
+	}
+	else
+	{
+		Cnt_Lost_Main_L = 0;
+		Flag_Lost_Main_L = 0;
+	}
+	if (CCDMain_Status.Right_LostFlag == 1)
+	{
+		if (Flag_Lost_Main_R == 0)
+		{
+			Cnt_Lost_Main_R++;
+			if (Cnt_Lost_Main_R > 2)
+			{
+				Flag_Lost_Main_R = 1;
+			}
+			else
+			{
+				CCDMain_Status.Right_LostFlag = 0;
+				CCDMain_Status.RightPoint = CCDMain_Status.LastRightPoint;
+			}
+		}
+	}
+	else
+	{
+		Cnt_Lost_Main_R = 0;
+		Flag_Lost_Main_R = 0;
+	}
+
+
+	//如果十字，则从ccd出现一条线就引导，并且十字清零
 	if ((CCDMain_Status.Left_LostFlag == 1 && CCDMain_Status.Right_LostFlag == 1))
 	{
 		CCDMain_Status.ControlValue = 0;
@@ -802,6 +912,7 @@ void CCD_Deal_Both(void)
 		CCDSlave_Status.MidPoint = 1;
 		CCDSlave_Status.ControlValue = 0;
 	}
+	
 /*
 	if ((CCDSlave_Status.MidPoint - CCDMain_Status.MidPoint <5) && (CCDSlave_Status.MidPoint - CCDMain_Status.MidPoint)>-5 && \
 		((CCDMain_Status.MidPoint - 64) < 4 && (CCDMain_Status.MidPoint - 64) > -4))

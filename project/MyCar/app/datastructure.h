@@ -41,10 +41,18 @@ typedef struct
 	//float OutMax;//积分饱和值
 	//float OutMin;//积分饱和值
 
-	//float ThisError_Left;
-	//float LastError_Left;
-	//float PreError_Left;
-	//float OutValueSum_Left;//增量和
+	float ThisError_Left;
+	float LastError_Left;
+	float PreError_Left;
+	float OutValueSum_Left;//增量和
+
+
+	float ThisError_Right;
+	float LastError_Right;
+	float PreError_Right;
+	float OutValueSum_Right;//增量和
+
+
 
 	float ThisError;
 	float LastError;
@@ -53,10 +61,7 @@ typedef struct
 	float IntegralSum;//积分的误差
 	float OutValue;//本次的输出控制量
 
-//	float ThisError_Right;
-	//float LastError_Right;
-	//float PreError_Right;
-	//float OutValueSum_Right;//增量和
+	
 
 }SpeedPID_TypeDef;
 
