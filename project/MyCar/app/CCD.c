@@ -46,6 +46,7 @@ char TimerMsCnt = 0;
 // #define DIRECTION_CONTROL_COUNT			5
 // #define DIRECTION_CONTROL_PERIOD		(DIRECTION_CONTROL_COUNT * CONTROL_PERIOD)
 extern void CCDCP(void);
+extern void Beep_Isr(void);
 void ccd_exposure(void)
 {
 	unsigned char integration_piont;
@@ -71,6 +72,7 @@ void ccd_exposure(void)
 		TimerMsCnt = 0;
 		SpeedControlPeriod = 0;
 	}
+	Beep_Isr();
 }
 
 

@@ -55,6 +55,7 @@ void Init_NVIC(void)
 	Init_NVIC_Struct.NVIC_IRQChannelPreemptionPriority = 1;
 	LPLD_NVIC_Init(Init_NVIC_Struct);
 }
+extern void Status_Check(void);
 void Init_PIT(void)
 {
 // 	Init_PIT_Struct.PIT_Pitx = PIT2;
@@ -75,13 +76,19 @@ void Init_PIT(void)
 	LPLD_PIT_Init(Init_PIT_Struct);
 	LPLD_PIT_EnableIrq(Init_PIT_Struct); //CCD的毫秒定时器
 
+/*
 	Init_PIT_Struct.PIT_Pitx = PIT2;
 	Init_PIT_Struct.PIT_PeriodMs = 11;
 	Init_PIT_Struct.PIT_Isr = Beep_Isr;
 	LPLD_PIT_Init(Init_PIT_Struct);
-	LPLD_PIT_EnableIrq(Init_PIT_Struct); //蜂鸣器的毫秒定时器
+	LPLD_PIT_EnableIrq(Init_PIT_Struct); //蜂鸣器的毫秒定时器*/
 
-
+/*
+	Init_PIT_Struct.PIT_Pitx = PIT3;
+	Init_PIT_Struct.PIT_PeriodMs = 26;
+	Init_PIT_Struct.PIT_Isr = Status_Check;
+	LPLD_PIT_Init(Init_PIT_Struct);
+	LPLD_PIT_EnableIrq(Init_PIT_Struct); //蜂鸣器的毫秒定时器*/
 }
 
 //void Init_I2C(void)
@@ -167,7 +174,7 @@ void Init_GPIO(void)
 
 void CarInit(void)
 {
-	char whoami = 1; //用來判斷寄存器正常不正常
+	static char whoami = 1; //用來判斷寄存器正常不正常
 	Init_NVIC();
 	Init_Systick();
 	Init_GPIO();
@@ -176,6 +183,7 @@ void CarInit(void)
 	Init_FTM();
 	
 	whoami = LPLD_MMA8451_Init();
+/*
 	if (whoami != 0x1a)
 	{
 		LPLD_GPIO_Output_b(PTE, 5, 1);
@@ -186,8 +194,9 @@ void CarInit(void)
 		}
 	}
 	else
-		LPLD_GPIO_Output_b(PTE, 5, 0);
-	if (MPU6050_Init() != 0x68)
+		LPLD_GPIO_Output_b(PTE, 5, 0);*/
+        whoami=MPU6050_Init();
+	if (whoami != 0x68)
 	{
 		LPLD_GPIO_Output_b(PTE, 5, 1);
 		while (1);

@@ -4,8 +4,8 @@
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
 #define MOTOR_OUT_MAX       9000
 #define MOTOR_OUT_MIN       -9000
-#define ANGLE_CONTROL_OUT_MAX			12000
-#define ANGLE_CONTROL_OUT_MIN			-12000
+#define ANGLE_CONTROL_OUT_MAX			20000
+#define ANGLE_CONTROL_OUT_MIN			-20000
 #define SPEED_CONTROL_OUT_MAX			5500
 #define SPPED_CONTROL_OUT_MIN			-5500
 #define CoderResolution 500 //编码器的线数
@@ -191,86 +191,86 @@ void SpeedControlValueCalc(void)
 	TempValue.New_SpeedOutValueRight = p->OutValueSum_Right;*/
 
 
-	/*#define ErrorMax 100
-		SpeedGet();
-		static float Dir_ControlValue[8] = { 0 };
-		int i = 0, k = 0, j = 0;
-		float Dir_Diff_10 = 0;
-		for (i = 0; i < 7; i++)
-		{
+#define ErrorMax 100
+	SpeedGet();
+	static float Dir_ControlValue[8] = { 0 };
+	int i = 0, k = 0, j = 0;
+	float Dir_Diff_10 = 0;
+	for (i = 0; i < 7; i++)
+	{
 		Dir_ControlValue[i + 1] = Dir_ControlValue[i];
-		}
-		if (CCDSlave_Status.MidPoint != 1)
-		{
+	}
+	if (CCDSlave_Status.MidPoint != 1)
+	{
 		Dir_ControlValue[0] = CCDSlave_Status.MidPoint;
-		}
-		else
+	}
+	else
 		Dir_ControlValue[0] = Dir_ControlValue[1];
-		for (i = 0; i < 4; i++)
-		{
+	for (i = 0; i < 4; i++)
+	{
 		Dir_Diff_10 += Dir_ControlValue[i] - Dir_ControlValue[i + 4];
-		}
-		if (Dir_Diff_10>25 || Dir_Diff_10 < -25 || \
-		(((!(CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1))&& \
-		(!(CCDMain_Status.Left_LostFlag==1 && CCDMain_Status.Right_LostFlag==1))) && \
+	}
+	if (Dir_Diff_10>25 || Dir_Diff_10 < -25 || \
+		(((!(CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1)) && \
+		(!(CCDMain_Status.Left_LostFlag == 1 && CCDMain_Status.Right_LostFlag == 1))) && \
 		((CCDMain_Status.MidPoint - CCDSlave_Status.MidPoint >30) || \
 		(CCDMain_Status.MidPoint - CCDSlave_Status.MidPoint < -30))))
-		{//如果差分绝对值大于25或者在不全丢线的情况下 两个ccd的中线差大于30
+	{//如果差分绝对值大于25或者在不全丢线的情况下 两个ccd的中线差大于30
 		SpeedSet_Variable = p->SpeedSet;
 		BeepBeepBeep(400);
-		}
-		else
-		{
+	}
+	else
+	{
 		SpeedSet_Variable = p->SpeedSet;
-		}
-		p->ThisError = SpeedSet_Variable - CarInfo_Now.CarSpeed;//实现过弯减速
-		if (p->ThisError > ErrorMax)
+	}
+	p->ThisError = SpeedSet_Variable - CarInfo_Now.CarSpeed;//实现过弯减速
+	if (p->ThisError > ErrorMax)
 		p->ThisError = ErrorMax;
-		else if (p->ThisError < -ErrorMax)
+	else if (p->ThisError < -ErrorMax)
 		p->ThisError = -ErrorMax;
-		p->OutValue = p->Kp*(p->ThisError - p->LastError) \
+	p->OutValue = p->Kp*(p->ThisError - p->LastError) \
 		+ (p->Ki / 10.0)*p->ThisError \
 		+ p->Kd*(p->ThisError - 2 * p->LastError + p->PreError);
-		p->PreError = p->LastError;
-		p->LastError = p->ThisError;
-		p->OutValueSum += p->OutValue;
-		if (p->OutValueSum > SPEED_CONTROL_OUT_MAX)
+	p->PreError = p->LastError;
+	p->LastError = p->ThisError;
+	p->OutValueSum += p->OutValue;
+	if (p->OutValueSum > SPEED_CONTROL_OUT_MAX)
 		p->OutValueSum = SPEED_CONTROL_OUT_MAX;
-		else if (p->OutValueSum < SPPED_CONTROL_OUT_MIN)
+	else if (p->OutValueSum < SPPED_CONTROL_OUT_MIN)
 		p->OutValueSum = SPPED_CONTROL_OUT_MIN;
-		TempValue.Old_SpeedOutValue= TempValue.New_SpeedOutValue;
-		TempValue.New_SpeedOutValue = p->OutValueSum;*/
+	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
+	TempValue.New_SpeedOutValue = p->OutValueSum;
 
-#define ErrorMax 100
-	p->ThisError_Left = SpeedSet_Variable - CarInfo_Now.MotorCounterLeft / 10;
-	p->ThisError_Right = SpeedSet_Variable - CarInfo_Now.MotorCounterRight / 10;
-	if (p->ThisError_Right > ErrorMax)
+	/*#define ErrorMax 100
+		p->ThisError_Left = SpeedSet_Variable - CarInfo_Now.MotorCounterLeft / 10;
+		p->ThisError_Right = SpeedSet_Variable - CarInfo_Now.MotorCounterRight / 10;
+		if (p->ThisError_Right > ErrorMax)
 		p->ThisError_Right = ErrorMax;
-	else if (p->ThisError_Right < -ErrorMax)
+		else if (p->ThisError_Right < -ErrorMax)
 		p->ThisError_Right = -ErrorMax;
-	if (p->ThisError_Left > ErrorMax)
+		if (p->ThisError_Left > ErrorMax)
 		p->ThisError_Left = ErrorMax;
-	else if (p->ThisError_Left < -ErrorMax)
+		else if (p->ThisError_Left < -ErrorMax)
 		p->ThisError_Left = -ErrorMax;
-	p->OutValueSum_Left += p->Kp*(p->ThisError_Left - p->LastError_Left) \
+		p->OutValueSum_Left += p->Kp*(p->ThisError_Left - p->LastError_Left) \
 		+ (p->Ki / 10.0)*p->ThisError_Left \
 		+ p->Kd*(p->ThisError_Left - 2 * p->LastError_Left + p->PreError_Left);
-	p->OutValueSum_Right += p->Kp*(p->ThisError_Right - p->LastError_Right) \
+		p->OutValueSum_Right += p->Kp*(p->ThisError_Right - p->LastError_Right) \
 		+ (p->Ki / 10.0)*p->ThisError_Right \
 		+ p->Kd*(p->ThisError_Right - 2 * p->LastError_Right + p->PreError_Right);
-	if (p->OutValueSum_Left > SPEED_CONTROL_OUT_MAX)
+		if (p->OutValueSum_Left > SPEED_CONTROL_OUT_MAX)
 		p->OutValueSum_Left = SPEED_CONTROL_OUT_MAX;
-	else if (p->OutValueSum_Left < SPPED_CONTROL_OUT_MIN)
+		else if (p->OutValueSum_Left < SPPED_CONTROL_OUT_MIN)
 		p->OutValueSum_Left = SPPED_CONTROL_OUT_MIN;
-	if (p->OutValueSum_Right > SPEED_CONTROL_OUT_MAX)
+		if (p->OutValueSum_Right > SPEED_CONTROL_OUT_MAX)
 		p->OutValueSum_Right = SPEED_CONTROL_OUT_MAX;
-	else if (p->OutValueSum_Right < SPPED_CONTROL_OUT_MIN)
+		else if (p->OutValueSum_Right < SPPED_CONTROL_OUT_MIN)
 		p->OutValueSum_Right = SPPED_CONTROL_OUT_MIN;
 
-	TempValue.Old_SpeedOutValueLeft = TempValue.New_SpeedOutValueLeft;
-	TempValue.New_SpeedOutValueLeft = p->OutValueSum_Left;
-	TempValue.Old_SpeedOutValueRight = TempValue.New_SpeedOutValueRight;
-	TempValue.New_SpeedOutValueRight = p->OutValueSum_Right;
+		TempValue.Old_SpeedOutValueLeft = TempValue.New_SpeedOutValueLeft;
+		TempValue.New_SpeedOutValueLeft = p->OutValueSum_Left;
+		TempValue.Old_SpeedOutValueRight = TempValue.New_SpeedOutValueRight;
+		TempValue.New_SpeedOutValueRight = p->OutValueSum_Right;*/
 }
 
 
@@ -302,7 +302,7 @@ void DirControlValueCale(void)
 
 
 	float Dir_Diff;
-	static float Ki = 0;
+	static float Ki = -0.1;
 
 	Dir_PID.LastError = Dir_PID.ThisError;
 	Dir_PID.ThisError = Dir_PID.ControlValue;
@@ -347,14 +347,14 @@ void DirControlValueCale(void)
 void ControlSmooth(void)
 {
 	static float TempF = 0;
-	 	TempF = TempValue.New_SpeedOutValueRight - TempValue.Old_SpeedOutValueRight;
-	 	TempValue.SpeedOutValueRight = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValueRight;
-	 
-	 	TempF = TempValue.New_SpeedOutValueLeft - TempValue.Old_SpeedOutValueLeft;
-	 	TempValue.SpeedOutValueLeft = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValueLeft;
+	//TempF = TempValue.New_SpeedOutValueRight - TempValue.Old_SpeedOutValueRight;
+	//TempValue.SpeedOutValueRight = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValueRight;
 
-	//TempF = TempValue.New_SpeedOutValue - TempValue.Old_SpeedOutValue;
-	//TempValue.SpeedOutValue = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValue;
+	//TempF = TempValue.New_SpeedOutValueLeft - TempValue.Old_SpeedOutValueLeft;
+	//TempValue.SpeedOutValueLeft = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValueLeft;
+
+	TempF = TempValue.New_SpeedOutValue - TempValue.Old_SpeedOutValue;
+	TempValue.SpeedOutValue = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValue;
 
 
 	/*TempF = TempValue.DirOutValue_New - TempValue.DirOutValue_Old;
@@ -375,9 +375,9 @@ void MotorControl_Out(void)
 {
 	ControlSmooth();
 	MotorControl.LeftMotorOutValue = (int)TempValue.AngControl_OutValue
-		+ (int)TempValue.Dir_LeftOutValue - (int)TempValue.SpeedOutValueLeft; //取整
+		+ (int)TempValue.Dir_LeftOutValue - (int)TempValue.SpeedOutValue; //取整
 	MotorControl.RightMotorOutValue = (int)TempValue.AngControl_OutValue
-		+ (int)TempValue.Dir_RightOutValue - (int)TempValue.SpeedOutValueRight;
+		+ (int)TempValue.Dir_RightOutValue - (int)TempValue.SpeedOutValue;
 	//调速度PI参数
 	/*MotorControl.LeftMotorOutValue = (int)TempValue.SpeedOutValue;
 	MotorControl.RightMotorOutValue = (int)TempValue.SpeedOutValue;*/ //

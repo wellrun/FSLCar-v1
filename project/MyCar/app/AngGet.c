@@ -37,9 +37,11 @@ void AngleGet(void)
 {
 	static int initok = 0;
 	static float GyroTemp = 0;
-	static char whoam = 0;
+	static short whoam = 0;
 	static int error = 0;
-	acc_x = LPLD_MMA8451_GetResult(MMA8451_STATUS_Z_READY, MMA8451_REG_OUTZ_MSB);
+	static int MMAError = 0;
+	//acc_x = LPLD_MMA8451_GetResult(MMA8451_STATUS_Z_READY, MMA8451_REG_OUTZ_MSB);
+	acc_x = MPU6050_GetResult(ACCEL_YOUT_H);
 	//Dir_AngSpeed = L3G4200_GetResult(OUT_Z_L)*Dir_SpeedRatio;
 	//GyroscopeAngleSpeed = L3G4200_GetResult(OUT_Y_L)*GYROSCOPE_ANGLE_RATIO;
 	GyroscopeAngleSpeed = MPU6050_GetResult(GYRO_XOUT_H)*GYROSCOPE_ANGLE_RATIO;
@@ -49,17 +51,24 @@ void AngleGet(void)
 		while (1)
 		{
 			error++;
-			errordealy();
 			LPLD_GPIO_Output_b(PTE, 5, 1);
 			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
 			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
 			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
 			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
-			whoam = MPU6050_Init();
+			whoam = MPU6050_GetResult(GYRO_XOUT_H);
+			whoam = MPU6050_ReadReg(0x75);
 			if (whoam == 0x68)
 				break;
+			else
+				errordealy();
 		}
 	}
+	whoam = LPLD_MMA8451_ReadReg(MMA8451_REG_WHOAMI);
+	/*if (whoam != 0x1a)
+	{
+          MMAError++;
+	}*/
 	GravityAngle = acc_x*(180.0 / (4096.0 * 2));
 
 
@@ -69,7 +78,7 @@ void AngleGet(void)
 		initok = 1;
 	}
 	// complement_filter(GravityAngle, GyroscopeAngleSpeed);
-	complement2(GravityAngle, -GyroscopeAngleSpeed);
+	complement2(GravityAngle, GyroscopeAngleSpeed);
 	CarInfo_Now.CarAngle = angle_com;
 
 	CarInfo_Now.CarAngSpeed = angle_dot_com;

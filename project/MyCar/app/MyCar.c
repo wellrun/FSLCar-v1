@@ -26,8 +26,8 @@ PC16-CCDReady(20Ms);
 #define Scope40Ms 15
 #define ScopeCCDReady 16
 #define CCD2
-#define CAR_STAND_ANG_MAX -5
-#define CAR_STAND_ANG_MIN -55
+#define CAR_STAND_ANG_MAX 60
+#define CAR_STAND_ANG_MIN 10
 char CarStandFlag = 1;
 CarInfo_TypeDef CarInfo_Now;
 CarControl_TypeDef MotorControl; //存储电机控制的值
@@ -99,28 +99,39 @@ int DebugerErrorCnt = 0;
 
 uint8 DebugerByte36[PageDateLen];
 
-
+unsigned char Status_Check(void)
+{
+	if (((CarInfo_Now.CarAngle < CAR_STAND_ANG_MIN) || (CarInfo_Now.CarAngle > CAR_STAND_ANG_MAX)))
+	{
+		CarStandFlag = 0;
+		Speed_PID.OutValueSum = 0;
+		Speed_PID.IntegralSum = 0;
+		Speed_PID.OutValueSum_Right = 0;
+		Speed_PID.OutValueSum_Left = 0;
+		IntSum = 0;
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
+		return 1;
+	}
+	else
+	{
+		CarStandFlag = 1;
+		return 0;
+	}
+}
 void AngleCon_Isr(void)
 {
-	
+	Status_Check();
 	if (AngleCale == 1)
 	{
-		LPLD_GPIO_Toggle_b(PTC, Scope4Ms);
-		AngleGet();
-		AngleControlValueCalc();
-		if (((CarInfo_Now.CarAngle < CAR_STAND_ANG_MIN) || (CarInfo_Now.CarAngle > CAR_STAND_ANG_MAX)))
-		{
-			CarStandFlag = 0;
-			Speed_PID.OutValueSum = 0;
-			Speed_PID.IntegralSum = 0;
-			IntSum=0;
-		}
-		else
-		{
-			CarStandFlag = 1;
-		}
+			LPLD_GPIO_Toggle_b(PTC, Scope4Ms);
+			AngleGet();
+			AngleControlValueCalc();
 	}
 	AngData_Ready = 1;
+
 	if (CarStandFlag == 1 && CarStop == 0)
 	{
 		MotorControl_Out(); //输出电机控制的值
@@ -447,6 +458,8 @@ void main(void)
 						//Speed_PID.IntegralSum_Right = 0;
 						Speed_PID.OutValueSum = 0;
 						Speed_PID.IntegralSum = 0;
+						Speed_PID.OutValueSum_Right = 0;
+						Speed_PID.OutValueSum_Left = 0;
 						//Dir_PID.OutValueSum = 0;
 					}
 					else
@@ -457,6 +470,8 @@ void main(void)
 						//Speed_PID.IntegralSum_Right = 0;
 						Speed_PID.OutValueSum = 0;
 						Speed_PID.IntegralSum = 0;
+						Speed_PID.OutValueSum_Right = 0;
+						Speed_PID.OutValueSum_Left = 0;
 						//Dir_PID.OutValueSum = 0;
 					}
 				}
