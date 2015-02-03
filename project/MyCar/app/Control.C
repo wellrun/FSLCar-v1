@@ -1,13 +1,13 @@
 #include "Control.h"
 #include "CCD.h"
-#include "mpu6050.h"
+//#include "mpu6050.h"
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
-#define MOTOR_OUT_MAX       9000
-#define MOTOR_OUT_MIN       -9000
+#define MOTOR_OUT_MAX       8000
+#define MOTOR_OUT_MIN       -8000
 #define ANGLE_CONTROL_OUT_MAX			20000
 #define ANGLE_CONTROL_OUT_MIN			-20000
-#define SPEED_CONTROL_OUT_MAX			5500
-#define SPPED_CONTROL_OUT_MIN			-5500
+#define SPEED_CONTROL_OUT_MAX			6000
+#define SPPED_CONTROL_OUT_MIN			-6000
 #define CoderResolution 500 //编码器的线数
 #define TyreCircumference 20//轮胎周长CM
 //轮子转一圈..编码器增加5200
@@ -27,14 +27,14 @@ DirPID_TypeDef Dir_PID;
 short SpeedControlPeriod, DirectionConrtolPeriod;
 extern signed char Beep;
 extern int Beep_TimeMs;
-
+extern char CarStandFlag;
 void Beep_Isr(void)
 {
 	static int Cnt_Times = 0;
-	if (Beep == 1)
+	if (Beep == 1 && CarStandFlag==1)
 	{
 		LPLD_GPIO_Output_b(PTC, 17, 1);
-		Cnt_Times += 11;
+		Cnt_Times ++;
 		if (Cnt_Times > Beep_TimeMs)
 		{
 			LPLD_GPIO_Output_b(PTC, 17, 0);
@@ -42,6 +42,10 @@ void Beep_Isr(void)
 			Beep_TimeMs = 0;
 			Beep = 0;
 		}
+	}
+	else
+	{
+		LPLD_GPIO_Output_b(PTC, 17, 0);
 	}
 }
 void BeepBeepBeep(int Times)
@@ -64,7 +68,7 @@ void DeathTime_Delay(void)
 
 void AngleControlValueCalc(void)
 {
-	static float lastControlValue = 0;
+	//static float lastControlValue = 0;
 	float ControlValue = 0;
 	Ang_PID.Delta = (Ang_PID.AngSet) - CarInfo_Now.CarAngle; //当前误差//这里全是角度,值很小
 	//微分项应该是负的
@@ -74,8 +78,8 @@ void AngleControlValueCalc(void)
 		ControlValue = ANGLE_CONTROL_OUT_MAX;
 	if (ControlValue < ANGLE_CONTROL_OUT_MIN)
 		ControlValue = ANGLE_CONTROL_OUT_MIN; //限幅
-	lastControlValue = ControlValue;
-	TempValue.AngControl_OutValue = ControlValue*0.7 + lastControlValue*0.3; //更新控制临时变量的值
+	//lastControlValue = ControlValue;
+	TempValue.AngControl_OutValue = ControlValue; //更新控制临时变量的值
 }
 
 void SpeedGet(void)
@@ -96,7 +100,8 @@ void SpeedGet(void)
 	{
 		CarInfo_Now.MotorCounterRight -= 65535;
 	}
-	CarInfo_Now.MotorCounterRight = -CarInfo_Now.MotorCounterRight;
+	//CarInfo_Now.MotorCounterRight = -CarInfo_Now.MotorCounterRight;
+        CarInfo_Now.MotorCounterLeft=-CarInfo_Now.MotorCounterLeft;
 	//CarInfo_Now.LeftSpeed = (CarInfo_Now.MotorCounterLeft / CoderResolution*TyreCircumference) / Speed_Dt;//计算出速度,是准确的cm/s
 	//CarInfo_Now.RightSpeed = (CarInfo_Now.MotorCounterRight / CoderResolution*TyreCircumference) / Speed_Dt;//计算出速度,是准确的cm/s
 	//CarInfo_Now.CarSpeed = (CarInfo_Now.LeftSpeed + CarInfo_Now.RightSpeed) / 2;//车子的速度用左右轮速度平均值,不准确
@@ -192,8 +197,10 @@ void SpeedControlValueCalc(void)
 
 
 #define ErrorMax 100
+	static int Index = 1;
+	static float Speed_IntSum = 0;
 	SpeedGet();
-	static float Dir_ControlValue[8] = { 0 };
+	/*static float Dir_ControlValue[8] = { 0 };
 	int i = 0, k = 0, j = 0;
 	float Dir_Diff_10 = 0;
 	for (i = 0; i < 7; i++)
@@ -222,14 +229,33 @@ void SpeedControlValueCalc(void)
 	else
 	{
 		SpeedSet_Variable = p->SpeedSet;
-	}
-	p->ThisError = SpeedSet_Variable - CarInfo_Now.CarSpeed;//实现过弯减速
+	}*/
+	p->ThisError = SpeedSet_Variable - CarInfo_Now.CarSpeed;
 	if (p->ThisError > ErrorMax)
 		p->ThisError = ErrorMax;
 	else if (p->ThisError < -ErrorMax)
 		p->ThisError = -ErrorMax;
+	if (p->OutValueSum >(SPEED_CONTROL_OUT_MAX))
+	{
+		if (p->ThisError > 0)
+			Index = 0;
+		else
+		{
+			Index = 1;
+		}
+	}
+	else if (p->OutValueSum < SPPED_CONTROL_OUT_MIN)
+	{
+		if (p->ThisError < 0)
+			Index = 0;
+		else
+		{
+			Index = 1;
+		}
+	}
+
 	p->OutValue = p->Kp*(p->ThisError - p->LastError) \
-		+ (p->Ki / 10.0)*p->ThisError \
+		+ (p->Ki / 10.0)*p->ThisError*Index \
 		+ p->Kd*(p->ThisError - 2 * p->LastError + p->PreError);
 	p->PreError = p->LastError;
 	p->LastError = p->ThisError;
@@ -302,26 +328,27 @@ void DirControlValueCale(void)
 
 
 	float Dir_Diff;
-	static float Ki = -0.1;
+	static float Ki = 0;
+	extern float Dir_AngSpeed;
 
 	Dir_PID.LastError = Dir_PID.ThisError;
 	Dir_PID.ThisError = Dir_PID.ControlValue;
-	Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;
+	//Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;
 	IntSum += Ki*Dir_PID.ThisError;
-	Dir_PID.OutValue = -(Dir_PID.ThisError*0.6 + Dir_PID.LastError*0.4)* Dir_PID.Kp_Temp + Dir_Diff*Dir_PID.Kd_Temp + IntSum;
-	//TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
-	//TempValue.DirOutValue_New = Dir_PID.OutValue;
-	TempValue.DirOutValue = Dir_PID.OutValue;
+	Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* Dir_PID.Kp_Temp + Dir_AngSpeed*Dir_PID.Kd_Temp + IntSum;
+	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
+	TempValue.DirOutValue_New = Dir_PID.OutValue;
+	/*TempValue.DirOutValue = Dir_PID.OutValue;
 	if (TempValue.DirOutValue > 0)
 	{
-		TempValue.Dir_LeftOutValue = TempValue.DirOutValue*1.2;
-		TempValue.Dir_RightOutValue = -TempValue.DirOutValue*0.7;
+		TempValue.Dir_LeftOutValue = TempValue.DirOutValue;
+		TempValue.Dir_RightOutValue = -TempValue.DirOutValue;
 	}
 	else
 	{
-		TempValue.Dir_LeftOutValue = TempValue.DirOutValue*0.7;
-		TempValue.Dir_RightOutValue = -TempValue.DirOutValue*1.2;
-	}
+		TempValue.Dir_LeftOutValue = TempValue.DirOutValue;
+		TempValue.Dir_RightOutValue = -TempValue.DirOutValue;
+	}*/
 	/*static float LeftError=0;
 	static float RightError=0;
 	static float LastLeftError = 0;
@@ -357,7 +384,7 @@ void ControlSmooth(void)
 	TempValue.SpeedOutValue = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValue;
 
 
-	/*TempF = TempValue.DirOutValue_New - TempValue.DirOutValue_Old;
+	TempF = TempValue.DirOutValue_New - TempValue.DirOutValue_Old;
 	TempValue.DirOutValue = TempF*(DirectionConrtolPeriod + 1) / DIRECTION_CONTROL_PERIOD + TempValue.DirOutValue_Old;
 	if (TempValue.DirOutValue > 0)
 	{
@@ -368,7 +395,7 @@ void ControlSmooth(void)
 	{
 	TempValue.Dir_LeftOutValue = TempValue.DirOutValue*0.7;
 	TempValue.Dir_RightOutValue = -TempValue.DirOutValue;
-	}*/
+	}
 	//方向控制去掉平滑处理
 }
 void MotorControl_Out(void)

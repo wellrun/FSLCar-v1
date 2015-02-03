@@ -112,6 +112,7 @@ void SendHex(unsigned char hex);
 void CCD_ControlValueCale(void);
 void CCD_GetLine(void);
 void CCD_Deal_Both(void);
+void CCD_Median_Filtering(void);
 #endif
 
 

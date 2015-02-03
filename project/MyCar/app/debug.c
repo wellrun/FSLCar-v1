@@ -50,17 +50,17 @@ void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 {
 	int i;
 
-	Ang_PID.Kp = -400; //比例
-	Ang_PID.Kd = -19; //微分
-	Ang_PID.AngSet = 42; //调试时调试这一行
+	Ang_PID.Kp = -900; //比例
+	Ang_PID.Kd = -29; //微分
+	Ang_PID.AngSet = 54.5; 
 	Ang_PID.AngSpeedSet = 0.00;
 
-	Speed_PID.SpeedSet = 250;
-	Speed_PID.Kp = 45;
-	Speed_PID.Ki = 9;
-	Speed_PID.Kd = 6;
-	Dir_PID.Kp = 34;
-	Dir_PID.Kd = 105;
+	Speed_PID.SpeedSet = 80;
+	Speed_PID.Kp = 220;
+	Speed_PID.Ki =80;
+	Speed_PID.Kd = 00;
+	Dir_PID.Kp = 35;
+	Dir_PID.Kd = 1.5;
         
 	TempValue.AngControl_OutValue = 0;
 	TempValue.Dir_RightOutValue = 0;

@@ -9203,6 +9203,478 @@ typedef struct {
 #define TSI_CNTR15_CNTN1_SHIFT                   TSI_CNTR15_CTN_SHIFT
 #define TSI_CNTR15_CNTN1(x)                      TSI_CNTR15_CTN(x)
 
+
+
+
+typedef struct GPIO_MemMap
+{
+    union
+    {
+        uint32_t PDOR;                                   /**< Port Data Output Register, offset: 0x0 */
+        struct                                            // 用于直接赋值位的   ——by 野火
+        {
+            uint32_t PDOR0 : 1;
+            uint32_t PDOR1: 1;
+            uint32_t PDOR2 : 1;
+            uint32_t PDOR3 : 1;
+            uint32_t PDOR4 : 1;
+            uint32_t PDOR5 : 1;
+            uint32_t PDOR6 : 1;
+            uint32_t PDOR7 : 1;
+            uint32_t PDOR8 : 1;
+            uint32_t PDOR9 : 1;
+            uint32_t PDOR10: 1;
+            uint32_t PDOR11: 1;
+            uint32_t PDOR12: 1;
+            uint32_t PDOR13: 1;
+            uint32_t PDOR14: 1;
+            uint32_t PDOR15: 1;
+            uint32_t PDOR16: 1;
+            uint32_t PDOR17: 1;
+            uint32_t PDOR18: 1;
+            uint32_t PDOR19: 1;
+            uint32_t PDOR20: 1;
+            uint32_t PDOR21: 1;
+            uint32_t PDOR22: 1;
+            uint32_t PDOR23: 1;
+            uint32_t PDOR24: 1;
+            uint32_t PDOR25: 1;
+            uint32_t PDOR26: 1;
+            uint32_t PDOR27: 1;
+            uint32_t PDOR28: 1;
+            uint32_t PDOR29: 1;
+            uint32_t PDOR30: 1;
+            uint32_t PDOR31: 1;
+        } PDORs;
+        struct                                            // 用于直接赋值位的   ——by 野火
+        {
+            uint8_t Byte0;
+            uint8_t Byte1;
+            uint8_t Byte2;
+            uint8_t Byte3;
+        } PDORByte;
+        struct                                            // 用于直接赋值位的   ——by 野火
+        {
+            uint16_t Word0;
+            uint16_t Word1;
+        } PDORWord;
+    };
+
+    uint32_t PSOR;                                   /**< Port Set Output Register, offset: 0x4 */
+    uint32_t PCOR;                                   /**< Port Clear Output Register, offset: 0x8 */
+    uint32_t PTOR;                                   /**< Port Toggle Output Register, offset: 0xC */
+
+    union
+    {
+        uint32_t PDIR;                                   /**< Port Data Input Register, offset: 0x10 */
+        struct                                            // 用于直接赋值位的   ——by 野火
+        {
+            uint32_t PDIR0 : 1;
+            uint32_t PDIR1: 1;
+            uint32_t PDIR2 : 1;
+            uint32_t PDIR3 : 1;
+            uint32_t PDIR4 : 1;
+            uint32_t PDIR5 : 1;
+            uint32_t PDIR6 : 1;
+            uint32_t PDIR7 : 1;
+            uint32_t PDIR8 : 1;
+            uint32_t PDIR9 : 1;
+            uint32_t PDIR10: 1;
+            uint32_t PDIR11: 1;
+            uint32_t PDIR12: 1;
+            uint32_t PDIR13: 1;
+            uint32_t PDIR14: 1;
+            uint32_t PDIR15: 1;
+            uint32_t PDIR16: 1;
+            uint32_t PDIR17: 1;
+            uint32_t PDIR18: 1;
+            uint32_t PDIR19: 1;
+            uint32_t PDIR20: 1;
+            uint32_t PDIR21: 1;
+            uint32_t PDIR22: 1;
+            uint32_t PDIR23: 1;
+            uint32_t PDIR24: 1;
+            uint32_t PDIR25: 1;
+            uint32_t PDIR26: 1;
+            uint32_t PDIR27: 1;
+            uint32_t PDIR28: 1;
+            uint32_t PDIR29: 1;
+            uint32_t PDIR30: 1;
+            uint32_t PDIR31: 1;
+        } PDIRs;
+        struct                                            // 用于直接赋值位的   ——by 野火
+        {
+            uint8_t Byte0;
+            uint8_t Byte1;
+            uint8_t Byte2;
+            uint8_t Byte3;
+        } PDIRByte;
+        struct                                            // 用于直接赋值位的   ——by 野火
+        {
+            uint16_t Word0;
+            uint16_t Word1;
+        } PDIRWord;
+    };
+
+    union
+    {
+        uint32_t PDDR;                                   /**< Port Data Direction Register, offset: 0x14 */
+        struct                                            // 用于直接赋值位的   ——by 野火
+        {
+            uint32_t DDR0 : 1;
+            uint32_t DDR1: 1;
+            uint32_t DDR2 : 1;
+            uint32_t DDR3 : 1;
+            uint32_t DDR4 : 1;
+            uint32_t DDR5 : 1;
+            uint32_t DDR6 : 1;
+            uint32_t DDR7 : 1;
+            uint32_t DDR8 : 1;
+            uint32_t DDR9 : 1;
+            uint32_t DDR10: 1;
+            uint32_t DDR11: 1;
+            uint32_t DDR12: 1;
+            uint32_t DDR13: 1;
+            uint32_t DDR14: 1;
+            uint32_t DDR15: 1;
+            uint32_t DDR16: 1;
+            uint32_t DDR17: 1;
+            uint32_t DDR18: 1;
+            uint32_t DDR19: 1;
+            uint32_t DDR20: 1;
+            uint32_t DDR21: 1;
+            uint32_t DDR22: 1;
+            uint32_t DDR23: 1;
+            uint32_t DDR24: 1;
+            uint32_t DDR25: 1;
+            uint32_t DDR26: 1;
+            uint32_t DDR27: 1;
+            uint32_t DDR28: 1;
+            uint32_t DDR29: 1;
+            uint32_t DDR30: 1;
+            uint32_t DDR31: 1;
+        } DDRs;
+        struct                                            // 用于直接赋值位的   ——by 野火
+        {
+            uint8_t Byte0;
+            uint8_t Byte1;
+            uint8_t Byte2;
+            uint8_t Byte3;
+        } DDRByte;
+        struct                                            // 用于直接赋值位的   ——by 野火
+        {
+            uint16_t Word0;
+            uint16_t Word1;
+        } DDRWord;
+    };
+
+} volatile *GPIO_MemMapPtr;
+
+typedef struct PORT_MemMap
+{
+	uint32_t PCR[32];                                /**< Pin Control Register n, array offset: 0x0, array step: 0x4 */
+	uint32_t GPCLR;                                  /**< Global Pin Control Low Register, offset: 0x80 */
+	uint32_t GPCHR;                                  /**< Global Pin Control High Register, offset: 0x84 */
+	uint8_t RESERVED_0[24];
+	uint32_t ISFR;                                   /**< Interrupt Status Flag Register, offset: 0xA0 */
+	uint8_t RESERVED_1[28];
+	uint32_t DFER;                                   /**< Digital Filter Enable Register, offset: 0xC0 */
+	uint32_t DFCR;                                   /**< Digital Filter Clock Register, offset: 0xC4 */
+	uint32_t DFWR;                                   /**< Digital Filter Width Register, offset: 0xC8 */
+} volatile *PORT_MemMapPtr;
+
+
+
+/** Peripheral PTA base pointer */
+#define PTA_BASE_PTR                             ((GPIO_MemMapPtr)0x400FF000u)
+/** Peripheral PTB base pointer */
+#define PTB_BASE_PTR                             ((GPIO_MemMapPtr)0x400FF040u)
+/** Peripheral PTC base pointer */
+#define PTC_BASE_PTR                             ((GPIO_MemMapPtr)0x400FF080u)
+/** Peripheral PTD base pointer */
+#define PTD_BASE_PTR                             ((GPIO_MemMapPtr)0x400FF0C0u)
+/** Peripheral PTE base pointer */
+#define PTE_BASE_PTR                             ((GPIO_MemMapPtr)0x400FF100u)
+
+/** Peripheral PORTA base pointer */
+#define PORTA_BASE_PTR                           ((PORT_MemMapPtr)0x40049000u)
+/** Peripheral PORTB base pointer */
+#define PORTB_BASE_PTR                           ((PORT_MemMapPtr)0x4004A000u)
+/** Peripheral PORTC base pointer */
+#define PORTC_BASE_PTR                           ((PORT_MemMapPtr)0x4004B000u)
+/** Peripheral PORTD base pointer */
+#define PORTD_BASE_PTR                           ((PORT_MemMapPtr)0x4004C000u)
+/** Peripheral PORTE base pointer */
+#define PORTE_BASE_PTR                           ((PORT_MemMapPtr)0x4004D000u)
+
+
+
+
+#define GPIO_PDOR_REG(base)                      ((base)->PDOR)
+#define GPIO_PSOR_REG(base)                      ((base)->PSOR)
+#define GPIO_PCOR_REG(base)                      ((base)->PCOR)
+#define GPIO_PTOR_REG(base)                      ((base)->PTOR)
+#define GPIO_PDIR_REG(base)                      ((base)->PDIR)
+#define GPIO_PDDR_REG(base)                      ((base)->PDDR)
+
+
+#define GPIOA_PDOR                               GPIO_PDOR_REG(PTA_BASE_PTR)
+#define GPIOA_PSOR                               GPIO_PSOR_REG(PTA_BASE_PTR)
+#define GPIOA_PCOR                               GPIO_PCOR_REG(PTA_BASE_PTR)
+#define GPIOA_PTOR                               GPIO_PTOR_REG(PTA_BASE_PTR)
+#define GPIOA_PDIR                               GPIO_PDIR_REG(PTA_BASE_PTR)
+#define GPIOA_PDDR                               GPIO_PDDR_REG(PTA_BASE_PTR)
+/* PTB */
+#define GPIOB_PDOR                               GPIO_PDOR_REG(PTB_BASE_PTR)
+#define GPIOB_PSOR                               GPIO_PSOR_REG(PTB_BASE_PTR)
+#define GPIOB_PCOR                               GPIO_PCOR_REG(PTB_BASE_PTR)
+#define GPIOB_PTOR                               GPIO_PTOR_REG(PTB_BASE_PTR)
+#define GPIOB_PDIR                               GPIO_PDIR_REG(PTB_BASE_PTR)
+#define GPIOB_PDDR                               GPIO_PDDR_REG(PTB_BASE_PTR)
+/* PTC */
+#define GPIOC_PDOR                               GPIO_PDOR_REG(PTC_BASE_PTR)
+#define GPIOC_PSOR                               GPIO_PSOR_REG(PTC_BASE_PTR)
+#define GPIOC_PCOR                               GPIO_PCOR_REG(PTC_BASE_PTR)
+#define GPIOC_PTOR                               GPIO_PTOR_REG(PTC_BASE_PTR)
+#define GPIOC_PDIR                               GPIO_PDIR_REG(PTC_BASE_PTR)
+#define GPIOC_PDDR                               GPIO_PDDR_REG(PTC_BASE_PTR)
+/* PTD */
+#define GPIOD_PDOR                               GPIO_PDOR_REG(PTD_BASE_PTR)
+#define GPIOD_PSOR                               GPIO_PSOR_REG(PTD_BASE_PTR)
+#define GPIOD_PCOR                               GPIO_PCOR_REG(PTD_BASE_PTR)
+#define GPIOD_PTOR                               GPIO_PTOR_REG(PTD_BASE_PTR)
+#define GPIOD_PDIR                               GPIO_PDIR_REG(PTD_BASE_PTR)
+#define GPIOD_PDDR                               GPIO_PDDR_REG(PTD_BASE_PTR)
+/* PTE */
+#define GPIOE_PDOR                               GPIO_PDOR_REG(PTE_BASE_PTR)
+#define GPIOE_PSOR                               GPIO_PSOR_REG(PTE_BASE_PTR)
+#define GPIOE_PCOR                               GPIO_PCOR_REG(PTE_BASE_PTR)
+#define GPIOE_PTOR                               GPIO_PTOR_REG(PTE_BASE_PTR)
+#define GPIOE_PDIR                               GPIO_PDIR_REG(PTE_BASE_PTR)
+#define GPIOE_PDDR                               GPIO_PDDR_REG(PTE_BASE_PTR)
+
+
+
+#define PORT_PCR_REG(base,index)                 ((base)->PCR[index])
+#define PORT_GPCLR_REG(base)                     ((base)->GPCLR)
+#define PORT_GPCHR_REG(base)                     ((base)->GPCHR)
+#define PORT_ISFR_REG(base)                      ((base)->ISFR)
+#define PORT_DFER_REG(base)                      ((base)->DFER)
+#define PORT_DFCR_REG(base)                      ((base)->DFCR)
+#define PORT_DFWR_REG(base)                      ((base)->DFWR)
+
+
+
+/* PORTA */
+#define PORTA_PCR0                               PORT_PCR_REG(PORTA_BASE_PTR,0)
+#define PORTA_PCR1                               PORT_PCR_REG(PORTA_BASE_PTR,1)
+#define PORTA_PCR2                               PORT_PCR_REG(PORTA_BASE_PTR,2)
+#define PORTA_PCR3                               PORT_PCR_REG(PORTA_BASE_PTR,3)
+#define PORTA_PCR4                               PORT_PCR_REG(PORTA_BASE_PTR,4)
+#define PORTA_PCR5                               PORT_PCR_REG(PORTA_BASE_PTR,5)
+#define PORTA_PCR6                               PORT_PCR_REG(PORTA_BASE_PTR,6)
+#define PORTA_PCR7                               PORT_PCR_REG(PORTA_BASE_PTR,7)
+#define PORTA_PCR8                               PORT_PCR_REG(PORTA_BASE_PTR,8)
+#define PORTA_PCR9                               PORT_PCR_REG(PORTA_BASE_PTR,9)
+#define PORTA_PCR10                              PORT_PCR_REG(PORTA_BASE_PTR,10)
+#define PORTA_PCR11                              PORT_PCR_REG(PORTA_BASE_PTR,11)
+#define PORTA_PCR12                              PORT_PCR_REG(PORTA_BASE_PTR,12)
+#define PORTA_PCR13                              PORT_PCR_REG(PORTA_BASE_PTR,13)
+#define PORTA_PCR14                              PORT_PCR_REG(PORTA_BASE_PTR,14)
+#define PORTA_PCR15                              PORT_PCR_REG(PORTA_BASE_PTR,15)
+#define PORTA_PCR16                              PORT_PCR_REG(PORTA_BASE_PTR,16)
+#define PORTA_PCR17                              PORT_PCR_REG(PORTA_BASE_PTR,17)
+#define PORTA_PCR18                              PORT_PCR_REG(PORTA_BASE_PTR,18)
+#define PORTA_PCR19                              PORT_PCR_REG(PORTA_BASE_PTR,19)
+#define PORTA_PCR20                              PORT_PCR_REG(PORTA_BASE_PTR,20)
+#define PORTA_PCR21                              PORT_PCR_REG(PORTA_BASE_PTR,21)
+#define PORTA_PCR22                              PORT_PCR_REG(PORTA_BASE_PTR,22)
+#define PORTA_PCR23                              PORT_PCR_REG(PORTA_BASE_PTR,23)
+#define PORTA_PCR24                              PORT_PCR_REG(PORTA_BASE_PTR,24)
+#define PORTA_PCR25                              PORT_PCR_REG(PORTA_BASE_PTR,25)
+#define PORTA_PCR26                              PORT_PCR_REG(PORTA_BASE_PTR,26)
+#define PORTA_PCR27                              PORT_PCR_REG(PORTA_BASE_PTR,27)
+#define PORTA_PCR28                              PORT_PCR_REG(PORTA_BASE_PTR,28)
+#define PORTA_PCR29                              PORT_PCR_REG(PORTA_BASE_PTR,29)
+#define PORTA_PCR30                              PORT_PCR_REG(PORTA_BASE_PTR,30)
+#define PORTA_PCR31                              PORT_PCR_REG(PORTA_BASE_PTR,31)
+#define PORTA_GPCLR                              PORT_GPCLR_REG(PORTA_BASE_PTR)
+#define PORTA_GPCHR                              PORT_GPCHR_REG(PORTA_BASE_PTR)
+#define PORTA_ISFR                               PORT_ISFR_REG(PORTA_BASE_PTR)
+#define PORTA_DFER                               PORT_DFER_REG(PORTA_BASE_PTR)
+#define PORTA_DFCR                               PORT_DFCR_REG(PORTA_BASE_PTR)
+#define PORTA_DFWR                               PORT_DFWR_REG(PORTA_BASE_PTR)
+/* PORTB */
+#define PORTB_PCR0                               PORT_PCR_REG(PORTB_BASE_PTR,0)
+#define PORTB_PCR1                               PORT_PCR_REG(PORTB_BASE_PTR,1)
+#define PORTB_PCR2                               PORT_PCR_REG(PORTB_BASE_PTR,2)
+#define PORTB_PCR3                               PORT_PCR_REG(PORTB_BASE_PTR,3)
+#define PORTB_PCR4                               PORT_PCR_REG(PORTB_BASE_PTR,4)
+#define PORTB_PCR5                               PORT_PCR_REG(PORTB_BASE_PTR,5)
+#define PORTB_PCR6                               PORT_PCR_REG(PORTB_BASE_PTR,6)
+#define PORTB_PCR7                               PORT_PCR_REG(PORTB_BASE_PTR,7)
+#define PORTB_PCR8                               PORT_PCR_REG(PORTB_BASE_PTR,8)
+#define PORTB_PCR9                               PORT_PCR_REG(PORTB_BASE_PTR,9)
+#define PORTB_PCR10                              PORT_PCR_REG(PORTB_BASE_PTR,10)
+#define PORTB_PCR11                              PORT_PCR_REG(PORTB_BASE_PTR,11)
+#define PORTB_PCR12                              PORT_PCR_REG(PORTB_BASE_PTR,12)
+#define PORTB_PCR13                              PORT_PCR_REG(PORTB_BASE_PTR,13)
+#define PORTB_PCR14                              PORT_PCR_REG(PORTB_BASE_PTR,14)
+#define PORTB_PCR15                              PORT_PCR_REG(PORTB_BASE_PTR,15)
+#define PORTB_PCR16                              PORT_PCR_REG(PORTB_BASE_PTR,16)
+#define PORTB_PCR17                              PORT_PCR_REG(PORTB_BASE_PTR,17)
+#define PORTB_PCR18                              PORT_PCR_REG(PORTB_BASE_PTR,18)
+#define PORTB_PCR19                              PORT_PCR_REG(PORTB_BASE_PTR,19)
+#define PORTB_PCR20                              PORT_PCR_REG(PORTB_BASE_PTR,20)
+#define PORTB_PCR21                              PORT_PCR_REG(PORTB_BASE_PTR,21)
+#define PORTB_PCR22                              PORT_PCR_REG(PORTB_BASE_PTR,22)
+#define PORTB_PCR23                              PORT_PCR_REG(PORTB_BASE_PTR,23)
+#define PORTB_PCR24                              PORT_PCR_REG(PORTB_BASE_PTR,24)
+#define PORTB_PCR25                              PORT_PCR_REG(PORTB_BASE_PTR,25)
+#define PORTB_PCR26                              PORT_PCR_REG(PORTB_BASE_PTR,26)
+#define PORTB_PCR27                              PORT_PCR_REG(PORTB_BASE_PTR,27)
+#define PORTB_PCR28                              PORT_PCR_REG(PORTB_BASE_PTR,28)
+#define PORTB_PCR29                              PORT_PCR_REG(PORTB_BASE_PTR,29)
+#define PORTB_PCR30                              PORT_PCR_REG(PORTB_BASE_PTR,30)
+#define PORTB_PCR31                              PORT_PCR_REG(PORTB_BASE_PTR,31)
+#define PORTB_GPCLR                              PORT_GPCLR_REG(PORTB_BASE_PTR)
+#define PORTB_GPCHR                              PORT_GPCHR_REG(PORTB_BASE_PTR)
+#define PORTB_ISFR                               PORT_ISFR_REG(PORTB_BASE_PTR)
+#define PORTB_DFER                               PORT_DFER_REG(PORTB_BASE_PTR)
+#define PORTB_DFCR                               PORT_DFCR_REG(PORTB_BASE_PTR)
+#define PORTB_DFWR                               PORT_DFWR_REG(PORTB_BASE_PTR)
+/* PORTC */
+#define PORTC_PCR0                               PORT_PCR_REG(PORTC_BASE_PTR,0)
+#define PORTC_PCR1                               PORT_PCR_REG(PORTC_BASE_PTR,1)
+#define PORTC_PCR2                               PORT_PCR_REG(PORTC_BASE_PTR,2)
+#define PORTC_PCR3                               PORT_PCR_REG(PORTC_BASE_PTR,3)
+#define PORTC_PCR4                               PORT_PCR_REG(PORTC_BASE_PTR,4)
+#define PORTC_PCR5                               PORT_PCR_REG(PORTC_BASE_PTR,5)
+#define PORTC_PCR6                               PORT_PCR_REG(PORTC_BASE_PTR,6)
+#define PORTC_PCR7                               PORT_PCR_REG(PORTC_BASE_PTR,7)
+#define PORTC_PCR8                               PORT_PCR_REG(PORTC_BASE_PTR,8)
+#define PORTC_PCR9                               PORT_PCR_REG(PORTC_BASE_PTR,9)
+#define PORTC_PCR10                              PORT_PCR_REG(PORTC_BASE_PTR,10)
+#define PORTC_PCR11                              PORT_PCR_REG(PORTC_BASE_PTR,11)
+#define PORTC_PCR12                              PORT_PCR_REG(PORTC_BASE_PTR,12)
+#define PORTC_PCR13                              PORT_PCR_REG(PORTC_BASE_PTR,13)
+#define PORTC_PCR14                              PORT_PCR_REG(PORTC_BASE_PTR,14)
+#define PORTC_PCR15                              PORT_PCR_REG(PORTC_BASE_PTR,15)
+#define PORTC_PCR16                              PORT_PCR_REG(PORTC_BASE_PTR,16)
+#define PORTC_PCR17                              PORT_PCR_REG(PORTC_BASE_PTR,17)
+#define PORTC_PCR18                              PORT_PCR_REG(PORTC_BASE_PTR,18)
+#define PORTC_PCR19                              PORT_PCR_REG(PORTC_BASE_PTR,19)
+#define PORTC_PCR20                              PORT_PCR_REG(PORTC_BASE_PTR,20)
+#define PORTC_PCR21                              PORT_PCR_REG(PORTC_BASE_PTR,21)
+#define PORTC_PCR22                              PORT_PCR_REG(PORTC_BASE_PTR,22)
+#define PORTC_PCR23                              PORT_PCR_REG(PORTC_BASE_PTR,23)
+#define PORTC_PCR24                              PORT_PCR_REG(PORTC_BASE_PTR,24)
+#define PORTC_PCR25                              PORT_PCR_REG(PORTC_BASE_PTR,25)
+#define PORTC_PCR26                              PORT_PCR_REG(PORTC_BASE_PTR,26)
+#define PORTC_PCR27                              PORT_PCR_REG(PORTC_BASE_PTR,27)
+#define PORTC_PCR28                              PORT_PCR_REG(PORTC_BASE_PTR,28)
+#define PORTC_PCR29                              PORT_PCR_REG(PORTC_BASE_PTR,29)
+#define PORTC_PCR30                              PORT_PCR_REG(PORTC_BASE_PTR,30)
+#define PORTC_PCR31                              PORT_PCR_REG(PORTC_BASE_PTR,31)
+#define PORTC_GPCLR                              PORT_GPCLR_REG(PORTC_BASE_PTR)
+#define PORTC_GPCHR                              PORT_GPCHR_REG(PORTC_BASE_PTR)
+#define PORTC_ISFR                               PORT_ISFR_REG(PORTC_BASE_PTR)
+#define PORTC_DFER                               PORT_DFER_REG(PORTC_BASE_PTR)
+#define PORTC_DFCR                               PORT_DFCR_REG(PORTC_BASE_PTR)
+#define PORTC_DFWR                               PORT_DFWR_REG(PORTC_BASE_PTR)
+/* PORTD */
+#define PORTD_PCR0                               PORT_PCR_REG(PORTD_BASE_PTR,0)
+#define PORTD_PCR1                               PORT_PCR_REG(PORTD_BASE_PTR,1)
+#define PORTD_PCR2                               PORT_PCR_REG(PORTD_BASE_PTR,2)
+#define PORTD_PCR3                               PORT_PCR_REG(PORTD_BASE_PTR,3)
+#define PORTD_PCR4                               PORT_PCR_REG(PORTD_BASE_PTR,4)
+#define PORTD_PCR5                               PORT_PCR_REG(PORTD_BASE_PTR,5)
+#define PORTD_PCR6                               PORT_PCR_REG(PORTD_BASE_PTR,6)
+#define PORTD_PCR7                               PORT_PCR_REG(PORTD_BASE_PTR,7)
+#define PORTD_PCR8                               PORT_PCR_REG(PORTD_BASE_PTR,8)
+#define PORTD_PCR9                               PORT_PCR_REG(PORTD_BASE_PTR,9)
+#define PORTD_PCR10                              PORT_PCR_REG(PORTD_BASE_PTR,10)
+#define PORTD_PCR11                              PORT_PCR_REG(PORTD_BASE_PTR,11)
+#define PORTD_PCR12                              PORT_PCR_REG(PORTD_BASE_PTR,12)
+#define PORTD_PCR13                              PORT_PCR_REG(PORTD_BASE_PTR,13)
+#define PORTD_PCR14                              PORT_PCR_REG(PORTD_BASE_PTR,14)
+#define PORTD_PCR15                              PORT_PCR_REG(PORTD_BASE_PTR,15)
+#define PORTD_PCR16                              PORT_PCR_REG(PORTD_BASE_PTR,16)
+#define PORTD_PCR17                              PORT_PCR_REG(PORTD_BASE_PTR,17)
+#define PORTD_PCR18                              PORT_PCR_REG(PORTD_BASE_PTR,18)
+#define PORTD_PCR19                              PORT_PCR_REG(PORTD_BASE_PTR,19)
+#define PORTD_PCR20                              PORT_PCR_REG(PORTD_BASE_PTR,20)
+#define PORTD_PCR21                              PORT_PCR_REG(PORTD_BASE_PTR,21)
+#define PORTD_PCR22                              PORT_PCR_REG(PORTD_BASE_PTR,22)
+#define PORTD_PCR23                              PORT_PCR_REG(PORTD_BASE_PTR,23)
+#define PORTD_PCR24                              PORT_PCR_REG(PORTD_BASE_PTR,24)
+#define PORTD_PCR25                              PORT_PCR_REG(PORTD_BASE_PTR,25)
+#define PORTD_PCR26                              PORT_PCR_REG(PORTD_BASE_PTR,26)
+#define PORTD_PCR27                              PORT_PCR_REG(PORTD_BASE_PTR,27)
+#define PORTD_PCR28                              PORT_PCR_REG(PORTD_BASE_PTR,28)
+#define PORTD_PCR29                              PORT_PCR_REG(PORTD_BASE_PTR,29)
+#define PORTD_PCR30                              PORT_PCR_REG(PORTD_BASE_PTR,30)
+#define PORTD_PCR31                              PORT_PCR_REG(PORTD_BASE_PTR,31)
+#define PORTD_GPCLR                              PORT_GPCLR_REG(PORTD_BASE_PTR)
+#define PORTD_GPCHR                              PORT_GPCHR_REG(PORTD_BASE_PTR)
+#define PORTD_ISFR                               PORT_ISFR_REG(PORTD_BASE_PTR)
+#define PORTD_DFER                               PORT_DFER_REG(PORTD_BASE_PTR)
+#define PORTD_DFCR                               PORT_DFCR_REG(PORTD_BASE_PTR)
+#define PORTD_DFWR                               PORT_DFWR_REG(PORTD_BASE_PTR)
+/* PORTE */
+#define PORTE_PCR0                               PORT_PCR_REG(PORTE_BASE_PTR,0)
+#define PORTE_PCR1                               PORT_PCR_REG(PORTE_BASE_PTR,1)
+#define PORTE_PCR2                               PORT_PCR_REG(PORTE_BASE_PTR,2)
+#define PORTE_PCR3                               PORT_PCR_REG(PORTE_BASE_PTR,3)
+#define PORTE_PCR4                               PORT_PCR_REG(PORTE_BASE_PTR,4)
+#define PORTE_PCR5                               PORT_PCR_REG(PORTE_BASE_PTR,5)
+#define PORTE_PCR6                               PORT_PCR_REG(PORTE_BASE_PTR,6)
+#define PORTE_PCR7                               PORT_PCR_REG(PORTE_BASE_PTR,7)
+#define PORTE_PCR8                               PORT_PCR_REG(PORTE_BASE_PTR,8)
+#define PORTE_PCR9                               PORT_PCR_REG(PORTE_BASE_PTR,9)
+#define PORTE_PCR10                              PORT_PCR_REG(PORTE_BASE_PTR,10)
+#define PORTE_PCR11                              PORT_PCR_REG(PORTE_BASE_PTR,11)
+#define PORTE_PCR12                              PORT_PCR_REG(PORTE_BASE_PTR,12)
+#define PORTE_PCR13                              PORT_PCR_REG(PORTE_BASE_PTR,13)
+#define PORTE_PCR14                              PORT_PCR_REG(PORTE_BASE_PTR,14)
+#define PORTE_PCR15                              PORT_PCR_REG(PORTE_BASE_PTR,15)
+#define PORTE_PCR16                              PORT_PCR_REG(PORTE_BASE_PTR,16)
+#define PORTE_PCR17                              PORT_PCR_REG(PORTE_BASE_PTR,17)
+#define PORTE_PCR18                              PORT_PCR_REG(PORTE_BASE_PTR,18)
+#define PORTE_PCR19                              PORT_PCR_REG(PORTE_BASE_PTR,19)
+#define PORTE_PCR20                              PORT_PCR_REG(PORTE_BASE_PTR,20)
+#define PORTE_PCR21                              PORT_PCR_REG(PORTE_BASE_PTR,21)
+#define PORTE_PCR22                              PORT_PCR_REG(PORTE_BASE_PTR,22)
+#define PORTE_PCR23                              PORT_PCR_REG(PORTE_BASE_PTR,23)
+#define PORTE_PCR24                              PORT_PCR_REG(PORTE_BASE_PTR,24)
+#define PORTE_PCR25                              PORT_PCR_REG(PORTE_BASE_PTR,25)
+#define PORTE_PCR26                              PORT_PCR_REG(PORTE_BASE_PTR,26)
+#define PORTE_PCR27                              PORT_PCR_REG(PORTE_BASE_PTR,27)
+#define PORTE_PCR28                              PORT_PCR_REG(PORTE_BASE_PTR,28)
+#define PORTE_PCR29                              PORT_PCR_REG(PORTE_BASE_PTR,29)
+#define PORTE_PCR30                              PORT_PCR_REG(PORTE_BASE_PTR,30)
+#define PORTE_PCR31                              PORT_PCR_REG(PORTE_BASE_PTR,31)
+#define PORTE_GPCLR                              PORT_GPCLR_REG(PORTE_BASE_PTR)
+#define PORTE_GPCHR                              PORT_GPCHR_REG(PORTE_BASE_PTR)
+#define PORTE_ISFR                               PORT_ISFR_REG(PORTE_BASE_PTR)
+#define PORTE_DFER                               PORT_DFER_REG(PORTE_BASE_PTR)
+#define PORTE_DFCR                               PORT_DFCR_REG(PORTE_BASE_PTR)
+#define PORTE_DFWR                               PORT_DFWR_REG(PORTE_BASE_PTR)
+
+/* PORT - Register array accessors */
+#define PORTA_PCR(index)                         PORT_PCR_REG(PORTA_BASE_PTR,index)
+#define PORTB_PCR(index)                         PORT_PCR_REG(PORTB_BASE_PTR,index)
+#define PORTC_PCR(index)                         PORT_PCR_REG(PORTC_BASE_PTR,index)
+#define PORTD_PCR(index)                         PORT_PCR_REG(PORTD_BASE_PTR,index)
+#define PORTE_PCR(index)                         PORT_PCR_REG(PORTE_BASE_PTR,index)
+
+
+
+
+
+
+
+
 /**
  * @}
  */ /* end of group Backward_Compatibility_Symbols */

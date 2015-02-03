@@ -317,7 +317,7 @@ void LPLD_I2C_WaitAck(I2C_Type *i2cx, uint8 is_wait)
       {
         time_out++;
       }
-      if(time_out>60000) //如果等待超时，强行退出
+      if(time_out>20000) //如果等待超时，强行退出
         break;
       else time_out++;
     }

@@ -1,8 +1,10 @@
 #include "init.h"
 #include "datastructure.h"
 #include "DEV_MMA8451.h"
-#include "mpu6050.h"
+//#include "mpu6050.h"
 #include "ccd.h"
+#include "MPU6050_Moni.h"
+#include "My_IIC.h"
 //#include "l3g4200.h"
 ADC_InitTypeDef Init_ADC_Struct;
 ADC_InitTypeDef Init_ADC_CCD_Struct;
@@ -63,15 +65,15 @@ void Init_PIT(void)
 // 	Init_PIT_Struct.PIT_Isr = PIT2_ISR;
 // 	LPLD_PIT_Init(Init_PIT_Struct); //用PIT0来做1MS的中断
 // 	LPLD_PIT_EnableIrq(Init_PIT_Struct); //开启PIT0的中断
-	Init_PIT_Struct.PIT_Pitx=PIT1;
+	/*Init_PIT_Struct.PIT_Pitx=PIT1;
 	Init_PIT_Struct.PIT_PeriodMs=1;
 	Init_PIT_Struct.PIT_Isr=ccd_exposure;
 	LPLD_PIT_Init(Init_PIT_Struct);
-	LPLD_PIT_EnableIrq(Init_PIT_Struct); //CCD的毫秒定时器
+	LPLD_PIT_EnableIrq(Init_PIT_Struct); //CCD的毫秒定时器*/
 
 
 	Init_PIT_Struct.PIT_Pitx = PIT0;
-	Init_PIT_Struct.PIT_PeriodMs = 5;
+	Init_PIT_Struct.PIT_PeriodMs = 1;
 	Init_PIT_Struct.PIT_Isr = AngleCon_Isr;
 	LPLD_PIT_Init(Init_PIT_Struct);
 	LPLD_PIT_EnableIrq(Init_PIT_Struct); //CCD的毫秒定时器
@@ -170,6 +172,8 @@ void Init_GPIO(void)
 	Init_GPIO_Struct.GPIO_Dir = DIR_INPUT;
 	LPLD_GPIO_Init(Init_GPIO_Struct);//4个拨码开关
 
+	
+
 }
 
 void CarInit(void)
@@ -179,10 +183,10 @@ void CarInit(void)
 	Init_Systick();
 	Init_GPIO();
 	Init_ADC();
-	Init_PIT();
+	
 	Init_FTM();
 	
-	whoami = LPLD_MMA8451_Init();
+	//whoami = LPLD_MMA8451_Init();
 /*
 	if (whoami != 0x1a)
 	{
@@ -195,11 +199,19 @@ void CarInit(void)
 	}
 	else
 		LPLD_GPIO_Output_b(PTE, 5, 0);*/
-        whoami=MPU6050_Init();
+	PORTD_PCR8 = PORT_PCR_MUX(1);    //IO模拟IIC SCL
+	PORTD_PCR9 = PORT_PCR_MUX(1);    //IO模拟IIC SDA
+      //  whoami=MPU6050_Init();
+	MPU6050_Inital();
+	whoami=MPU6050_ReadByte(0x75);
 	if (whoami != 0x68)
 	{
 		LPLD_GPIO_Output_b(PTE, 5, 1);
-		while (1);
+		while (1)
+		{
+			LPLD_SYSTICK_DelayMs(500);
+			LPLD_GPIO_Toggle_b(PTE, 5);
+		}
 	}
 	else
 		LPLD_GPIO_Output_b(PTE, 5, 0);
@@ -210,6 +222,7 @@ void CarInit(void)
 		while (1);
 	}*/
 	//Init_I2C();
+        Init_PIT();
 }
 void Init_FTM(void)
 {
@@ -226,13 +239,13 @@ void Init_FTM(void)
 
 	Init_FTM_Struct.FTM_Ftmx=FTM1;
 	Init_FTM_Struct.FTM_Mode= FTM_MODE_QD;
-	Init_FTM_Struct.FTM_QdMode=QD_MODE_PHAB;
+	Init_FTM_Struct.FTM_QdMode=QD_MODE_CNTDIR;
 	LPLD_FTM_Init(Init_FTM_Struct);
 	LPLD_FTM_QD_Enable(FTM1, PTB0, PTB1); //正交解码FTM1是左电机,FTM2是右电机
 
 	Init_FTM_Struct.FTM_Ftmx=FTM2;
 	Init_FTM_Struct.FTM_Mode= FTM_MODE_QD;
-	Init_FTM_Struct.FTM_QdMode=QD_MODE_PHAB;
+	Init_FTM_Struct.FTM_QdMode = QD_MODE_CNTDIR;
 	LPLD_FTM_Init(Init_FTM_Struct);
 	LPLD_FTM_QD_Enable(FTM2, PTB18, PTB19);//开启正交解码模式
 }

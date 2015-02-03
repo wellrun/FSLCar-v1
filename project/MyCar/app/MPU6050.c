@@ -20,7 +20,7 @@ uint8 MPU6050_Init(void)
   //初始化I2C1
   i2c_init_param.I2C_I2Cx = I2C1;       //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_IntEnable = FALSE;
-  i2c_init_param.I2C_ICR = 0x23;  //可根据实际电路更改SCL频率
+  i2c_init_param.I2C_ICR = 0x2B;  //可根据实际电路更改SCL频率
   i2c_init_param.I2C_SclPin = PTC10;   //MPU
   i2c_init_param.I2C_SdaPin = PTC11;   //MPU
   i2c_init_param.I2C_Isr = NULL;
@@ -37,7 +37,7 @@ uint8 MPU6050_Init(void)
 	MPU6050_WriteReg(CONFIG, 0x02);//低通的值..低通频率不能太低了..
 	MPU6050_WriteReg(GYRO_CONFIG, 0x18);
 	MPU6050_WriteReg(ACCEL_CONFIG, 0x00);
-        device_id = MPU6050_ReadReg(0x75);
+     device_id = MPU6050_ReadReg(0x75);
 	return device_id;
 }
 

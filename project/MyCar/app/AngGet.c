@@ -4,11 +4,13 @@
 #include "DEV_MMA8451.h"
 #include "datastructure.h"
 #include "Kalman.h"
-#include "MPU6050.h"
+//#include "MPU6050.h"
+#include "MPU6050_Moni.h"
 //#include "L3G4200.h"
 float GYROSCOPE_ANGLE_RATIO = 0.35;// 0.1336// (3300/4096)/(0.67*6) //陀螺仪当前的静态为2360  //这个是放大9倍
 //L3G4200官方典型值为0.0175
-float Dir_SpeedRatio = 0.08;
+float Dir_SpeedRatio = 0.35;
+float AngRatio=(180.0 / (4096.0 * 2));
 extern CarInfo_TypeDef CarInfo_Now; //当前车子的信息
 extern CarControl_TypeDef MotorControl; //电机控制的值
 extern float angle_com, angle_dot_com;
@@ -36,40 +38,55 @@ void AngleIntegration(float Anglespeed);
 void AngleGet(void)
 {
 	static int initok = 0;
-	static float GyroTemp = 0;
+	//static float GyroTemp = 0;
 	static short whoam = 0;
 	static int error = 0;
-	static int MMAError = 0;
+	//static int MMAError = 0;
 	//acc_x = LPLD_MMA8451_GetResult(MMA8451_STATUS_Z_READY, MMA8451_REG_OUTZ_MSB);
-	acc_x = MPU6050_GetResult(ACCEL_YOUT_H);
+	
 	//Dir_AngSpeed = L3G4200_GetResult(OUT_Z_L)*Dir_SpeedRatio;
 	//GyroscopeAngleSpeed = L3G4200_GetResult(OUT_Y_L)*GYROSCOPE_ANGLE_RATIO;
-	GyroscopeAngleSpeed = MPU6050_GetResult(GYRO_XOUT_H)*GYROSCOPE_ANGLE_RATIO;
-	whoam = MPU6050_ReadReg(0x75);
+	//acc_x = MPU6050_GetResult(ACCEL_YOUT_H);
+	//GyroscopeAngleSpeed = MPU6050_GetResult(GYRO_XOUT_H)*GYROSCOPE_ANGLE_RATIO;
+	acc_x = MPU6050_GetData(ACCEL_YOUT_H);
+	GyroscopeAngleSpeed = MPU6050_GetData(GYRO_XOUT_H)*GYROSCOPE_ANGLE_RATIO;
+	Dir_AngSpeed = MPU6050_GetData(GYRO_YOUT_H)*Dir_SpeedRatio;
+	whoam = MPU6050_ReadByte(0x75);
 	if (whoam != 0x68)
 	{
 		while (1)
 		{
 			error++;
 			LPLD_GPIO_Output_b(PTE, 5, 1);
-			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
-			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
-			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
-			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
-			whoam = MPU6050_GetResult(GYRO_XOUT_H);
-			whoam = MPU6050_ReadReg(0x75);
+			//LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
+			//LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
+			//LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
+			//LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
+			//whoam = MPU6050_GetData(GYRO_XOUT_H);
+			//whoam = MPU6050_ReadByte(0x75);
+			MPU6050_Inital();
+			whoam = MPU6050_ReadByte(0x75);
 			if (whoam == 0x68)
 				break;
-			else
-				errordealy();
+			else if (error > 20)
+			{
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
+				while (1);
+
+			}
+			//else
+			//errordealy();
 		}
 	}
-	whoam = LPLD_MMA8451_ReadReg(MMA8451_REG_WHOAMI);
+	//whoam = LPLD_MMA8451_ReadReg(MMA8451_REG_WHOAMI);
 	/*if (whoam != 0x1a)
 	{
           MMAError++;
 	}*/
-	GravityAngle = acc_x*(180.0 / (4096.0 * 2));
+	GravityAngle = acc_x*AngRatio;
 
 
 	if (initok == 0)
@@ -86,7 +103,7 @@ void AngleGet(void)
 	// 	Kalman_Filter(GravityAngle, -GyroscopeAngleSpeed);
 	// 	CarInfo_Now.CarAngSpeed = angle_dot;
 	// 	CarInfo_Now.CarAngle = angle;
-	AngleIntegration(-GyroscopeAngleSpeed);//确定了当前的值合适
+	AngleIntegration(-Dir_AngSpeed);//确定了当前的值合适
 
 }
 

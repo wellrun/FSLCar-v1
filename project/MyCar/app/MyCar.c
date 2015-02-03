@@ -9,7 +9,7 @@
 #include "Control.h"
 #include "CCD.h"
 #include "Communicate.h"
-#include "MPU6050.h"
+//#include "MPU6050.h"
 //#include "L3G4200.h"
 //#include "DataScope_DP.h"
 /*选了几个引脚来判断时序是否正常
@@ -19,14 +19,13 @@ PC14-20Ms;
 PC15-40Ms;
 PC16-CCDReady(20Ms);
 ------------------------*/
-
 #define Scope5Ms 12
 #define Scope4Ms 13
 #define Scope20Ms 14
 #define Scope40Ms 15
 #define ScopeCCDReady 16
 #define CCD2
-#define CAR_STAND_ANG_MAX 60
+#define CAR_STAND_ANG_MAX 70
 #define CAR_STAND_ANG_MIN 10
 char CarStandFlag = 1;
 CarInfo_TypeDef CarInfo_Now;
@@ -43,7 +42,7 @@ int Beep_TimeMs = 0;
 uint8 OUTDATA[OutDataLen] =
 { 0x03, 0xfc, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 0xfc, 0x03 }; //示波器
 extern float GravityAngle; //重力角
-extern char TimeFlag_5Ms, TimeFlag_40Ms, TimeFlag_20Ms, TimeFlag_2Ms;
+extern short TimeFlag_5Ms, TimeFlag_40Ms, TimeFlag_20Ms, TimeFlag_2Ms;
 extern unsigned char CCDReady;
 extern unsigned char CCDTimeMs;//时间片标志
 extern uint8 debugerConnected; //是否连接到调试器
@@ -52,6 +51,7 @@ extern float AngleIntegraed;//对角速度积分的角度值
 extern uint8 IntegrationTime;
 extern float SpeedSet_Variable ;
 extern float IntSum;
+extern float Dir_AngSpeed ;
 //--控制区
  uint8 Debuger = 1;
  uint8 CCDOn = 1;
@@ -96,8 +96,11 @@ uint8 Temp1B = 0;
 char DataReciveStart = 0;
 char CarStop = 0;//强制停车的标志
 int DebugerErrorCnt = 0;
-
+short TimeFlag_5Ms, TimeFlag_40Ms, TimeFlag_20Ms, TimeFlag_2Ms;
+short TimerMsCnt = 0,AngTimes=0;
+extern short SpeedControlPeriod, DirectionConrtolPeriod;
 uint8 DebugerByte36[PageDateLen];
+extern void Beep_Isr(void);
 
 unsigned char Status_Check(void)
 {
@@ -121,33 +124,84 @@ unsigned char Status_Check(void)
 		return 0;
 	}
 }
+
+void Speed_Change(void)//测试速度pi用..需要配合示波器
+{
+	static int t = 0;
+	t++;
+	if (t > 10000)
+	{
+		if (SpeedSet_Variable!=40)
+		{
+			SpeedSet_Variable = 40;
+			t = 0;
+		}
+		else
+		{
+			SpeedSet_Variable = 80;
+			t = 0;
+		}
+	}
+	
+}
+
 void AngleCon_Isr(void)
 {
-	Status_Check();
-	if (AngleCale == 1)
-	{
-			LPLD_GPIO_Toggle_b(PTC, Scope4Ms);
-			AngleGet();
-			AngleControlValueCalc();
-	}
-	AngData_Ready = 1;
-
-	if (CarStandFlag == 1 && CarStop == 0)
-	{
-		MotorControl_Out(); //输出电机控制的值
-	}
-	else
-	{
-		if (CarStandFlag != 0)
+	unsigned char integration_piont;
+		CCDTimeMs++;
+		TimerMsCnt++;
+		AngTimes++;
+		SpeedControlPeriod++;
+		DirectionConrtolPeriod++;
+		integration_piont = DIRECTION_CONTROL_PERIOD - IntegrationTime;
+		if (integration_piont == CCDTimeMs)
 		{
-			CarStandFlag = 0;
-			LPLD_SYSTICK_DelayMs(1000);
+			StartIntegration_M();
 		}
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
-	}
+		if (CCDTimeMs >= DIRECTION_CONTROL_PERIOD)
+		{
+			ImageCapture_M(CCDM_Arr, CCDS_Arr);
+			CCDTimeMs = 0;
+			CCDReady = 1;
+			DirectionConrtolPeriod = 0;
+		}
+		if (TimerMsCnt >= SPEED_CONTROL_PERIOD)
+		{
+			TimeFlag_40Ms = 1;
+			TimerMsCnt = 0;
+			SpeedControlPeriod = 0;
+		}
+		Beep_Isr();
+		if (AngTimes == 5)
+		{
+			AngTimes = 0;
+			if (AngleCale == 1)
+			{
+				LPLD_GPIO_Toggle_b(PTC, Scope4Ms);
+				AngleGet();
+				AngleControlValueCalc();
+			}
+			AngData_Ready = 1;
+
+			if (CarStandFlag == 1 && CarStop == 0)
+			{
+				MotorControl_Out(); //输出电机控制的值
+			}
+			else
+			{
+				if (CarStandFlag != 0)
+				{
+					CarStandFlag = 0;
+					LPLD_SYSTICK_DelayMs(1000);
+				}
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
+			}
+		}
+		Status_Check();
+		//Speed_Change();
 }
 
 
@@ -156,6 +210,7 @@ void CCDCP(void)
 	LPLD_GPIO_Toggle_b(PTC, ScopeCCDReady);
 	if (CCDOn == 1)
 	{
+		CCD_Median_Filtering();
 		CCD_Deal_Main(CCDM_Arr);
 		CCD_Deal_Slave(CCDS_Arr);//现在这两个函数只负责找到线
 		CCD_Deal_Both();
@@ -168,7 +223,7 @@ void CCDCP(void)
 		{
 			CCD_ControlValueCale();
 			DirControlValueCale();//方向控制
-			if (CarStandFlag == 1)
+			if (CarStandFlag == 1 && CarStop == 0)
 			{
 				MotorControl_Out();
 			}
@@ -185,19 +240,22 @@ void main(void)
 	short CCDSendPointCnt = 0;
 	short ScopeSendPointCnt = 0;
 	short DebugDataPointCnt = 0;
-	DisableInterrupts;
 	Struct_Init(); //初始各种结构体的值
 	CarInit();
-	BeepBeepBeep(500);
+
+	/*while (1)
+	{
+		LPLD_GPIO_Toggle_b(PTC, 14);
+		MPU6050_GetData(ACCEL_YOUT_H);
+		MPU6050_GetData(GYRO_XOUT_H);
+	}*/
 	//LPLD_Flash_Init(); //初始化EEPROM,所有的初始化数据保存在EEPROM的第60个扇区
 	//Flash_WriteTest(); 测试flash区
 
 	//Timer_Init(); //初始化程序时间计数器
-	EnableInterrupts;
 	while (1)
 	{
 		//更改了时间片的模式
-
 		if (TimeFlag_40Ms == 1)
 		{
 			TimeFlag_40Ms = 0;
@@ -312,42 +370,42 @@ void main(void)
 				{
 					AngDataSendOK = 0;
 					//调直立用
- 					Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
- 					tempfloat = CarInfo_Now.CarAngSpeed;
- 					Float2Byte(&tempfloat, OUTDATA, 10);
- 					Float2Byte(&GravityAngle, OUTDATA, 6);
- 					tempfloat = -(float)AngleIntegraed;
- 					Float2Byte(&tempfloat, OUTDATA, 14);
+// 					Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
+// 					tempfloat = CarInfo_Now.CarAngSpeed;
+// 					Float2Byte(&tempfloat, OUTDATA, 10);
+// 					Float2Byte(&GravityAngle, OUTDATA, 6);
+// 					tempfloat = Dir_AngSpeed;
+// 					Float2Byte(&tempfloat, OUTDATA, 14);
 
 					//调速度PI
-// 					tempfloat = (float)SpeedSet_Variable;
-// 					Float2Byte(&tempfloat, OUTDATA, 2);
-// 					tempfloat = (float)TempValue.AngControl_OutValue;
-// 					Float2Byte(&tempfloat, OUTDATA, 6);
-// 					tempfloat = (float)CarInfo_Now.CarSpeed;
-// 					Float2Byte(&tempfloat, OUTDATA, 10);
-// 					tempfloat = Speed_PID.OutValue;
-// 					Float2Byte(&tempfloat, OUTDATA, 14);
+					tempfloat = (float)SpeedSet_Variable;
+					Float2Byte(&tempfloat, OUTDATA, 2);
+					tempfloat = (float)TempValue.AngControl_OutValue;
+					Float2Byte(&tempfloat, OUTDATA, 6);
+					tempfloat = (float)CarInfo_Now.CarSpeed;
+					Float2Byte(&tempfloat, OUTDATA, 10);
+					tempfloat = (float)TempValue.SpeedOutValue;
+					Float2Byte(&tempfloat, OUTDATA, 14);
 
 
 					//调方向和速度
-// 					tempfloat = (float)Dir_PID.ControlValue;
-// 					Float2Byte(&tempfloat, OUTDATA, 2);
-// 					tempfloat = (float)CarInfo_Now.CarSpeed;
-// 					Float2Byte(&tempfloat, OUTDATA, 6);
-// 					tempfloat = (float)Speed_PID.SpeedSet;
+// 					tempfloat = (float)TempValue.SpeedOutValue;
 // 					Float2Byte(&tempfloat, OUTDATA, 10);
-// 					tempfloat = (float)CarInfo_Now.CarAngle;
+// 					tempfloat = (float)CarInfo_Now.CarSpeed;
+// 					Float2Byte(&tempfloat, OUTDATA, 2);
+// 					tempfloat = (float)SpeedSet_Variable;
+// 					Float2Byte(&tempfloat, OUTDATA, 6);
+// 					tempfloat = (float)TempValue.AngControl_OutValue;
 // 					Float2Byte(&tempfloat, OUTDATA, 14);
 
-// 					tempfloat = (float)Dir_PID.ControlValue;
+// 					tempfloat = (float)CCDMain_Status.MidPoint;
 // 					Float2Byte(&tempfloat, OUTDATA, 2);
-// 					tempfloat = (float)CCDSlave_Status.LeftPoint;
+// 					tempfloat = (float)CCDSlave_Status.MidPoint;
 // 					Float2Byte(&tempfloat, OUTDATA, 6);
-// 					tempfloat = (float)CCDSlave_Status.RightPoint;
-// 					Float2Byte(&tempfloat, OUTDATA, 10);
-// 					tempfloat = (float)CarInfo_Now.CarAngle;
+// 					tempfloat = (float)SpeedSet_Variable;
 // 					Float2Byte(&tempfloat, OUTDATA, 14);
+// 					tempfloat = (float)CarInfo_Now.CarSpeed;
+// 					Float2Byte(&tempfloat, OUTDATA, 10);
 				}
 				LPLD_UART_PutChar(UART5, OUTDATA[ScopeSendPointCnt]);
 				ScopeSendPointCnt++;
