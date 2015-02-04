@@ -175,12 +175,9 @@ void AngleCon_Isr(void)
 		if (AngTimes == 5)
 		{
 			AngTimes = 0;
-			if (AngleCale == 1)
-			{
-				LPLD_GPIO_Toggle_b(PTC, Scope4Ms);
-				AngleGet();
-				AngleControlValueCalc();
-			}
+			LPLD_GPIO_Toggle_b(PTC, Scope4Ms);
+			AngleGet();
+			AngleControlValueCalc();
 			AngData_Ready = 1;
 
 			if (CarStandFlag == 1 && CarStop == 0)
@@ -378,14 +375,14 @@ void main(void)
 // 					Float2Byte(&tempfloat, OUTDATA, 14);
 
 					//调速度PI
-					tempfloat = (float)SpeedSet_Variable;
-					Float2Byte(&tempfloat, OUTDATA, 2);
-					tempfloat = (float)TempValue.AngControl_OutValue;
-					Float2Byte(&tempfloat, OUTDATA, 6);
-					tempfloat = (float)CarInfo_Now.CarSpeed;
-					Float2Byte(&tempfloat, OUTDATA, 10);
-					tempfloat = (float)TempValue.SpeedOutValue;
-					Float2Byte(&tempfloat, OUTDATA, 14);
+// 					tempfloat = (float)SpeedSet_Variable;
+// 					Float2Byte(&tempfloat, OUTDATA, 2);
+// 					tempfloat = (float)TempValue.AngControl_OutValue;
+// 					Float2Byte(&tempfloat, OUTDATA, 6);
+// 					tempfloat = (float)CarInfo_Now.CarSpeed;
+// 					Float2Byte(&tempfloat, OUTDATA, 10);
+// 					tempfloat = (float)TempValue.SpeedOutValue;
+// 					Float2Byte(&tempfloat, OUTDATA, 14);
 
 
 					//调方向和速度
@@ -406,6 +403,16 @@ void main(void)
 // 					Float2Byte(&tempfloat, OUTDATA, 14);
 // 					tempfloat = (float)CarInfo_Now.CarSpeed;
 // 					Float2Byte(&tempfloat, OUTDATA, 10);
+
+					//模糊控制
+					tempfloat = (float)Dir_PID.ThisError;
+					Float2Byte(&tempfloat, OUTDATA, 2);
+					tempfloat = (float)CarInfo_Now.CarSpeed;
+					Float2Byte(&tempfloat, OUTDATA, 10);
+					tempfloat = (float)Dir_AngSpeed;
+					Float2Byte(&tempfloat, OUTDATA, 6);
+					tempfloat = (float)Speed_PID.SpeedSet;
+					Float2Byte(&tempfloat, OUTDATA, 14);
 				}
 				LPLD_UART_PutChar(UART5, OUTDATA[ScopeSendPointCnt]);
 				ScopeSendPointCnt++;

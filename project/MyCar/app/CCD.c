@@ -1209,10 +1209,10 @@ void CCDLineInit(void)
 	int i;
 	
 	CCDMain_Status.LeftSet = 39;
-	CCDMain_Status.RightSet = 94;
+	CCDMain_Status.RightSet = 92;
 
 
-	CCDSlave_Status.LeftSet = 50;
+	CCDSlave_Status.LeftSet = 47;
 	CCDSlave_Status.RightSet = 76;
         
         CCDMain_Status.MidSet = (CCDMain_Status.LeftSet+CCDMain_Status.RightSet)/2;

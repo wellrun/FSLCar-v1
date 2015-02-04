@@ -17,12 +17,12 @@ uint8 MPU6050_Init(void)
   I2C_InitTypeDef i2c_init_param;
 	uint8 device_id;
 
-  //初始化I2C1
-  i2c_init_param.I2C_I2Cx = I2C1;       //在DEV_MMA8451.h中修改该值
+  //初始化I2C0
+  i2c_init_param.I2C_I2Cx = I2C0;       //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_IntEnable = FALSE;
-  i2c_init_param.I2C_ICR = 0x2B;  //可根据实际电路更改SCL频率
-  i2c_init_param.I2C_SclPin = PTC10;   //MPU
-  i2c_init_param.I2C_SdaPin = PTC11;   //MPU
+  i2c_init_param.I2C_ICR = 0x20;  //可根据实际电路更改SCL频率
+  i2c_init_param.I2C_SclPin = PTD8;   //MPU
+  i2c_init_param.I2C_SdaPin = PTD9;   //MPU
   i2c_init_param.I2C_Isr = NULL;
 //i2c_init_param.I2C_OpenDrainEnable=TRUE;
  LPLD_I2C_Init(i2c_init_param);
@@ -54,26 +54,26 @@ uint8 MPU6050_Init(void)
 void MPU6050_WriteReg(uint8 RegisterAddress, uint8 Data)
 {
 	//发送从机地址
-	// LPLD_I2C_StartTrans(I2C1, MMA8451_DEV_ADDR, I2C_MWSR);
-	LPLD_I2C_Start(I2C1); 
+	// LPLD_I2C_StartTrans(I2C0, MMA8451_DEV_ADDR, I2C_MWSR);
+	LPLD_I2C_Start(I2C0); 
 	//MMA8451_Delay(10);
-	LPLD_I2C_WriteByte(I2C1, SlaveAddress);
+	LPLD_I2C_WriteByte(I2C0, SlaveAddress);
 	//MMA8451_Delay(10);
-	LPLD_I2C_WaitAck(I2C1, I2C_ACK_ON);
+	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
 
 	//写MMA8451寄存器地址
 	//MMA8451_Delay(300);
-	LPLD_I2C_WriteByte(I2C1, RegisterAddress);
+	LPLD_I2C_WriteByte(I2C0, RegisterAddress);
 	//MMA8451_Delay(10);
-	LPLD_I2C_WaitAck(I2C1, I2C_ACK_ON);
+	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
 
 	//向寄存器中写具体数据
 	//MMA8451_Delay(10);
-	LPLD_I2C_WriteByte(I2C1, Data);
+	LPLD_I2C_WriteByte(I2C0, Data);
 	//MMA8451_Delay(10);
-	LPLD_I2C_WaitAck(I2C1, I2C_ACK_ON);
+	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
 
-	LPLD_I2C_Stop(I2C1);
+	LPLD_I2C_Stop(I2C0);
 
 	MMA8451_Delay(5000);
 }
@@ -93,48 +93,48 @@ uint8 MPU6050_ReadReg(uint8 RegisterAddress)
 	uint8 result;
 
 	//发送从机地址
-	LPLD_I2C_Start(I2C1);
+	LPLD_I2C_Start(I2C0);
 	//MMA8451_Delay(20);
-	LPLD_I2C_WriteByte(I2C1, SlaveAddress);
+	LPLD_I2C_WriteByte(I2C0, SlaveAddress);
 	//MMA8451_Delay(5);
-	LPLD_I2C_WaitAck(I2C1, I2C_ACK_ON);
+	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
 
 	//写MMA8451寄存器地址
 	//MMA8451_Delay(100);
     //在这个位置卡死
-	LPLD_I2C_WriteByte(I2C1, RegisterAddress);
+	LPLD_I2C_WriteByte(I2C0, RegisterAddress);
 	//MMA8451_Delay(5);
-	LPLD_I2C_WaitAck(I2C1, I2C_ACK_ON);
+	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
 	//MMA8451_Delay(10);
 	//再次产生开始信号
-	LPLD_I2C_ReStart(I2C1);
+	LPLD_I2C_ReStart(I2C0);
 
 	//发送从机地址和读取位
 	//MMA8451_Delay(10);
-	LPLD_I2C_WriteByte(I2C1, SlaveAddress + 1);
+	LPLD_I2C_WriteByte(I2C0, SlaveAddress + 1);
 	//MMA8451_Delay(10);
-	LPLD_I2C_WaitAck(I2C1, I2C_ACK_ON);
+	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
 
 	//转换主机模式为读
 	//MMA8451_Delay(10);
-	LPLD_I2C_SetMasterWR(I2C1, I2C_MRSW);
+	LPLD_I2C_SetMasterWR(I2C0, I2C_MRSW);
 
 	//关闭应答ACK
 	//MMA8451_Delay(3);
-	LPLD_I2C_WaitAck(I2C1, I2C_ACK_OFF); //NACK
+	LPLD_I2C_WaitAck(I2C0, I2C_ACK_OFF); //NACK
 
 	//读IIC数据
 	//MMA8451_Delay(100);
-	result = LPLD_I2C_ReadByte(I2C1);
+	result = LPLD_I2C_ReadByte(I2C0);
 	//MMA8451_Delay(10);
-	LPLD_I2C_WaitAck(I2C1, I2C_ACK_ON);
+	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
 
 	//发送停止信号
-	LPLD_I2C_Stop(I2C1);
+	LPLD_I2C_Stop(I2C0);
 
 	//读IIC数据
 	//MMA8451_Delay(50);
-	result = LPLD_I2C_ReadByte(I2C1);
+	result = LPLD_I2C_ReadByte(I2C0);
 
 	MMA8451_Delay(5000);
 

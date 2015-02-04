@@ -1,5 +1,6 @@
 #include "Control.h"
 #include "CCD.h"
+#include "Fuzzy.h"
 //#include "mpu6050.h"
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
 #define MOTOR_OUT_MAX       8000
@@ -200,6 +201,7 @@ void SpeedControlValueCalc(void)
 	static int Index = 1;
 	static float Speed_IntSum = 0;
 	SpeedGet();
+#define IntMax 3500
 	/*static float Dir_ControlValue[8] = { 0 };
 	int i = 0, k = 0, j = 0;
 	float Dir_Diff_10 = 0;
@@ -235,7 +237,7 @@ void SpeedControlValueCalc(void)
 		p->ThisError = ErrorMax;
 	else if (p->ThisError < -ErrorMax)
 		p->ThisError = -ErrorMax;
-	if (p->OutValueSum >(SPEED_CONTROL_OUT_MAX))
+	if (p->OutValueSum >(IntMax))
 	{
 		if (p->ThisError > 0)
 			Index = 0;
@@ -244,7 +246,7 @@ void SpeedControlValueCalc(void)
 			Index = 1;
 		}
 	}
-	else if (p->OutValueSum < SPPED_CONTROL_OUT_MIN)
+	else if (p->OutValueSum < (-IntMax))
 	{
 		if (p->ThisError < 0)
 			Index = 0;
@@ -255,7 +257,7 @@ void SpeedControlValueCalc(void)
 	}
 
 	p->OutValue = p->Kp*(p->ThisError - p->LastError) \
-		+ (p->Ki / 10.0)*p->ThisError*Index \
+		+ (p->Ki / 10.0)*p->ThisError \
 		+ p->Kd*(p->ThisError - 2 * p->LastError + p->PreError);
 	p->PreError = p->LastError;
 	p->LastError = p->ThisError;
@@ -329,15 +331,17 @@ void DirControlValueCale(void)
 
 	float Dir_Diff;
 	static float Ki = 0;
+	static float Last_DirAngSpeed;
 	extern float Dir_AngSpeed;
-
+	
 	Dir_PID.LastError = Dir_PID.ThisError;
 	Dir_PID.ThisError = Dir_PID.ControlValue;
 	//Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;
 	IntSum += Ki*Dir_PID.ThisError;
-	Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* Dir_PID.Kp_Temp + Dir_AngSpeed*Dir_PID.Kd_Temp + IntSum;
+	Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_AngSpeed*0.6+Last_DirAngSpeed*0.4)*Dir_PID.Kd_Temp + IntSum;
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
+	Last_DirAngSpeed = Dir_AngSpeed;
 	/*TempValue.DirOutValue = Dir_PID.OutValue;
 	if (TempValue.DirOutValue > 0)
 	{
@@ -389,11 +393,11 @@ void ControlSmooth(void)
 	if (TempValue.DirOutValue > 0)
 	{
 	TempValue.Dir_LeftOutValue = TempValue.DirOutValue;
-	TempValue.Dir_RightOutValue = -TempValue.DirOutValue*0.7;
+	TempValue.Dir_RightOutValue = -TempValue.DirOutValue;
 	}
 	else
 	{
-	TempValue.Dir_LeftOutValue = TempValue.DirOutValue*0.7;
+	TempValue.Dir_LeftOutValue = TempValue.DirOutValue;
 	TempValue.Dir_RightOutValue = -TempValue.DirOutValue;
 	}
 	//方向控制去掉平滑处理

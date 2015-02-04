@@ -4,8 +4,8 @@
 #include "DEV_MMA8451.h"
 #include "datastructure.h"
 #include "Kalman.h"
-//#include "MPU6050.h"
-#include "MPU6050_Moni.h"
+#include "MPU6050.h"
+//#include "MPU6050_Moni.h"
 //#include "L3G4200.h"
 float GYROSCOPE_ANGLE_RATIO = 0.35;// 0.1336// (3300/4096)/(0.67*6) //陀螺仪当前的静态为2360  //这个是放大9倍
 //L3G4200官方典型值为0.0175
@@ -58,12 +58,6 @@ void AngleGet(void)
 		{
 			error++;
 			LPLD_GPIO_Output_b(PTE, 5, 1);
-			//LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
-			//LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
-			//LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
-			//LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
-			//whoam = MPU6050_GetData(GYRO_XOUT_H);
-			//whoam = MPU6050_ReadByte(0x75);
 			MPU6050_Inital();
 			whoam = MPU6050_ReadByte(0x75);
 			if (whoam == 0x68)
@@ -77,8 +71,6 @@ void AngleGet(void)
 				while (1);
 
 			}
-			//else
-			//errordealy();
 		}
 	}
 	//whoam = LPLD_MMA8451_ReadReg(MMA8451_REG_WHOAMI);
