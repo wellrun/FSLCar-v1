@@ -55,29 +55,22 @@ void AngleGet(void)
 	whoam = MPU6050_ReadByte(0x75);
 	if (whoam != 0x68)
 	{
-		while (1)
+		error++;
+		LPLD_GPIO_Output_b(PTE, 5, 1);
+		if (error > 20)
 		{
-			error++;
-			LPLD_GPIO_Output_b(PTE, 5, 1);
-			MPU6050_Inital();
-			whoam = MPU6050_ReadByte(0x75);
-			if (whoam == 0x68)
-				break;
-			else if (error > 20)
-			{
-				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
-				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
-				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
-				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
-				while (1);
+			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
+			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
+			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
+			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
+			while (1);
 
-			}
 		}
 	}
 	//whoam = LPLD_MMA8451_ReadReg(MMA8451_REG_WHOAMI);
 	/*if (whoam != 0x1a)
 	{
-          MMAError++;
+	MMAError++;
 	}*/
 	GravityAngle = acc_x*AngRatio;
 

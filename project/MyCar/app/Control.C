@@ -336,10 +336,10 @@ void DirControlValueCale(void)
 	
 	Dir_PID.LastError = Dir_PID.ThisError;
 	Dir_PID.ThisError = Dir_PID.ControlValue;
-	Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;
+	//Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;
 	IntSum += Ki*Dir_PID.ThisError;
-	Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_Diff)*Dir_PID.Kd_Temp + IntSum;
-	//Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_AngSpeed*0.6+Last_DirAngSpeed*0.4)*Dir_PID.Kd_Temp + IntSum;
+	//Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_Diff)*Dir_PID.Kd_Temp + IntSum;
+	Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_AngSpeed*0.6+Last_DirAngSpeed*0.4)*Dir_PID.Kd_Temp + IntSum;
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
 	Last_DirAngSpeed = Dir_AngSpeed;

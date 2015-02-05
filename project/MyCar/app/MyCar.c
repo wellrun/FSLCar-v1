@@ -147,6 +147,8 @@ void Speed_Change(void)//测试速度pi用..需要配合示波器
 
 void AngleCon_Isr(void)
 {
+  static int cvtemp[10000];
+  static int i=0;
 	unsigned char integration_piont;
 		CCDTimeMs++;
 		TimerMsCnt++;
@@ -183,6 +185,8 @@ void AngleCon_Isr(void)
 			if (CarStandFlag == 1 && CarStop == 0)
 			{
 				MotorControl_Out(); //输出电机控制的值
+                                cvtemp[i]=Dir_PID.ControlValue;
+                                i++;
 			}
 			else
 			{
@@ -375,14 +379,14 @@ void main(void)
 // 					Float2Byte(&tempfloat, OUTDATA, 14);
 
 					//调速度PI
-// 					tempfloat = (float)SpeedSet_Variable;
-// 					Float2Byte(&tempfloat, OUTDATA, 2);
-// 					tempfloat = (float)TempValue.AngControl_OutValue;
-// 					Float2Byte(&tempfloat, OUTDATA, 6);
-// 					tempfloat = (float)CarInfo_Now.CarSpeed;
-// 					Float2Byte(&tempfloat, OUTDATA, 10);
-// 					tempfloat = (float)TempValue.SpeedOutValue;
-// 					Float2Byte(&tempfloat, OUTDATA, 14);
+  					tempfloat = (float)SpeedSet_Variable;
+  					Float2Byte(&tempfloat, OUTDATA, 2);
+  					tempfloat = (float)TempValue.AngControl_OutValue;
+  					Float2Byte(&tempfloat, OUTDATA, 6);
+  					tempfloat = (float)CarInfo_Now.CarSpeed;
+  					Float2Byte(&tempfloat, OUTDATA, 10);
+  					tempfloat = (float)TempValue.SpeedOutValue;
+  					Float2Byte(&tempfloat, OUTDATA, 14);
 
 
 					//调方向和速度
@@ -405,14 +409,14 @@ void main(void)
 // 					Float2Byte(&tempfloat, OUTDATA, 10);
 
 					//模糊控制
-					tempfloat = (float)Dir_PID.ThisError;
-					Float2Byte(&tempfloat, OUTDATA, 2);
-					tempfloat = (float)CarInfo_Now.CarSpeed;
-					Float2Byte(&tempfloat, OUTDATA, 10);
-					tempfloat = (float)Dir_AngSpeed;
-					Float2Byte(&tempfloat, OUTDATA, 6);
-					tempfloat = (float)Speed_PID.SpeedSet;
-					Float2Byte(&tempfloat, OUTDATA, 14);
+// 					tempfloat = (float)Dir_PID.ThisError;
+// 					Float2Byte(&tempfloat, OUTDATA, 2);
+// 					tempfloat = (float)CarInfo_Now.CarSpeed;
+// 					Float2Byte(&tempfloat, OUTDATA, 10);
+// 					tempfloat = (float)Dir_AngSpeed;
+// 					Float2Byte(&tempfloat, OUTDATA, 6);
+// 					tempfloat = (float)Speed_PID.SpeedSet;
+// 					Float2Byte(&tempfloat, OUTDATA, 14);
 				}
 				LPLD_UART_PutChar(UART5, OUTDATA[ScopeSendPointCnt]);
 				ScopeSendPointCnt++;

@@ -55,12 +55,12 @@ void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 	Ang_PID.AngSet = 53.5; 
 	Ang_PID.AngSpeedSet = 0.00;
 
-	Speed_PID.SpeedSet = 65;
-	Speed_PID.Kp = 330;
-	Speed_PID.Ki =90;
-	Speed_PID.Kd = -70;
-	Dir_PID.Kp = 82;
-	Dir_PID.Kd = 100;
+	Speed_PID.SpeedSet = 80;
+	Speed_PID.Kp = 350;
+	Speed_PID.Ki =80;
+	Speed_PID.Kd = -150;
+	Dir_PID.Kp = 72;
+	Dir_PID.Kd = 6;
         
 	TempValue.AngControl_OutValue = 0;
 	TempValue.Dir_RightOutValue = 0;

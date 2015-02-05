@@ -28,9 +28,9 @@ uint8 MPU6050_Init(void)
  LPLD_I2C_Init(i2c_init_param);
 
 //读取设备ID
-	
+	LPLD_SYSTICK_DelayMs(500);
 	MPU6050_WriteReg(PWR_MGMT_1, 0x80);
-	LPLD_SYSTICK_DelayMs(20);
+	LPLD_SYSTICK_DelayMs(500);
 	MPU6050_WriteReg(PWR_MGMT_1, 0x00); //解除休眠状态
 	LPLD_SYSTICK_DelayMs(20);
 	MPU6050_WriteReg(SMPLRT_DIV, 0x04);

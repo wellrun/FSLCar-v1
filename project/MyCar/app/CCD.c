@@ -38,8 +38,8 @@ uint8 IntegrationTime = 4;
 unsigned char CCDM_Arr[128] = { 0 };
 unsigned char CCDS_Arr[128] = { 0 };
 extern short SpeedControlPeriod, DirectionConrtolPeriod;
-int TurningRight_Correction[20] = { -2, -2, -3, -4, -3, -1, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 1, 1, 0 };
-int TurningLeft_Correction[20] ={ 2, 2, 3, 4, 3, 1, 1, 0, 0, 0, 0, 0, -1, -1, -2, -2, -1, -1, 0};
+int TurningRight_Correction[20] = { -3, -3,-1-1 };
+int TurningLeft_Correction[20] = { 3, 3, 1,1};
 
 
 // #define CONTROL_PERIOD	5
@@ -945,84 +945,6 @@ void CCD_Deal_Both(void)
 		Cnt_Lost_Main_R = 0;
 		Flag_Lost_Main_R = 0;
 	}
-	if (((CCDSlave_Status.MidPoint - CCDSlave_Status.MidSet) - (CCDMain_Status.MidPoint - CCDMain_Status.MidSet))>7 || ((CCDSlave_Status.MidPoint - CCDSlave_Status.MidSet) - (CCDMain_Status.MidPoint - CCDMain_Status.MidSet))<-7)
-	{
-		Cnt_Straight++;
-		if (Cnt_Straight > 4)
-		{
-			Flag_Straight = 1;
-			Flag_TurnLeft = 0;
-			Flag_TurnRight = 0;
-			Cnt_TurnRight = 0;
-			Cnt_TurnLeft = 0;
-			Flag_DistanceCnt = 0;
-			Flag_Ohm = 0;
-		}
-		else
-			Flag_Straight = 0;
-	}//判断是否为直线..判定成功清除其他所有标志位和计数
-	if (CCDSlave_Status.LeftPoint > (CCDSlave_Status.MidSet + 8) && CCDSlave_Status.Right_LostFlag == 1)
-	{
-		Cnt_TurnRight++;
-		if (Cnt_TurnRight > 1)
-		{
-			if (Cnt_Straight < 10)
-			{
-				if (Flag_Ohm != 1)
-				{
-					Flag_Ohm = 1;
-					DistanceOfCar = 60;
-				}
-			}
-			Flag_TurnRight = 1;
-			Flag_Straight = 0;
-			Flag_TurnLeft = 0;
-			Cnt_Straight = 0;
-			Cnt_TurnLeft = 0;
-			Flag_DistanceCnt = 1;
-		}
-		else
-		{
-			Flag_TurnRight = 0;
-			DistanceOfCar = 0;
-			Flag_Ohm = 0;
-		}
-	}
-	if (CCDSlave_Status.RightPoint < (CCDSlave_Status.MidSet - 8) && CCDSlave_Status.Left_LostFlag == 1)
-	{
-		Cnt_TurnLeft++;
-		if (Cnt_TurnLeft>1)
-		{
-			if (Cnt_Straight < 10)
-			{
-				if (Flag_Ohm != 1)
-				{
-					Flag_Ohm = 1;
-					DistanceOfCar = 60;
-				}
-			}
-			Flag_TurnLeft = 1;
-			Flag_TurnRight = 0;
-			Flag_Straight = 0;
-			Cnt_Straight = 0;
-			Cnt_TurnLeft = 0;
-			Flag_DistanceCnt = 1;
-		}
-		else
-		{
-			Flag_TurnLeft = 0;
-			DistanceOfCar = 0;
-			Flag_Ohm = 0;
-		}
-	}
-	//判断如果从ccd一端丢线一端大于中线Set.则开启修正数组并计算距离,
-	if (Flag_SpeedGot == 1 && Flag_DistanceCnt==1)
-	{
-		Flag_SpeedGot = 0;//记得对距离变量清零
-		DistanceOfCar += (CarInfo_Now.MotorCounterLeft + CarInfo_Now.MotorCounterRight) / (115);
-		//算出跑了多长距离单位厘米
-	}
-	//如果十字，则从ccd出现一条线就引导，并且十字清零
 	if ((CCDMain_Status.Left_LostFlag == 1 && CCDMain_Status.Right_LostFlag == 1))
 	{
 		CCDMain_Status.ControlValue = 0;
@@ -1043,41 +965,44 @@ void CCD_Deal_Both(void)
 			CCDSlave_Status.SearchBegin = CCDSlave_Status.RightPoint-10;
 			if (CCDSlave_Status.SearchBegin < 15)
 				CCDSlave_Status.SearchBegin = 15;
+			CCDSlave_Status.ControlValue = CCDSlave_Status.RightSet - CCDSlave_Status.RightPoint;
 		}
 		else if (CCDSlave_Status.Right_LostFlag)
 		{
 			CCDSlave_Status.SearchBegin = CCDSlave_Status.LeftPoint + 10;
 			if (CCDSlave_Status.SearchBegin > 115)
 				CCDSlave_Status.SearchBegin = 115;
+			CCDSlave_Status.ControlValue = CCDSlave_Status.LeftSet - CCDSlave_Status.LeftPoint;
 		}
 		else
 		{
 			CCDSlave_Status.SearchBegin = CCDSlave_Status.MidPoint;
+			CCDSlave_Status.ControlValue = CCDSlave_Status.MidSet - CCDSlave_Status.MidPoint;
 		}
-		CCDSlave_Status.ControlValue = CCDSlave_Status.MidSet - CCDSlave_Status.MidPoint;
+			
 	}
 	else
 	{
 		CCDSlave_Status.MidPoint = 1;
 		CCDSlave_Status.ControlValue = 0;
 	}
-	if (Flag_TurnLeft == 1)
-	{	
-		if (DistanceOfCar/10 < 18)
-			CCDMain_Status.ControlValue += TurningLeft_Correction[(int)(DistanceOfCar / 10)];
-	}
-	if (Flag_TurnRight == 1)
+	if (((CCDSlave_Status.ControlValue - CCDMain_Status.ControlValue) > 25 || (CCDSlave_Status.ControlValue - CCDMain_Status.ControlValue) < -25)\
+		|| CCDMain_Status.ControlValue>10 || CCDMain_Status.ControlValue <-10)
 	{
-		if (DistanceOfCar/10<18)
-			CCDMain_Status.ControlValue += TurningRight_Correction[(int)(DistanceOfCar / 10)];
-	}
-	if (Flag_Straight == 1)
-	{
+		Cnt_Straight = 0;
+		Dir_PID.Kp_Temp = Dir_PID.Kp;
+		Dir_PID.Kd_Temp = Dir_PID.Kd;
 		SpeedSet_Variable = Speed_PID.SpeedSet;
 	}
 	else
 	{
-		SpeedSet_Variable = Speed_PID.SpeedSet*0.95;
+		Cnt_Straight++;
+		if (Cnt_Straight > 20)
+		{
+			Dir_PID.Kp_Temp = Dir_PID.Kp*0.5;
+			Dir_PID.Kd_Temp = Dir_PID.Kd;
+			SpeedSet_Variable = Speed_PID.SpeedSet;
+		}
 	}
 }
 
@@ -1097,7 +1022,7 @@ void CCD_ControlValueCale(void)
 		}
 		else if (CCDSlave_Status.Left_LostFlag==0 && CCDSlave_Status.Right_LostFlag==0)
 		{
-			Dir_PID.ControlValue = CCDSlave_Status.ControlValue*0.5;
+			Dir_PID.ControlValue = CCDSlave_Status.ControlValue*0.6;
 		}
 		else
 		{
@@ -1112,7 +1037,7 @@ void CCD_ControlValueCale(void)
 	else if (CCDSlave_Status.Left_LostFlag == 1 || CCDSlave_Status.Right_LostFlag==1)
 	{
 		//如果其中之一丢线,,权重增加
-		Dir_PID.ControlValue = CCDMain_Status.ControlValue ;
+		Dir_PID.ControlValue = CCDMain_Status.ControlValue*0.7 + CCDSlave_Status.ControlValue*0.3;
 	}
 	else
 	{
@@ -1131,12 +1056,12 @@ void CCDLineInit(void)
 	float a[128];
 	int i;
 	
-	CCDMain_Status.LeftSet = 39;
-	CCDMain_Status.RightSet = 92;
+	CCDMain_Status.LeftSet = 36;
+	CCDMain_Status.RightSet = 93;
 
 
-	CCDSlave_Status.LeftSet = 47;
-	CCDSlave_Status.RightSet = 76;
+	CCDSlave_Status.LeftSet = 48;
+	CCDSlave_Status.RightSet = 81;
         
         CCDMain_Status.MidSet = (CCDMain_Status.LeftSet+CCDMain_Status.RightSet)/2;
 	CCDSlave_Status.MidSet = (CCDSlave_Status.LeftSet+CCDSlave_Status.RightSet)/2;
