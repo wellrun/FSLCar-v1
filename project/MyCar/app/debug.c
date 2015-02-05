@@ -29,9 +29,9 @@ void SaveAllDateToFlash(void);
 
 void Timer_Init(void)
 {
-	Code_Timer_Struct.PIT_Pitx = PIT2;
-	Code_Timer_Struct.PIT_PeriodUs = 100;
-	Code_Timer_Struct.PIT_Isr = PIT3_ISR;
+	//Code_Timer_Struct.PIT_Pitx = PIT2;
+	//Code_Timer_Struct.PIT_PeriodUs = 100;
+	//Code_Timer_Struct.PIT_Isr = PIT3_ISR;
 	//LPLD_PIT_Init(Code_Timer_Struct);
 	//LPLD_PIT_EnableIrq(Code_Timer_Struct);
 }
@@ -52,15 +52,15 @@ void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 
 	Ang_PID.Kp = -900; //比例
 	Ang_PID.Kd = -29; //微分
-	Ang_PID.AngSet = 54.5; 
+	Ang_PID.AngSet = 53.5; 
 	Ang_PID.AngSpeedSet = 0.00;
 
 	Speed_PID.SpeedSet = 65;
 	Speed_PID.Kp = 330;
 	Speed_PID.Ki =90;
-	Speed_PID.Kd = -60;
-	Dir_PID.Kp = 28;
-	Dir_PID.Kd = 1.5;
+	Speed_PID.Kd = -70;
+	Dir_PID.Kp = 82;
+	Dir_PID.Kd = 100;
         
 	TempValue.AngControl_OutValue = 0;
 	TempValue.Dir_RightOutValue = 0;

@@ -7,7 +7,7 @@ void DelayUs(unsigned int us)
   int ii,jj;
   if (us<1) us=1;
   for(ii=0;ii<us;ii++)
-    for(jj=0;jj<1;jj++);   //50MHz--1us
+    for(jj=0;jj<2;jj++);   //50MHz--1us
 }
 
 void DelayMs(unsigned int ms)

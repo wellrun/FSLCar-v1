@@ -179,7 +179,7 @@ void AngleCon_Isr(void)
 			AngleGet();
 			AngleControlValueCalc();
 			AngData_Ready = 1;
-
+			Status_Check();
 			if (CarStandFlag == 1 && CarStop == 0)
 			{
 				MotorControl_Out(); //输出电机控制的值
@@ -197,7 +197,7 @@ void AngleCon_Isr(void)
 				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
 			}
 		}
-		Status_Check();
+		
 		//Speed_Change();
 }
 

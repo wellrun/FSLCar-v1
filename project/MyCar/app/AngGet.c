@@ -5,7 +5,8 @@
 #include "datastructure.h"
 #include "Kalman.h"
 #include "MPU6050.h"
-//#include "MPU6050_Moni.h"
+#include "MPU6050_Moni.h"
+#include "math.h"
 //#include "L3G4200.h"
 float GYROSCOPE_ANGLE_RATIO = 0.35;// 0.1336// (3300/4096)/(0.67*6) //陀螺仪当前的静态为2360  //这个是放大9倍
 //L3G4200官方典型值为0.0175

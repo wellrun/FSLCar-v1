@@ -77,12 +77,11 @@ void AngleControlValueCalc(void)
 	//ControlValue *= AngToMotorRatio; //乘上比例因子将角度转换成PWM的占空比
 	if (ControlValue > ANGLE_CONTROL_OUT_MAX)
 		ControlValue = ANGLE_CONTROL_OUT_MAX;
-	if (ControlValue < ANGLE_CONTROL_OUT_MIN)
+	else if (ControlValue < ANGLE_CONTROL_OUT_MIN)
 		ControlValue = ANGLE_CONTROL_OUT_MIN; //限幅
-	//lastControlValue = ControlValue;
 	TempValue.AngControl_OutValue = ControlValue; //更新控制临时变量的值
 }
-
+extern unsigned char Flag_SpeedGot;
 void SpeedGet(void)
 {//FTM1是左电机,FTM2是右电机
 	static int LeftSum = 0;
@@ -107,7 +106,8 @@ void SpeedGet(void)
 	//CarInfo_Now.RightSpeed = (CarInfo_Now.MotorCounterRight / CoderResolution*TyreCircumference) / Speed_Dt;//计算出速度,是准确的cm/s
 	//CarInfo_Now.CarSpeed = (CarInfo_Now.LeftSpeed + CarInfo_Now.RightSpeed) / 2;//车子的速度用左右轮速度平均值,不准确
 	CarInfo_Now.CarSpeed = (CarInfo_Now.MotorCounterLeft + CarInfo_Now.MotorCounterRight) / 20;
-
+	Flag_SpeedGot = 1;
+/*
 	LeftSum += CarInfo_Now.MotorCounterLeft;
 	RightSum += CarInfo_Now.MotorCounterRight;
 	cnt++;
@@ -116,7 +116,7 @@ void SpeedGet(void)
 		cnt = 0;
 		LeftSum = 0;
 		RightSum = 0;
-	}
+	}*/
 	// RightSum=RightSum;
 	/*printf("QD Counter1 = %d\r\n", CarInfo_Now.MotorCounterLeft);
 	printf("QD Counter2 = %d\r\n", CarInfo_Now.MotorCounterRight);*/
@@ -237,7 +237,7 @@ void SpeedControlValueCalc(void)
 		p->ThisError = ErrorMax;
 	else if (p->ThisError < -ErrorMax)
 		p->ThisError = -ErrorMax;
-	if (p->OutValueSum >(IntMax))
+/*	if (p->OutValueSum >(IntMax))
 	{
 		if (p->ThisError > 0)
 			Index = 0;
@@ -254,7 +254,7 @@ void SpeedControlValueCalc(void)
 		{
 			Index = 1;
 		}
-	}
+	}*/
 
 	p->OutValue = p->Kp*(p->ThisError - p->LastError) \
 		+ (p->Ki / 10.0)*p->ThisError \
@@ -336,9 +336,10 @@ void DirControlValueCale(void)
 	
 	Dir_PID.LastError = Dir_PID.ThisError;
 	Dir_PID.ThisError = Dir_PID.ControlValue;
-	//Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;
+	Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;
 	IntSum += Ki*Dir_PID.ThisError;
-	Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_AngSpeed*0.6+Last_DirAngSpeed*0.4)*Dir_PID.Kd_Temp + IntSum;
+	Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_Diff)*Dir_PID.Kd_Temp + IntSum;
+	//Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_AngSpeed*0.6+Last_DirAngSpeed*0.4)*Dir_PID.Kd_Temp + IntSum;
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
 	Last_DirAngSpeed = Dir_AngSpeed;
