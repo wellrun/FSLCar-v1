@@ -4,13 +4,13 @@
 #include "DEV_MMA8451.h"
 #include "datastructure.h"
 #include "Kalman.h"
-#include "MPU6050.h"
-#include "MPU6050_Moni.h"
+//#include "MPU6050.h"
+//#include "MPU6050_Moni.h"
 #include "math.h"
-//#include "L3G4200.h"
-float GYROSCOPE_ANGLE_RATIO = 0.35;// 0.1336// (3300/4096)/(0.67*6) //陀螺仪当前的静态为2360  //这个是放大9倍
-//L3G4200官方典型值为0.0175
-float Dir_SpeedRatio = 0.35;
+#include "L3G4200.h"
+float GYROSCOPE_ANGLE_RATIO = 0.39;
+float Dir_SpeedRatio = 0.21;
+int Gyro_Offset=2000;
 float AngRatio=(180.0 / (4096.0 * 2));
 extern CarInfo_TypeDef CarInfo_Now; //当前车子的信息
 extern CarControl_TypeDef MotorControl; //电机控制的值
@@ -39,58 +39,27 @@ void AngleIntegration(float Anglespeed);
 void AngleGet(void)
 {
 	static int initok = 0;
-	//static float GyroTemp = 0;
-	static short whoam = 0;
-	static int error = 0;
-	//static int MMAError = 0;
-	//acc_x = LPLD_MMA8451_GetResult(MMA8451_STATUS_Z_READY, MMA8451_REG_OUTZ_MSB);
-	
-	//Dir_AngSpeed = L3G4200_GetResult(OUT_Z_L)*Dir_SpeedRatio;
-	//GyroscopeAngleSpeed = L3G4200_GetResult(OUT_Y_L)*GYROSCOPE_ANGLE_RATIO;
-	//acc_x = MPU6050_GetResult(ACCEL_YOUT_H);
-	//GyroscopeAngleSpeed = MPU6050_GetResult(GYRO_XOUT_H)*GYROSCOPE_ANGLE_RATIO;
-	acc_x = MPU6050_GetData(ACCEL_YOUT_H);
-	GyroscopeAngleSpeed = MPU6050_GetData(GYRO_XOUT_H)*GYROSCOPE_ANGLE_RATIO;
-	Dir_AngSpeed = MPU6050_GetData(GYRO_YOUT_H)*Dir_SpeedRatio;
-	whoam = MPU6050_ReadByte(0x75);
-	if (whoam != 0x68)
-	{
-		error++;
-		LPLD_GPIO_Output_b(PTE, 5, 1);
-		if (error > 20)
-		{
-			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch4, 0);
-			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch5, 0);
-			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch6, 0);
-			LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch7, 0);
-			while (1);
-
-		}
-	}
-	//whoam = LPLD_MMA8451_ReadReg(MMA8451_REG_WHOAMI);
-	/*if (whoam != 0x1a)
-	{
-	MMAError++;
-	}*/
+	short Acc_H;
+	static float bias_cf;
+	Acc_H = LPLD_MMA8451_ReadReg(MMA8451_REG_OUTZ_MSB);
+	GyroscopeAngleSpeed = (LPLD_ADC_Get(ADC1, AD6)-Gyro_Offset)*GYROSCOPE_ANGLE_RATIO;
+        Dir_AngSpeed=-(LPLD_ADC_Get(ADC1, AD7)-Gyro_Offset)*Dir_SpeedRatio;
+        bias_cf = bias_cf * 0.99999; //陀螺仪零飘低通滤波；500次均值；0.998
+	bias_cf = bias_cf + Dir_AngSpeed * 0.00001; //0.002*/
+	Dir_AngSpeed = Dir_AngSpeed- bias_cf;
+	AngleIntegration(Dir_AngSpeed);//确定了当前的值合适
+	//ACC_L = LPLD_MMA8451_ReadReg(MMA8451_REG_OUTZ_LSB);
+	acc_x = ((Acc_H << 8));
+	acc_x = acc_x >> 2;
 	GravityAngle = acc_x*AngRatio;
-
-
 	if (initok == 0)
 	{
 		angle_com = GravityAngle;
 		initok = 1;
 	}
-	// complement_filter(GravityAngle, GyroscopeAngleSpeed);
 	complement2(GravityAngle, GyroscopeAngleSpeed);
 	CarInfo_Now.CarAngle = angle_com;
-
 	CarInfo_Now.CarAngSpeed = angle_dot_com;
-
-	// 	Kalman_Filter(GravityAngle, -GyroscopeAngleSpeed);
-	// 	CarInfo_Now.CarAngSpeed = angle_dot;
-	// 	CarInfo_Now.CarAngle = angle;
-	AngleIntegration(-Dir_AngSpeed);//确定了当前的值合适
-
 }
 
 void AngleIntegration(float Anglespeed)//对角速度积分得到角度确定GYROSCOPE_ANGLE_RATIO的值

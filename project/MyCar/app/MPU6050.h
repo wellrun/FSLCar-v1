@@ -25,8 +25,8 @@
 
 
 uint8 MPU6050_Init(void);
-void MPU6050_WriteReg(uint8 RegisterAddress, uint8 Data);
-uint8 MPU6050_ReadReg(uint8 RegisterAddress);
+void hal_dev_mpu6050_write_reg(uint8 RegisterAddress, uint8 Data);
+uint8 hal_dev_mpu6050_read_reg(uint8 RegisterAddress);
 int16 MPU6050_GetResult(uint8 Regs_Addr);
 
 

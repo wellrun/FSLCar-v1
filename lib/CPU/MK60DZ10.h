@@ -9671,9 +9671,246 @@ typedef struct PORT_MemMap
 
 
 
+#define I2C0_BASE_PTR                            ((I2C_MemMapPtr)0x40066000u)
+/** Peripheral I2C1 base pointer */
+#define I2C1_BASE_PTR                            ((I2C_MemMapPtr)0x40067000u)
+
+/* ----------------------------------------------------------------------------
+-- I2C - Register accessor macros
+---------------------------------------------------------------------------- */
+
+/**
+* @addtogroup I2C_Register_Accessor_Macros I2C - Register accessor macros
+* @{
+*/
+
+
+/* I2C - Register instance definitions */
+/* I2C0 */
+#define I2C0_A1                                  I2C_A1_REG(I2C0_BASE_PTR)
+#define I2C0_F                                   I2C_F_REG(I2C0_BASE_PTR)
+#define I2C0_C1                                  I2C_C1_REG(I2C0_BASE_PTR)
+#define I2C0_S                                   I2C_S_REG(I2C0_BASE_PTR)
+#define I2C0_D                                   I2C_D_REG(I2C0_BASE_PTR)
+#define I2C0_C2                                  I2C_C2_REG(I2C0_BASE_PTR)
+#define I2C0_FLT                                 I2C_FLT_REG(I2C0_BASE_PTR)
+#define I2C0_RA                                  I2C_RA_REG(I2C0_BASE_PTR)
+#define I2C0_SMB                                 I2C_SMB_REG(I2C0_BASE_PTR)
+#define I2C0_A2                                  I2C_A2_REG(I2C0_BASE_PTR)
+#define I2C0_SLTH                                I2C_SLTH_REG(I2C0_BASE_PTR)
+#define I2C0_SLTL                                I2C_SLTL_REG(I2C0_BASE_PTR)
+/* I2C1 */
+#define I2C1_A1                                  I2C_A1_REG(I2C1_BASE_PTR)
+#define I2C1_F                                   I2C_F_REG(I2C1_BASE_PTR)
+#define I2C1_C1                                  I2C_C1_REG(I2C1_BASE_PTR)
+#define I2C1_S                                   I2C_S_REG(I2C1_BASE_PTR)
+#define I2C1_D                                   I2C_D_REG(I2C1_BASE_PTR)
+#define I2C1_C2                                  I2C_C2_REG(I2C1_BASE_PTR)
+#define I2C1_FLT                                 I2C_FLT_REG(I2C1_BASE_PTR)
+#define I2C1_RA                                  I2C_RA_REG(I2C1_BASE_PTR)
+#define I2C1_SMB                                 I2C_SMB_REG(I2C1_BASE_PTR)
+#define I2C1_A2                                  I2C_A2_REG(I2C1_BASE_PTR)
+#define I2C1_SLTH                                I2C_SLTH_REG(I2C1_BASE_PTR)
+#define I2C1_SLTL                                I2C_SLTL_REG(I2C1_BASE_PTR)
 
 
 
+
+typedef struct I2C_MemMap
+{
+	uint8_t A1;                                      /**< I2C Address Register 1, offset: 0x0 */
+	uint8_t F;                                       /**< I2C Frequency Divider register, offset: 0x1 */
+	uint8_t C1;                                      /**< I2C Control Register 1, offset: 0x2 */
+	uint8_t S;                                       /**< I2C Status Register, offset: 0x3 */
+	uint8_t D;                                       /**< I2C Data I/O register, offset: 0x4 */
+	uint8_t C2;                                      /**< I2C Control Register 2, offset: 0x5 */
+	uint8_t FLT;                                     /**< I2C Programmable Input Glitch Filter register, offset: 0x6 */
+	uint8_t RA;                                      /**< I2C Range Address register, offset: 0x7 */
+	uint8_t SMB;                                     /**< I2C SMBus Control and Status register, offset: 0x8 */
+	uint8_t A2;                                      /**< I2C Address Register 2, offset: 0x9 */
+	uint8_t SLTH;                                    /**< I2C SCL Low Timeout Register High, offset: 0xA */
+	uint8_t SLTL;                                    /**< I2C SCL Low Timeout Register Low, offset: 0xB */
+} volatile *I2C_MemMapPtr;
+
+/* ----------------------------------------------------------------------------
+-- I2C - Register accessor macros
+---------------------------------------------------------------------------- */
+
+/**
+* @addtogroup I2C_Register_Accessor_Macros I2C - Register accessor macros
+* @{
+*/
+
+
+
+
+
+/* I2C - Register accessors */
+#define I2C_A1_REG(base)                         ((base)->A1)
+#define I2C_F_REG(base)                          ((base)->F)
+#define I2C_C1_REG(base)                         ((base)->C1)
+#define I2C_S_REG(base)                          ((base)->S)
+#define I2C_D_REG(base)                          ((base)->D)
+#define I2C_C2_REG(base)                         ((base)->C2)
+#define I2C_FLT_REG(base)                        ((base)->FLT)
+#define I2C_RA_REG(base)                         ((base)->RA)
+#define I2C_SMB_REG(base)                        ((base)->SMB)
+#define I2C_A2_REG(base)                         ((base)->A2)
+#define I2C_SLTH_REG(base)                       ((base)->SLTH)
+#define I2C_SLTL_REG(base)                       ((base)->SLTL)
+
+/**
+* @}
+*/ /* end of group I2C_Register_Accessor_Macros */
+
+
+/* ----------------------------------------------------------------------------
+-- I2C Register Masks
+---------------------------------------------------------------------------- */
+
+/**
+* @addtogroup I2C_Register_Masks I2C Register Masks
+* @{
+*/
+
+/* A1 Bit Fields */
+#define I2C_A1_AD_MASK                           0xFEu
+#define I2C_A1_AD_SHIFT                          1
+#define I2C_A1_AD(x)                             (((uint8_t)(((uint8_t)(x))<<I2C_A1_AD_SHIFT))&I2C_A1_AD_MASK)
+/* F Bit Fields */
+#define I2C_F_ICR_MASK                           0x3Fu
+#define I2C_F_ICR_SHIFT                          0
+#define I2C_F_ICR(x)                             (((uint8_t)(((uint8_t)(x))<<I2C_F_ICR_SHIFT))&I2C_F_ICR_MASK)
+#define I2C_F_MULT_MASK                          0xC0u
+#define I2C_F_MULT_SHIFT                         6
+#define I2C_F_MULT(x)                            (((uint8_t)(((uint8_t)(x))<<I2C_F_MULT_SHIFT))&I2C_F_MULT_MASK)
+/* C1 Bit Fields */
+#define I2C_C1_DMAEN_MASK                        0x1u
+#define I2C_C1_DMAEN_SHIFT                       0
+#define I2C_C1_WUEN_MASK                         0x2u
+#define I2C_C1_WUEN_SHIFT                        1
+#define I2C_C1_RSTA_MASK                         0x4u
+#define I2C_C1_RSTA_SHIFT                        2
+#define I2C_C1_TXAK_MASK                         0x8u
+#define I2C_C1_TXAK_SHIFT                        3
+#define I2C_C1_TX_MASK                           0x10u
+#define I2C_C1_TX_SHIFT                          4
+#define I2C_C1_MST_MASK                          0x20u
+#define I2C_C1_MST_SHIFT                         5
+#define I2C_C1_IICIE_MASK                        0x40u
+#define I2C_C1_IICIE_SHIFT                       6
+#define I2C_C1_IICEN_MASK                        0x80u
+#define I2C_C1_IICEN_SHIFT                       7
+/* S Bit Fields */
+#define I2C_S_RXAK_MASK                          0x1u
+#define I2C_S_RXAK_SHIFT                         0
+#define I2C_S_IICIF_MASK                         0x2u
+#define I2C_S_IICIF_SHIFT                        1
+#define I2C_S_SRW_MASK                           0x4u
+#define I2C_S_SRW_SHIFT                          2
+#define I2C_S_RAM_MASK                           0x8u
+#define I2C_S_RAM_SHIFT                          3
+#define I2C_S_ARBL_MASK                          0x10u
+#define I2C_S_ARBL_SHIFT                         4
+#define I2C_S_BUSY_MASK                          0x20u
+#define I2C_S_BUSY_SHIFT                         5
+#define I2C_S_IAAS_MASK                          0x40u
+#define I2C_S_IAAS_SHIFT                         6
+#define I2C_S_TCF_MASK                           0x80u
+#define I2C_S_TCF_SHIFT                          7
+/* D Bit Fields */
+#define I2C_D_DATA_MASK                          0xFFu
+#define I2C_D_DATA_SHIFT                         0
+#define I2C_D_DATA(x)                            (((uint8_t)(((uint8_t)(x))<<I2C_D_DATA_SHIFT))&I2C_D_DATA_MASK)
+/* C2 Bit Fields */
+#define I2C_C2_AD_MASK                           0x7u
+#define I2C_C2_AD_SHIFT                          0
+#define I2C_C2_AD(x)                             (((uint8_t)(((uint8_t)(x))<<I2C_C2_AD_SHIFT))&I2C_C2_AD_MASK)
+#define I2C_C2_RMEN_MASK                         0x8u
+#define I2C_C2_RMEN_SHIFT                        3
+#define I2C_C2_SBRC_MASK                         0x10u
+#define I2C_C2_SBRC_SHIFT                        4
+#define I2C_C2_HDRS_MASK                         0x20u
+#define I2C_C2_HDRS_SHIFT                        5
+#define I2C_C2_ADEXT_MASK                        0x40u
+#define I2C_C2_ADEXT_SHIFT                       6
+#define I2C_C2_GCAEN_MASK                        0x80u
+#define I2C_C2_GCAEN_SHIFT                       7
+/* FLT Bit Fields */
+#define I2C_FLT_FLT_MASK                         0x1Fu
+#define I2C_FLT_FLT_SHIFT                        0
+#define I2C_FLT_FLT(x)                           (((uint8_t)(((uint8_t)(x))<<I2C_FLT_FLT_SHIFT))&I2C_FLT_FLT_MASK)
+/* RA Bit Fields */
+#define I2C_RA_RAD_MASK                          0xFEu
+#define I2C_RA_RAD_SHIFT                         1
+#define I2C_RA_RAD(x)                            (((uint8_t)(((uint8_t)(x))<<I2C_RA_RAD_SHIFT))&I2C_RA_RAD_MASK)
+/* SMB Bit Fields */
+#define I2C_SMB_SHTF2IE_MASK                     0x1u
+#define I2C_SMB_SHTF2IE_SHIFT                    0
+#define I2C_SMB_SHTF2_MASK                       0x2u
+#define I2C_SMB_SHTF2_SHIFT                      1
+#define I2C_SMB_SHTF1_MASK                       0x4u
+#define I2C_SMB_SHTF1_SHIFT                      2
+#define I2C_SMB_SLTF_MASK                        0x8u
+#define I2C_SMB_SLTF_SHIFT                       3
+#define I2C_SMB_TCKSEL_MASK                      0x10u
+#define I2C_SMB_TCKSEL_SHIFT                     4
+#define I2C_SMB_SIICAEN_MASK                     0x20u
+#define I2C_SMB_SIICAEN_SHIFT                    5
+#define I2C_SMB_ALERTEN_MASK                     0x40u
+#define I2C_SMB_ALERTEN_SHIFT                    6
+#define I2C_SMB_FACK_MASK                        0x80u
+#define I2C_SMB_FACK_SHIFT                       7
+/* A2 Bit Fields */
+#define I2C_A2_SAD_MASK                          0xFEu
+#define I2C_A2_SAD_SHIFT                         1
+#define I2C_A2_SAD(x)                            (((uint8_t)(((uint8_t)(x))<<I2C_A2_SAD_SHIFT))&I2C_A2_SAD_MASK)
+/* SLTH Bit Fields */
+#define I2C_SLTH_SSLT_MASK                       0xFFu
+#define I2C_SLTH_SSLT_SHIFT                      0
+#define I2C_SLTH_SSLT(x)                         (((uint8_t)(((uint8_t)(x))<<I2C_SLTH_SSLT_SHIFT))&I2C_SLTH_SSLT_MASK)
+/* SLTL Bit Fields */
+#define I2C_SLTL_SSLT_MASK                       0xFFu
+#define I2C_SLTL_SSLT_SHIFT                      0
+#define I2C_SLTL_SSLT(x)                         (((uint8_t)(((uint8_t)(x))<<I2C_SLTL_SSLT_SHIFT))&I2C_SLTL_SSLT_MASK)
+
+
+#define SIM_BASE_PTR                             ((SIM_MemMapPtr)0x40047000u)
+
+/* ----------------------------------------------------------------------------
+-- SIM - Register accessor macros
+---------------------------------------------------------------------------- */
+
+/**
+* @addtogroup SIM_Register_Accessor_Macros SIM - Register accessor macros
+* @{
+*/
+
+
+/* SIM - Register instance definitions */
+/* SIM */
+#define SIM_SOPT1                                SIM_SOPT1_REG(SIM_BASE_PTR)
+#define SIM_SOPT2                                SIM_SOPT2_REG(SIM_BASE_PTR)
+#define SIM_SOPT4                                SIM_SOPT4_REG(SIM_BASE_PTR)
+#define SIM_SOPT5                                SIM_SOPT5_REG(SIM_BASE_PTR)
+#define SIM_SOPT6                                SIM_SOPT6_REG(SIM_BASE_PTR)
+#define SIM_SOPT7                                SIM_SOPT7_REG(SIM_BASE_PTR)
+#define SIM_SDID                                 SIM_SDID_REG(SIM_BASE_PTR)
+#define SIM_SCGC1                                SIM_SCGC1_REG(SIM_BASE_PTR)
+#define SIM_SCGC2                                SIM_SCGC2_REG(SIM_BASE_PTR)
+#define SIM_SCGC3                                SIM_SCGC3_REG(SIM_BASE_PTR)
+#define SIM_SCGC4                                SIM_SCGC4_REG(SIM_BASE_PTR)
+#define SIM_SCGC5                                SIM_SCGC5_REG(SIM_BASE_PTR)
+#define SIM_SCGC6                                SIM_SCGC6_REG(SIM_BASE_PTR)
+#define SIM_SCGC7                                SIM_SCGC7_REG(SIM_BASE_PTR)
+#define SIM_CLKDIV1                              SIM_CLKDIV1_REG(SIM_BASE_PTR)
+#define SIM_CLKDIV2                              SIM_CLKDIV2_REG(SIM_BASE_PTR)
+#define SIM_FCFG1                                SIM_FCFG1_REG(SIM_BASE_PTR)
+#define SIM_FCFG2                                SIM_FCFG2_REG(SIM_BASE_PTR)
+#define SIM_UIDH                                 SIM_UIDH_REG(SIM_BASE_PTR)
+#define SIM_UIDMH                                SIM_UIDMH_REG(SIM_BASE_PTR)
+#define SIM_UIDML                                SIM_UIDML_REG(SIM_BASE_PTR)
+#define SIM_UIDL                                 SIM_UIDL_REG(SIM_BASE_PTR)
 
 /**
  * @}

@@ -37,7 +37,7 @@ void L3G4200_WriteReg(uint8 RegisterAddress, uint8 Data);
 uint8 L3G4200_ReadReg(uint8 RegisterAddress);
 int16 L3G4200_GetResult(uint8 Regs_Addr);
 
-
+int16 L3G4200_MultipleRead(uint8 Regs_Addr);
 
 
 

@@ -25,42 +25,21 @@ extern AngPID_InitTypeDef Ang_PID; //用来调试PID参数
 extern TempOfMotor_TypeDef TempValue; //临时存储角度和速度控制浮点变量的结构体
 unsigned int Code_Count = 0;
 
-void SaveAllDateToFlash(void);
-
-void Timer_Init(void)
-{
-	//Code_Timer_Struct.PIT_Pitx = PIT2;
-	//Code_Timer_Struct.PIT_PeriodUs = 100;
-	//Code_Timer_Struct.PIT_Isr = PIT3_ISR;
-	//LPLD_PIT_Init(Code_Timer_Struct);
-	//LPLD_PIT_EnableIrq(Code_Timer_Struct);
-}
-
-void PIT3_ISR(void)
-{
-	Code_Count++;
-}
-
-void Timer_ReSet(void)
-{
-	Code_Count = 0;
-}
 extern float Dir_Kp_Correction[100];
 void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 {
 	int i;
 
-	Ang_PID.Kp = -900; //比例
-	Ang_PID.Kd = -29; //微分
-	Ang_PID.AngSet = 53.5; 
-	Ang_PID.AngSpeedSet = 0.00;
+	Ang_PID.Kp = -750; //比例
+	Ang_PID.Kd = -7; //微分
+	Ang_PID.AngSet = -18; 
 
 	Speed_PID.SpeedSet = 80;
-	Speed_PID.Kp = 350;
-	Speed_PID.Ki =80;
-	Speed_PID.Kd = -150;
-	Dir_PID.Kp = 72;
-	Dir_PID.Kd = 6;
+	Speed_PID.Kp = 280;
+	Speed_PID.Ki =90;
+	Speed_PID.Kd = -30;
+	Dir_PID.Kp = 83;
+	Dir_PID.Kd =11;
         
 	TempValue.AngControl_OutValue = 0;
 	TempValue.Dir_RightOutValue = 0;
@@ -77,33 +56,3 @@ void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 
 }
 
-void PagePrepare(void)
-{
-
-}
-
-void UART5_RxIsr(void)
-{
-
-
-}
-
-void SaveAllDateToFlash(void)
-{
-
-}
-
-void ReciveArr(uint8 *ch, uint8 len)
-{
-	while (len--)
-	{
-		*ch = LPLD_UART_GetChar(UART5);
-		ch++;
-                if(len>=0xa0)
-                  break;
-	}
-}
-void SendFlashData(uint8 sendcount)
-{
-
-}

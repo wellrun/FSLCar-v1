@@ -7,8 +7,8 @@
 #define MOTOR_OUT_MIN       -8000
 #define ANGLE_CONTROL_OUT_MAX			20000
 #define ANGLE_CONTROL_OUT_MIN			-20000
-#define SPEED_CONTROL_OUT_MAX			6000
-#define SPPED_CONTROL_OUT_MIN			-6000
+#define SPEED_CONTROL_OUT_MAX			7000
+#define SPPED_CONTROL_OUT_MIN			-7000
 #define CoderResolution 500 //编码器的线数
 #define TyreCircumference 20//轮胎周长CM
 //轮子转一圈..编码器增加5200
@@ -300,8 +300,59 @@ void SpeedControlValueCalc(void)
 		TempValue.Old_SpeedOutValueRight = TempValue.New_SpeedOutValueRight;
 		TempValue.New_SpeedOutValueRight = p->OutValueSum_Right;*/
 }
+int PulseCnt1 = 0;
+int PulseCnt2 = 1;
+void ic_isr0(void)
+{
+	if (LPLD_FTM_IsCHnF(FTM1, FTM_Ch0))
+	{
+		PulseCnt1 += 1;
+		//清空FTM0 COUNTER
+		LPLD_FTM_ClearCounter(FTM1);
+		//清除输入中断标志
+		LPLD_FTM_ClearCHnF(FTM1, FTM_Ch0);
+	}
+}
+void ic_isr1(void)
+{
+	if (LPLD_FTM_IsCHnF(FTM2, FTM_Ch0))
+	{
+		PulseCnt2 += 1;
+		//清空FTM0 COUNTER
+		LPLD_FTM_ClearCounter(FTM2);
+		//清除输入中断标志
+		LPLD_FTM_ClearCHnF(FTM2, FTM_Ch0);
+	}
+}
 
 
+void SpeedInit(void)
+{
+	FTM_InitTypeDef ftm1_init_struct;
+	ftm1_init_struct.FTM_Ftmx = FTM1;      //使能FTM1通道
+	ftm1_init_struct.FTM_Mode = FTM_MODE_IC;       //使能输入捕获模式
+	ftm1_init_struct.FTM_ClkDiv = FTM_CLK_DIV128;  //计数器频率为总线时钟的128分频
+	ftm1_init_struct.FTM_Isr = ic_isr0;     //设置中断函数
+	//初始化FTM0
+	LPLD_FTM_Init(ftm1_init_struct);
+	//使能输入捕获对应通道,上升沿捕获进入中断
+	LPLD_FTM_IC_Enable(FTM1, FTM_Ch0, PTB0, CAPTURE_RI);
+
+	//使能FTM0中断
+	LPLD_FTM_EnableIrq(ftm1_init_struct);
+
+	ftm1_init_struct.FTM_Ftmx = FTM2;      //使能FTM1通道
+	ftm1_init_struct.FTM_Mode = FTM_MODE_IC;       //使能输入捕获模式
+	ftm1_init_struct.FTM_ClkDiv = FTM_CLK_DIV128;  //计数器频率为总线时钟的128分频
+	ftm1_init_struct.FTM_Isr = ic_isr1;     //设置中断函数
+	//初始化FTM0
+	LPLD_FTM_Init(ftm1_init_struct);
+	//使能输入捕获对应通道,上升沿捕获进入中断
+	LPLD_FTM_IC_Enable(FTM1, FTM_Ch0, PTB0, CAPTURE_RI);
+
+	//使能FTM0中断
+	LPLD_FTM_EnableIrq(ftm1_init_struct);
+}
 float Dir_Kp_Correction[100];
 float IntSum = 0;
 void DirControlValueCale(void)

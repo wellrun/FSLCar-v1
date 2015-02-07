@@ -21,8 +21,7 @@ uint8 LPLD_MMA8451_Init(void)
   //初始化MMA8451_I2CX
   i2c_init_param.I2C_I2Cx = I2C0;       //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_IntEnable = FALSE;
-  i2c_init_param.I2C_ICR = 0x33;  //可根据实际电路更改SCL频率//
-  //改了底层..这个参数没用了
+  i2c_init_param.I2C_ICR = 0x23;
   i2c_init_param.I2C_SclPin = PTD8;   //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_SdaPin = PTD9;   //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_Isr = NULL;
@@ -31,12 +30,17 @@ uint8 LPLD_MMA8451_Init(void)
   LPLD_I2C_Init(i2c_init_param);
   
   //读取设备ID
+  for(device_id=0;device_id<100;device_id++)
+  {
+    MMA8451_Delay();
+    MMA8451_Delay();
+  }
   device_id = LPLD_MMA8451_ReadReg(MMA8451_REG_WHOAMI);
 
   //进行寄存器配置
   LPLD_MMA8451_WriteReg(MMA8451_REG_SYSMOD, 0x00);       //默认模式Standby Mode
   LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG2, 0x02);    //High Resolution
-  LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG1, 0x01);    //主动模式,800HZ
+  LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG1, 0x09);    //主动模式,800HZ
   //LPLD_MMA8451_WriteReg(0x0f, 0x33);//绕过高通滤波对冲击的响应,开启对于冲击的低通
  // LPLD_MMA8451_WriteReg(0x0e, 0x00);//开启高通滤波....截止频率2Hz,
  // LPLD_MMA8451_WriteReg(0x0f, 0x23);//开启低通滤波器
@@ -140,12 +144,12 @@ int16 LPLD_MMA8451_GetResult(uint8 Status, uint8 Regs_Addr)
     return 0;
   
   // 等待转换完成并取出值 
-  while(!(ret&Status)) 
+ /* while(!(ret&Status)) 
   {
     ret = LPLD_MMA8451_ReadReg( MMA8451_REG_STATUS);
     if(++cnt>100)
       break;
-  }
+  }*/
   
   result= LPLD_MMA8451_ReadReg( Regs_Addr);
   temp  = LPLD_MMA8451_ReadReg( Regs_Addr+1);
@@ -161,7 +165,7 @@ int16 LPLD_MMA8451_GetResult(uint8 Status, uint8 Regs_Addr)
  */
 static void MMA8451_Delay(void){
   int n;
-  for(n=1;n<200;n++) {
+  for(n=1;n<400;n++) {
     asm("nop");
   }
 }

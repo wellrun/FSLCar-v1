@@ -3,9 +3,9 @@
 #include "DEV_MMA8451.h"
 //#include "mpu6050.h"
 #include "ccd.h"
-#include "MPU6050_Moni.h"
-#include "My_IIC.h"
-//#include "l3g4200.h"
+//#include "MPU6050_Moni.h"
+//#include "My_IIC.h"
+#include "l3g4200.h"
 ADC_InitTypeDef Init_ADC_Struct;
 ADC_InitTypeDef Init_ADC_CCD_Struct;
 GPIO_InitTypeDef Init_GPIO_Struct;
@@ -111,9 +111,10 @@ void Init_ADC(void)
 	Init_ADC_Struct.ADC_SampleTimeCfg = SAMTIME_SHORT;
 	Init_ADC_Struct.ADC_HwAvgSel = HW_4AVG;
 	Init_ADC_Struct.ADC_CalEnable = TRUE;
+	Init_ADC_Struct.ADC_MuxSel = MUX_ADXXB;
 	LPLD_ADC_Init(Init_ADC_Struct);
-	LPLD_ADC_Chn_Enable(ADC1, AD14);
-	LPLD_ADC_Chn_Enable(ADC1, AD15);   
+	LPLD_ADC_Chn_Enable(ADC1, AD6);   
+	LPLD_ADC_Chn_Enable(ADC1, AD7);
 	//不再需要AD来读数据
 	//开启四个通道的ADC,
 
@@ -179,13 +180,30 @@ void Init_GPIO(void)
 void CarInit(void)
 {
 	static char whoami = 1; //用來判斷寄存器正常不正常
+
+      
+
 	Init_NVIC();
 	Init_Systick();
 	Init_GPIO();
 	Init_ADC();
 	
 	Init_FTM();
-	
+
+          if (LPLD_MMA8451_Init() != 0x1a)
+	{
+		LPLD_GPIO_Output_b(PTA, 17, 0);
+		while (1);
+	}
+        
+   /*    whoami= L3G4200_Init();
+       if (whoami != 0xd3)
+	{
+		LPLD_GPIO_Output_b(PTA, 17, 0);
+		while (1);
+	}*/
+        
+        
 	//whoami = LPLD_MMA8451_Init();
 /*
 	if (whoami != 0x1a)
@@ -199,9 +217,8 @@ void CarInit(void)
 	}
 	else
 		LPLD_GPIO_Output_b(PTE, 5, 0);*/
-	PORTD_PCR8 = PORT_PCR_MUX(1);    //IO模拟IIC SCL
+	/*PORTD_PCR8 = PORT_PCR_MUX(1);    //IO模拟IIC SCL
 	PORTD_PCR9 = PORT_PCR_MUX(1);    //IO模拟IIC SDA
-      //  whoami=MPU6050_Init();
 	MPU6050_Inital();
 	whoami=MPU6050_ReadByte(0x75);
 	if (whoami != 0x68)
@@ -214,19 +231,14 @@ void CarInit(void)
 		}
 	}
 	else
-		LPLD_GPIO_Output_b(PTE, 5, 0);
-	/*
-	if (MPU6050_Init() != 0x68)
-	{
-		LPLD_GPIO_Output_b(PTA, 17, 0);
-		while (1);
-	}*/
-	//Init_I2C();
-        Init_PIT();
+		LPLD_GPIO_Output_b(PTE, 5, 0);*/
+	
+
+      Init_PIT();
 }
 void Init_FTM(void)
 {
-	Init_FTM_Struct.FTM_Ftmx = FTM0;
+  	Init_FTM_Struct.FTM_Ftmx = FTM0;
 	Init_FTM_Struct.FTM_Mode = FTM_MODE_PWM;
 	Init_FTM_Struct.FTM_PwmFreq = 10000;
 	LPLD_FTM_Init(Init_FTM_Struct);
@@ -235,7 +247,6 @@ void Init_FTM(void)
 	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch6, 0, PTD6, ALIGN_LEFT); //右边电机正转
 	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch7, 0, PTD7, ALIGN_LEFT); //右边电机反转
 
-	//while (1);
 
 	Init_FTM_Struct.FTM_Ftmx=FTM1;
 	Init_FTM_Struct.FTM_Mode= FTM_MODE_QD;

@@ -1,172 +1,121 @@
 #include "MPU6050.h"
+#include "hal_i2c.h"
+#include "hal_i2c_ex.h"
 
-static void MMA8451_Delay(int t);
+static void pause(void)
+{
+	int n;
+	for (n = 0; n<400; n++)
+		asm("nop");
+}
 
-/*
- *   MPU6050_Init
- *   初始化MMA8451，包括初始化8451所需的I2C接口以及8451的寄存器
- *
- *   参数：
- *    无
- *
- *   返回值
- *      设备ID
- */
 uint8 MPU6050_Init(void)
 {
+  int i;
   I2C_InitTypeDef i2c_init_param;
 	uint8 device_id;
 
-  //初始化I2C0
-  i2c_init_param.I2C_I2Cx = I2C0;       //在DEV_MMA8451.h中修改该值
-  i2c_init_param.I2C_IntEnable = FALSE;
-  i2c_init_param.I2C_ICR = 0x20;  //可根据实际电路更改SCL频率
-  i2c_init_param.I2C_SclPin = PTD8;   //MPU
-  i2c_init_param.I2C_SdaPin = PTD9;   //MPU
-  i2c_init_param.I2C_Isr = NULL;
-//i2c_init_param.I2C_OpenDrainEnable=TRUE;
- LPLD_I2C_Init(i2c_init_param);
+	//初始化I2C0
+	i2c_init_param.I2C_I2Cx = I2C0;       //在DEV_MMA8451.h中修改该值
+	i2c_init_param.I2C_IntEnable = FALSE;
+	i2c_init_param.I2C_ICR = 0x17;  //可根据实际电路更改SCL频率
+	i2c_init_param.I2C_SclPin = PTD8;   //MPU
+	i2c_init_param.I2C_SdaPin = PTD9;   //MPU
+	i2c_init_param.I2C_Isr = NULL;
+	//i2c_init_param.I2C_OpenDrainEnable=TRUE;
+	LPLD_I2C_Init(i2c_init_param);
 
-//读取设备ID
-	LPLD_SYSTICK_DelayMs(500);
-	MPU6050_WriteReg(PWR_MGMT_1, 0x80);
-	LPLD_SYSTICK_DelayMs(500);
-	MPU6050_WriteReg(PWR_MGMT_1, 0x00); //解除休眠状态
-	LPLD_SYSTICK_DelayMs(20);
-	MPU6050_WriteReg(SMPLRT_DIV, 0x04);
-	MPU6050_WriteReg(CONFIG, 0x02);//低通的值..低通频率不能太低了..
-	MPU6050_WriteReg(GYRO_CONFIG, 0x18);
-	MPU6050_WriteReg(ACCEL_CONFIG, 0x00);
-     device_id = MPU6050_ReadReg(0x75);
-	return device_id;
+
+         for(i=0;i<100;i++)
+   pause();
+		 //读取设备ID
+		 device_id = hal_dev_mpu6050_read_reg(0x75);
+		 hal_dev_mpu6050_write_reg(PWR_MGMT_1, 0x80);
+                 for(i=0;i<100;i++)
+   pause();
+		 hal_dev_mpu6050_write_reg(PWR_MGMT_1, 0x00); //解除休眠状态
+		 hal_dev_mpu6050_write_reg(SMPLRT_DIV, 0x04);
+		 hal_dev_mpu6050_write_reg(CONFIG, 0x02);//低通的值..低通频率不能太低了..
+		 hal_dev_mpu6050_write_reg(GYRO_CONFIG, 0x18);
+		 hal_dev_mpu6050_write_reg(ACCEL_CONFIG, 0x00);
+
+		 return device_id;
 }
 
-/*
- *   MPU6050_WriteReg
- *   该函数用于配置MMA8451的寄存器
- *
- *   参数：
- *   RegisterAddress
- *    |__ MMA8451寄存器地址
- *   Data
- *    |__ 具体写入的字节型数据
- */
-void MPU6050_WriteReg(uint8 RegisterAddress, uint8 Data)
-{
-	//发送从机地址
-	// LPLD_I2C_StartTrans(I2C0, MMA8451_DEV_ADDR, I2C_MWSR);
-	LPLD_I2C_Start(I2C0); 
-	//MMA8451_Delay(10);
-	LPLD_I2C_WriteByte(I2C0, SlaveAddress);
-	//MMA8451_Delay(10);
-	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
 
-	//写MMA8451寄存器地址
-	//MMA8451_Delay(300);
-	LPLD_I2C_WriteByte(I2C0, RegisterAddress);
-	//MMA8451_Delay(10);
-	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
 
-	//向寄存器中写具体数据
-	//MMA8451_Delay(10);
-	LPLD_I2C_WriteByte(I2C0, Data);
-	//MMA8451_Delay(10);
-	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
-
-	LPLD_I2C_Stop(I2C0);
-
-	MMA8451_Delay(5000);
-}
+#define I2C_ADDR_mpu6050 (0x68<<1)
+#define I2C0_B I2C0_BASE_PTR
 
 /*
- *   MPU6050_WriteReg
- *   该函数用于读取MMA8451的数据
- *
- *   参数：
- *     RegisterAddress
- *        |__ MMA8451寄存器地址
- *   返回值
- *      加速传感器的测量值
- */
-uint8 MPU6050_ReadReg(uint8 RegisterAddress)
+This delay is very important, it may cause w-r operation failure.
+The delay time is dependent on the current baudrate.
+It must be equal or longer than at least on clock of current baudrate.
+So, if you set to a higher baudrate, the loop value can be reduced from 4000 to 20, depending on your current baudrate.
+*/
+
+u8 hal_dev_mpu6050_read_reg(u8 addr)
 {
-	uint8 result;
+	u8 result;
 
-	//发送从机地址
-	LPLD_I2C_Start(I2C0);
-	//MMA8451_Delay(20);
-	LPLD_I2C_WriteByte(I2C0, SlaveAddress);
-	//MMA8451_Delay(5);
-	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
+	i2c_start(I2C0_B);
 
-	//写MMA8451寄存器地址
-	//MMA8451_Delay(100);
-    //在这个位置卡死
-	LPLD_I2C_WriteByte(I2C0, RegisterAddress);
-	//MMA8451_Delay(5);
-	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
-	//MMA8451_Delay(10);
-	//再次产生开始信号
-	LPLD_I2C_ReStart(I2C0);
+	i2c_write_byte(I2C0_B, I2C_ADDR_mpu6050 | I2C_WRITE);
+	i2c_wait(I2C0_B);
+	i2c_get_ack(I2C0_B);
 
-	//发送从机地址和读取位
-	//MMA8451_Delay(10);
-	LPLD_I2C_WriteByte(I2C0, SlaveAddress + 1);
-	//MMA8451_Delay(10);
-	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
+	i2c_write_byte(I2C0_B, addr);
+	i2c_wait(I2C0_B);
+	i2c_get_ack(I2C0_B);
 
-	//转换主机模式为读
-	//MMA8451_Delay(10);
-	LPLD_I2C_SetMasterWR(I2C0, I2C_MRSW);
+	i2c_repeated_start(I2C0_B);
+	i2c_write_byte(I2C0_B, I2C_ADDR_mpu6050 | I2C_READ);
+	i2c_wait(I2C0_B);
+	i2c_get_ack(I2C0_B);
 
-	//关闭应答ACK
-	//MMA8451_Delay(3);
-	LPLD_I2C_WaitAck(I2C0, I2C_ACK_OFF); //NACK
+	i2c_set_rx_mode(I2C0_B);
 
-	//读IIC数据
-	//MMA8451_Delay(100);
-	result = LPLD_I2C_ReadByte(I2C0);
-	//MMA8451_Delay(10);
-	LPLD_I2C_WaitAck(I2C0, I2C_ACK_ON);
+	i2c_give_nack(I2C0_B);
+	result = i2c_read_byte(I2C0_B);
+	i2c_wait(I2C0_B);
 
-	//发送停止信号
-	LPLD_I2C_Stop(I2C0);
-
-	//读IIC数据
-	//MMA8451_Delay(50);
-	result = LPLD_I2C_ReadByte(I2C0);
-
-	MMA8451_Delay(5000);
-
+	i2c_stop(I2C0_B);
+	result = i2c_read_byte(I2C0_B);
+	pause();
 	return result;
 }
+void hal_dev_mpu6050_write_reg(u8 addr, u8 data)
+{
+	i2c_start(I2C0_B);
 
-/*
- * 函数功能：读MAA8451加速度输出
- * 参数
- *       Regs_Addr - 数据寄存器地址
- * 函数返回值：加速度值（int16）
- */
+	i2c_write_byte(I2C0_B, I2C_ADDR_mpu6050 | I2C_WRITE);
+	i2c_wait(I2C0_B);
+	i2c_get_ack(I2C0_B);
+
+	i2c_write_byte(I2C0_B, addr);
+	i2c_wait(I2C0_B);
+	i2c_get_ack(I2C0_B);
+
+	i2c_write_byte(I2C0_B, data);
+	i2c_wait(I2C0_B);
+	i2c_get_ack(I2C0_B);
+
+	i2c_stop(I2C0_B);
+	pause();
+}
+
 int16 MPU6050_GetResult(uint8 Regs_Addr)
 {
 
 	int16 result, temp;
-	result = MPU6050_ReadReg(Regs_Addr);
-	temp = MPU6050_ReadReg(Regs_Addr + 1);
+	result = hal_dev_mpu6050_read_reg(Regs_Addr);
+	temp = hal_dev_mpu6050_read_reg(Regs_Addr + 1);
 	result = result << 8;
 	result = result | temp;
 
 	return result >> 2;
 }
 
-/*
- * 延时函数
- */
-static void MMA8451_Delay(int t)
-{
-	int n;
-	for (n = 1; n < t; n++)
-	{
-		asm("nop");
-	}
-}
+
+
+

@@ -139,8 +139,7 @@ uint8 LPLD_I2C_Init(I2C_InitTypeDef i2c_init_structure)
   }
 
 
- // i2cx->F  = I2C_F_ICR(bus_speed)|I2C_F_MULT(0);   //配置I2Cx SCL BusSpeed
-  i2cx->F = 0x60;
+  i2cx->F  = I2C_F_ICR(bus_speed)|I2C_F_MULT(0);   //配置I2Cx SCL BusSpeed
   i2cx->C1 |= I2C_C1_IICEN_MASK;      //使能I2Cx
   
   return 1;
@@ -311,15 +310,27 @@ void LPLD_I2C_WaitAck(I2C_Type *i2cx, uint8 is_wait)
   uint16 time_out=0;
   if(is_wait == I2C_ACK_ON)
   {
-    while(!(i2cx->S & I2C_S_IICIF_MASK))
+	  while (((i2cx->S & I2C_S_TCF_MASK) == 0))
+	  {
+		  if (time_out > 1000)
+		  {
+			  time_out++;
+		  }
+		  if (time_out > 60000) //如果等待超时，强行退出
+			  break;
+		  else time_out++;
+	  }
+
+	  time_out = 0;
+	  while ((!(i2cx->S & I2C_S_IICIF_MASK)) )
     {
-      if(time_out>1000)
-      {
-        time_out++;
-      }
-      if(time_out>20000) //如果等待超时，强行退出
-        break;
-      else time_out++;
+		if (time_out > 1000)
+		{
+			time_out++;
+		}
+		if (time_out > 60000) //如果等待超时，强行退出
+			break;
+		else time_out++;
     }
     i2cx->S |= I2C_S_IICIF_MASK;
   }

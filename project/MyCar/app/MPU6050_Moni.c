@@ -60,43 +60,6 @@ int16 MPU6050_GetData(unsigned char REG_Address)
 }
 
 
-uint8 mpu6050_getdata(unsigned char moudle,unsigned char axis)
-{
-  if( 0x68 != MPU6050_ReadByte(WHO_AM_I))
-    return 1;		//硬件错误或连接失败
-  if('G' == moudle)
-  {
-    if('X' == axis)
-    {
-      return MPU6050_GetData(GYRO_XOUT_H);
-    }
-    if('Y' == axis)
-    {
-      return MPU6050_GetData(GYRO_YOUT_H);
-    }
-    if('Z' == axis)
-    {
-      return MPU6050_GetData(GYRO_ZOUT_H);
-    }
-  }
-  if('A' == moudle)
-  {
-    if('X' == axis)
-    {
-      return MPU6050_GetData(ACCEL_XOUT_H);
-    }
-    if('Y' == axis)
-    {
-      return MPU6050_GetData(ACCEL_YOUT_H);
-    }
-    if('Z' == axis)
-    {
-      return MPU6050_GetData(ACCEL_ZOUT_H);
-    }
-  }
-  return 2;	//	输入参数配置错误
-}
-
 void HMC_SingleWrite(unsigned char regAddress,unsigned char data)
 {
   IIC_Start();
