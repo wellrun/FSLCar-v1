@@ -9,6 +9,7 @@
 #include "Control.h"
 #include "CCD.h"
 #include "Communicate.h"
+#include "MMA8451_moni.h"
 //#include "MPU6050.h"
 #include "L3G4200.h"
 //#include "DataScope_DP.h"
@@ -150,6 +151,7 @@ void Speed_Change(void)//测试速度pi用..需要配合示波器
 
 void AngleCon_Isr(void)
 {
+  uint8 Whoami=0;
 	unsigned char integration_piont;
 		CCDTimeMs++;
 		TimerMsCnt++;
@@ -202,11 +204,11 @@ void AngleCon_Isr(void)
 		}
 		if (AngTimes == 4)
 		{
-			/*Whoami = LPLD_MMA8451_ReadReg(MMA8451_REG_WHOAMI);
+			Whoami = MMA8451_ReadByte(MMA8451_REG_WHOAMI);
 			if (Whoami!=0x1a)
 			{
 				LPLD_GPIO_Output_b(PTE, 5, 1);
-			}*/
+			}
 		}
 }
 
@@ -384,7 +386,7 @@ void main(void)
   					tempfloat = CarInfo_Now.CarAngSpeed;
   					Float2Byte(&tempfloat, OUTDATA, 10);
   					Float2Byte(&AngleIntegraed, OUTDATA, 6);
-					tempfloat = Dir_AngSpeed;
+					tempfloat = GravityAngle;
   					Float2Byte(&tempfloat, OUTDATA, 14);
 
 					//调速度PI

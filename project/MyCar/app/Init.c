@@ -1,6 +1,7 @@
 #include "init.h"
 #include "datastructure.h"
-#include "DEV_MMA8451.h"
+//#include "DEV_MMA8451.h"
+#include "MMA8451_Moni.h"
 //#include "mpu6050.h"
 #include "ccd.h"
 //#include "MPU6050_Moni.h"
@@ -190,11 +191,7 @@ void CarInit(void)
 	
 	Init_FTM();
 
-          if (LPLD_MMA8451_Init() != 0x1a)
-	{
-		LPLD_GPIO_Output_b(PTA, 17, 0);
-		while (1);
-	}
+     
         
    /*    whoami= L3G4200_Init();
        if (whoami != 0xd3)
@@ -232,7 +229,13 @@ void CarInit(void)
 	}
 	else
 		LPLD_GPIO_Output_b(PTE, 5, 0);*/
-	
+	PORTD_PCR8 = PORT_PCR_MUX(1);    //IOÄ£ÄâIIC SCL
+	PORTD_PCR9 = PORT_PCR_MUX(1);    //IOÄ£ÄâIIC SDA
+	if (MMA8451_Inital() != 0x1a)
+	{
+		LPLD_GPIO_Output_b(PTA, 17, 0);
+		while (1);
+	}
 
       Init_PIT();
 }

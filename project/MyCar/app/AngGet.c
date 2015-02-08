@@ -41,7 +41,7 @@ void AngleGet(void)
 	static int initok = 0;
 	short Acc_H;
 	static float bias_cf;
-	Acc_H = LPLD_MMA8451_ReadReg(MMA8451_REG_OUTZ_MSB);
+	Acc_H = MMA8451_ReadByte(MMA8451_REG_OUTZ_MSB);
 	GyroscopeAngleSpeed = (LPLD_ADC_Get(ADC1, AD6)-Gyro_Offset)*GYROSCOPE_ANGLE_RATIO;
         Dir_AngSpeed=-(LPLD_ADC_Get(ADC1, AD7)-Gyro_Offset)*Dir_SpeedRatio;
         bias_cf = bias_cf * 0.99999; //陀螺仪零飘低通滤波；500次均值；0.998

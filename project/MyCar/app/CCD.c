@@ -834,6 +834,8 @@ void CCD_Deal_Both(void)
 	static int DistanceOfCar = 0;
 	static signed char Flag_DistanceCnt = 0;
 	static float k = 0.8;//主ccd的权重
+	static float Last_ConrtolValue = 0;
+	static float AngMax = 0;
 	if (CCDSlave_Status.Left_LostFlag==1)
 	{
 
@@ -932,47 +934,82 @@ void CCD_Deal_Both(void)
 		Cnt_Lost_Main_R = 0;
 		Flag_Lost_Main_R = 0;
 	}
-
 	if ((CCDMain_Status.Left_LostFlag == 1 && CCDMain_Status.Right_LostFlag == 1))
 	{
 		CCDMain_Status.ControlValue = 0;
 		CCDMain_Status.MidPoint = 127;
-		Cnt_Cross = 0;
+		Cnt_Cross ++;
 		Flag_Cross = 0;
 	}
-	else if (CCDMain_Status.Left_LostFlag == 1 || CCDMain_Status.Right_LostFlag == 1)
+	/*else if (CCDMain_Status.Left_LostFlag == 1 || CCDMain_Status.Right_LostFlag == 1)
 	{
-		if (CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1)
-		{
-			if (CCDMain_Status.Left_LostFlag == 1)
-			{
-				CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
-				CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
-				CCDMain_Status.ControlValue = CCDMain_Status.RightSet - CCDMain_Status.RightPoint;
-			}
-			else if (CCDMain_Status.Right_LostFlag == 1)
-			{
-				CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
-				CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
-				CCDMain_Status.ControlValue = CCDMain_Status.LeftSet - CCDMain_Status.LeftPoint;
-			}
+		
 		}
 		else
 		{
 			CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
 			CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
 			CCDMain_Status.ControlValue = CCDMain_Status.MidSet - CCDMain_Status.MidPoint;
+			if (CCDMain_Status.SearchBegin>115)
+			{
+				CCDMain_Status.SearchBegin = 115;
+			}
+			else if (CCDMain_Status.SearchBegin < 15)
+			{
+				CCDMain_Status.SearchBegin = 15;
+			}
 		}
 
-	}
+	}*/
 	else
 	{
-		CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
-		CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
-		CCDMain_Status.ControlValue = CCDMain_Status.MidSet - CCDMain_Status.MidPoint;
+		if (Cnt_Cross>1)
+		{
+				if (CCDMain_Status.Left_LostFlag == 1)
+				{
+					CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
+					CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
+					CCDMain_Status.ControlValue = CCDMain_Status.RightSet - CCDMain_Status.RightPoint;
+					if (CCDMain_Status.SearchBegin > 115)
+					{
+						CCDMain_Status.SearchBegin = 115;
+					}
+					else if (CCDMain_Status.SearchBegin < 15)
+					{
+						CCDMain_Status.SearchBegin = 15;
+					}
+				}
+				else if (CCDMain_Status.Right_LostFlag == 1)
+				{
+					CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
+					CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
+					CCDMain_Status.ControlValue = CCDMain_Status.LeftSet - CCDMain_Status.LeftPoint;
+					if (CCDMain_Status.SearchBegin>115)
+					{
+						CCDMain_Status.SearchBegin = 115;
+					}
+					else if (CCDMain_Status.SearchBegin < 15)
+					{
+						CCDMain_Status.SearchBegin = 15;
+					}
+				}
+		}
+		else
+		{
+			Cnt_Cross = 0;
+			CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
+			CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
+			CCDMain_Status.ControlValue = CCDMain_Status.MidSet - CCDMain_Status.MidPoint;
+			if (CCDMain_Status.SearchBegin>115)
+			{
+				CCDMain_Status.SearchBegin = 115;
+			}
+			else if (CCDMain_Status.SearchBegin < 15)
+			{
+				CCDMain_Status.SearchBegin = 15;
+			}
+		}
 	}
-
-
 	if (!(CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1))
 	{
 
@@ -1003,8 +1040,7 @@ void CCD_Deal_Both(void)
 		CCDSlave_Status.MidPoint = 1;
 		CCDSlave_Status.ControlValue = 0;
 	}
-	/*if (((CCDSlave_Status.ControlValue - CCDMain_Status.ControlValue) > 25 || (CCDSlave_Status.ControlValue - CCDMain_Status.ControlValue) < -25)\
-		|| CCDMain_Status.ControlValue>10 || CCDMain_Status.ControlValue <-10)
+	if ((CCDSlave_Status.Left_LostFlag==1 || CCDSlave_Status.Right_LostFlag==1)||( CCDMain_Status.ControlValue>10 || CCDMain_Status.ControlValue <-10))
 	{
 		Cnt_Straight = 0;
 		Dir_PID.Kp_Temp = Dir_PID.Kp;
@@ -1014,18 +1050,18 @@ void CCD_Deal_Both(void)
 	else
 	{
 		Cnt_Straight++;
-		if (Cnt_Straight > 12)
+		if (Cnt_Straight > 4)
 		{
-			Dir_PID.Kp_Temp = Dir_PID.Kp*0.4;
+			Dir_PID.Kp_Temp = Dir_PID.Kp*0.55;
 			Dir_PID.Kd_Temp = Dir_PID.Kd;
 			SpeedSet_Variable = Speed_PID.SpeedSet;
 		}
-	}*/
-	if (CCDMain_Status.Left_LostFlag==0 && CCDMain_Status.Right_LostFlag==0 &&CCDSlave_Status.Right_LostFlag==0\
+	}
+	/*if (CCDMain_Status.Left_LostFlag==0 && CCDMain_Status.Right_LostFlag==0 &&CCDSlave_Status.Right_LostFlag==0\
 		&& CCDSlave_Status.Left_LostFlag==0)
 	{
 		Cnt_Straight++;
-		if (Cnt_Straight > 5)
+		if (Cnt_Straight > 4)
 		{
 			Dir_PID.Kp_Temp = Dir_PID.Kp*0.55;
 			Dir_PID.Kd_Temp = Dir_PID.Kd;
@@ -1039,7 +1075,7 @@ void CCD_Deal_Both(void)
 		Dir_PID.Kp_Temp = Dir_PID.Kp;
 		Dir_PID.Kd_Temp = Dir_PID.Kd;
 		SpeedSet_Variable = Speed_PID.SpeedSet;
-	}
+	}*/
 	if ((CCDSlave_Status.Left_LostFlag == 0 && CCDSlave_Status.Right_LostFlag == 0))
 	{
 		AngleIntegraed = 0;
@@ -1056,7 +1092,7 @@ void CCD_Deal_Both(void)
 			{
 				Flag_Ohm = 1;
 				AngleIntegraed = 0;
-				k = 0.3;
+				k = 0.25;
 			}
 		}//没丢站刘启用直道策略，丢线加转角启用欧姆弯
 	}
@@ -1105,20 +1141,52 @@ void CCD_Deal_Both(void)
 			SpeedSet_Variable = Speed_PID.SpeedSet;
 		}
 	}*/
-
+/*	if (CCDSlave_Status.Left_LostFlag==1 && CCDSlave_Status.Right_LostFlag==1 && CCDMain_Status.Right_LostFlag==0&&CCDMain_Status.Left_LostFlag==0)
+	{
+		Cnt_Cross++;
+		if (Cnt_Cross > 2)
+		{
+			Flag_Cross = 1;
+			AngMax = 0;
+		}
+	}
+	else
+	{
+		Cnt_Cross = 0;
+		Flag_Cross = 0;
+	}
+	if (AngMax<AngleIntegraed)
+	{
+		AngMax = AngleIntegraed;
+	}*/
+/*	if (CCDSlave_Status.Left_LostFlag == 0 && CCDSlave_Status.Right_LostFlag == 0 && CCDMain_Status.Left_LostFlag == 0 && CCDMain_Status.Right_LostFlag == 0)
+	{
+		Cnt_TurnLeft++;
+		if (Cnt_TurnLeft > 5 && AngMax>200)
+		{
+			Cnt_Cross = 0;
+			Flag_Cross = 0;
+			Cnt_TurnLeft = 0;
+		}
+	}
+	else
+	{
+		Cnt_TurnLeft = 0;
+	}
+	Last_ConrtolValue = Dir_PID.ControlValue;*/
 	if (CCDMain_Status.Left_LostFlag == 1 && CCDMain_Status.Right_LostFlag == 1)
 	{//主CCD两条线都丢了,可能为十字
 		if (CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1)
 		{
-			Dir_PID.ControlValue = 0;
+			Dir_PID.ControlValue =0;
 		}
 		else if (CCDSlave_Status.Left_LostFlag == 1 || CCDSlave_Status.Right_LostFlag == 1)
 		{//如果主CCD丢线但是从CCD只丢了一条线,那么控制值由从CCD的一个权重确定
-			Dir_PID.ControlValue = CCDSlave_Status.ControlValue*0.4;
+			Dir_PID.ControlValue = 0;
 		}
 		else if (CCDSlave_Status.Left_LostFlag == 0 && CCDSlave_Status.Right_LostFlag == 0)
 		{
-			Dir_PID.ControlValue = CCDSlave_Status.ControlValue*0.7;
+			Dir_PID.ControlValue = CCDSlave_Status.ControlValue*0.5;
 		}
 		else
 		{
@@ -1139,7 +1207,12 @@ void CCD_Deal_Both(void)
 	{
 		Dir_PID.ControlValue = CCDMain_Status.ControlValue;
 	}
+	/*if (Flag_Cross == 1)
+	{
+		if (Dir_PID.ControlValue < 0 && AngMax>200)
+			Dir_PID.ControlValue = Last_ConrtolValue;
 
+	}*/
 }
 
 void Xielv(void)
@@ -1173,8 +1246,8 @@ void CCDLineInit(void)
 	CCDMain_Status.RightSet = 88;
 
 
-	CCDSlave_Status.LeftSet = 50;
-	CCDSlave_Status.RightSet = 77;
+	CCDSlave_Status.LeftSet = 47;
+	CCDSlave_Status.RightSet = 80;
         
         CCDMain_Status.MidSet = (CCDMain_Status.LeftSet+CCDMain_Status.RightSet)/2;
 	CCDSlave_Status.MidSet = (CCDSlave_Status.LeftSet+CCDSlave_Status.RightSet)/2;
