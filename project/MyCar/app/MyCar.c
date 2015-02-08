@@ -150,11 +150,6 @@ void Speed_Change(void)//测试速度pi用..需要配合示波器
 
 void AngleCon_Isr(void)
 {
-	static short  Gyro_H;
-	static short Gyro_L;
-	static short Gyro_Dir = 0;
-        static float LastGyro=0;
-	unsigned char Whoami = 0;
 	unsigned char integration_piont;
 		CCDTimeMs++;
 		TimerMsCnt++;
@@ -250,7 +245,6 @@ void CCDCP(void)
 void main(void)
 {
 	int i = 0;
-        unsigned char Whoami=0;
 	signed char KeyChanged = 0;
 	short CCDSendPointCnt = 0;
 	short ScopeSendPointCnt = 0;

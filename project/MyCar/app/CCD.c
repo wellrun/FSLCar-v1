@@ -168,7 +168,7 @@ void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2)
 
 	//Delay 10us for sample the first pixel
 	/**/
-	for (i = 0; i < 100; i++) {                    
+	for (i = 0; i < 200; i++) {                    
 		SamplingDelay();  //200ns                  //把该值改大或者改小达到自己满意的结果。
 	}
 
@@ -844,7 +844,7 @@ void CCD_Deal_Both(void)
 		if (Flag_Lost_Slave_L == 0)
 		{
 			Cnt_Lost_Slave_L++;
-			if (Cnt_Lost_Slave_L > 4)
+			if (Cnt_Lost_Slave_L > 1)
 			{
 				Flag_Lost_Slave_L = 1;
 			}
@@ -871,7 +871,7 @@ void CCD_Deal_Both(void)
 		{
 			Cnt_Lost_Slave_R++;
 			
-			if (Cnt_Lost_Slave_R>4)
+			if (Cnt_Lost_Slave_R>1)
 			{
 				Flag_Lost_Slave_R = 1;
 			}
@@ -888,28 +888,14 @@ void CCD_Deal_Both(void)
 		Flag_Lost_Slave_R = 0;
 		Cnt_Lost_Slave_R = 0;
 	}
-	if (Flag_Lost_Slave_R==1 && Flag_Lost_Slave_L==1 &&(CCDMain_Status.MidPoint-CCDMain_Status.MidSet<6 || CCDMain_Status.MidPoint-CCDMain_Status.MidSet>-6))
-	{
-		if (Flag_Cross == 0)
-		{
-			Cnt_Cross++;
-			if (Cnt_Cross > 2)
-			{
-				Flag_Cross = 1;
-			}
-		}
-	}
-	else
-	{
-		Flag_Cross = 0;
-		Cnt_Cross = 0;
-	}
+
+	
 	if (CCDMain_Status.Left_LostFlag == 1)
 	{
 		if (Flag_Lost_Main_L == 0)
 		{
 			Cnt_Lost_Main_L++;
-			if (Cnt_Lost_Main_L > 2)
+			if (Cnt_Lost_Main_L > 1)
 			{
 				Flag_Lost_Main_L = 1;
 			}
@@ -930,7 +916,7 @@ void CCD_Deal_Both(void)
 		if (Flag_Lost_Main_R == 0)
 		{
 			Cnt_Lost_Main_R++;
-			if (Cnt_Lost_Main_R > 2)
+			if (Cnt_Lost_Main_R > 1)
 			{
 				Flag_Lost_Main_R = 1;
 			}
@@ -946,10 +932,38 @@ void CCD_Deal_Both(void)
 		Cnt_Lost_Main_R = 0;
 		Flag_Lost_Main_R = 0;
 	}
+
 	if ((CCDMain_Status.Left_LostFlag == 1 && CCDMain_Status.Right_LostFlag == 1))
 	{
 		CCDMain_Status.ControlValue = 0;
 		CCDMain_Status.MidPoint = 127;
+		Cnt_Cross = 0;
+		Flag_Cross = 0;
+	}
+	else if (CCDMain_Status.Left_LostFlag == 1 || CCDMain_Status.Right_LostFlag == 1)
+	{
+		if (CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1)
+		{
+			if (CCDMain_Status.Left_LostFlag == 1)
+			{
+				CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
+				CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
+				CCDMain_Status.ControlValue = CCDMain_Status.RightSet - CCDMain_Status.RightPoint;
+			}
+			else if (CCDMain_Status.Right_LostFlag == 1)
+			{
+				CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
+				CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
+				CCDMain_Status.ControlValue = CCDMain_Status.LeftSet - CCDMain_Status.LeftPoint;
+			}
+		}
+		else
+		{
+			CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
+			CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
+			CCDMain_Status.ControlValue = CCDMain_Status.MidSet - CCDMain_Status.MidPoint;
+		}
+
 	}
 	else
 	{
@@ -957,11 +971,13 @@ void CCD_Deal_Both(void)
 		CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
 		CCDMain_Status.ControlValue = CCDMain_Status.MidSet - CCDMain_Status.MidPoint;
 	}
+
+
 	if (!(CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1))
 	{
 
 		CCDSlave_Status.MidPoint = (CCDSlave_Status.LeftPoint + CCDSlave_Status.RightPoint) / 2;
-		if (CCDSlave_Status.Left_LostFlag==1)
+		if (CCDSlave_Status.Left_LostFlag == 1)
 		{
 			CCDSlave_Status.SearchBegin = CCDSlave_Status.RightPoint-10;
 			if (CCDSlave_Status.SearchBegin < 15)

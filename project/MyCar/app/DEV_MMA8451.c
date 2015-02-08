@@ -136,8 +136,6 @@ uint8 LPLD_MMA8451_ReadReg(uint8 RegisterAddress)
  */   
 int16 LPLD_MMA8451_GetResult(uint8 Status, uint8 Regs_Addr) 
 {
-  uint8 ret=0;
-  uint16 cnt=0;
   int16 result,temp;
   
   if(Regs_Addr>MMA8451_REG_OUTZ_LSB)
