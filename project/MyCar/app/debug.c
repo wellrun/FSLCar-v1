@@ -34,7 +34,7 @@ void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 	Ang_PID.Kd = -7; //微分
 	Ang_PID.AngSet = -18; 
 
-	Speed_PID.SpeedSet = 100;
+	Speed_PID.SpeedSet = 120;
 	Speed_PID.Kp = 280;
 	Speed_PID.Ki =90;
 	Speed_PID.Kd = -30;

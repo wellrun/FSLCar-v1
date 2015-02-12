@@ -943,7 +943,36 @@ void CCD_Deal_Both(void)
 	}
 	/*else if (CCDMain_Status.Left_LostFlag == 1 || CCDMain_Status.Right_LostFlag == 1)
 	{
-		
+		if (CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1)
+		{
+			if (CCDMain_Status.Left_LostFlag == 1)
+			{
+				CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
+				CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
+				CCDMain_Status.ControlValue = CCDMain_Status.RightSet - CCDMain_Status.RightPoint;
+				if (CCDMain_Status.SearchBegin>115)
+				{
+					CCDMain_Status.SearchBegin = 115;
+				}
+				else if (CCDMain_Status.SearchBegin<15)
+				{
+					CCDMain_Status.SearchBegin = 15;
+				}
+			}
+			else if (CCDMain_Status.Right_LostFlag == 1)
+			{
+				CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
+				CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
+				CCDMain_Status.ControlValue = CCDMain_Status.LeftSet - CCDMain_Status.LeftPoint;
+				if (CCDMain_Status.SearchBegin>115)
+				{
+					CCDMain_Status.SearchBegin = 115;
+				}
+				else if (CCDMain_Status.SearchBegin < 15)
+				{
+					CCDMain_Status.SearchBegin = 15;
+				}
+			}
 		}
 		else
 		{
@@ -963,53 +992,20 @@ void CCD_Deal_Both(void)
 	}*/
 	else
 	{
-		if (Cnt_Cross>1)
+		CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
+		CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
+		CCDMain_Status.ControlValue = CCDMain_Status.MidSet - CCDMain_Status.MidPoint;
+		if (CCDMain_Status.SearchBegin>115)
 		{
-				if (CCDMain_Status.Left_LostFlag == 1)
-				{
-					CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
-					CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
-					CCDMain_Status.ControlValue = CCDMain_Status.RightSet - CCDMain_Status.RightPoint;
-					if (CCDMain_Status.SearchBegin > 115)
-					{
-						CCDMain_Status.SearchBegin = 115;
-					}
-					else if (CCDMain_Status.SearchBegin < 15)
-					{
-						CCDMain_Status.SearchBegin = 15;
-					}
-				}
-				else if (CCDMain_Status.Right_LostFlag == 1)
-				{
-					CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
-					CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
-					CCDMain_Status.ControlValue = CCDMain_Status.LeftSet - CCDMain_Status.LeftPoint;
-					if (CCDMain_Status.SearchBegin>115)
-					{
-						CCDMain_Status.SearchBegin = 115;
-					}
-					else if (CCDMain_Status.SearchBegin < 15)
-					{
-						CCDMain_Status.SearchBegin = 15;
-					}
-				}
+			CCDMain_Status.SearchBegin = 115;
 		}
-		else
+		else if (CCDMain_Status.SearchBegin < 15)
 		{
-			Cnt_Cross = 0;
-			CCDMain_Status.MidPoint = (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
-			CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
-			CCDMain_Status.ControlValue = CCDMain_Status.MidSet - CCDMain_Status.MidPoint;
-			if (CCDMain_Status.SearchBegin>115)
-			{
-				CCDMain_Status.SearchBegin = 115;
-			}
-			else if (CCDMain_Status.SearchBegin < 15)
-			{
-				CCDMain_Status.SearchBegin = 15;
-			}
+			CCDMain_Status.SearchBegin = 15;
 		}
 	}
+
+
 	if (!(CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1))
 	{
 
@@ -1159,7 +1155,7 @@ void CCD_Deal_Both(void)
 	{
 		AngMax = AngleIntegraed;
 	}*/
-/*	if (CCDSlave_Status.Left_LostFlag == 0 && CCDSlave_Status.Right_LostFlag == 0 && CCDMain_Status.Left_LostFlag == 0 && CCDMain_Status.Right_LostFlag == 0)
+	/*if (CCDSlave_Status.Left_LostFlag == 0 && CCDSlave_Status.Right_LostFlag == 0 && CCDMain_Status.Left_LostFlag == 0 && CCDMain_Status.Right_LostFlag == 0)
 	{
 		Cnt_TurnLeft++;
 		if (Cnt_TurnLeft > 5 && AngMax>200)
@@ -1203,6 +1199,10 @@ void CCD_Deal_Both(void)
 		//如果其中之一丢线,,权重增加
 		Dir_PID.ControlValue = CCDMain_Status.ControlValue*k + CCDSlave_Status.ControlValue*(1-k);
 	}
+	/*else if (CCDSlave_Status.Left_LostFlag==0&&CCDSlave_Status.Right_LostFlag==0&&(CCDMain_Status.Left_LostFlag==1 || CCDMain_Status.Right_LostFlag==1))
+	{
+		Dir_PID.ControlValue = CCDSlave_Status.ControlValue*0.7;
+	}*/
 	else
 	{
 		Dir_PID.ControlValue = CCDMain_Status.ControlValue;
