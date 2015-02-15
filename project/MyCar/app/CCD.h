@@ -41,36 +41,8 @@ extern unsigned char CCDTimeMs;
 // }CCD_Status_Struct;
 typedef struct 
 {
-	//signed char LeftLineArr[60];
-	//signed char RightLineArr[60];
-	signed char LeftPoint;
-	signed char LastLeftPoint;
-	signed char LastRightPoint;
-	signed char RightPoint;
-	signed char MidPoint;
-	
-	signed char LeftSet;
-	signed char RightSet;
-	signed char SearchBegin;
-	signed char Left_LostFlag;
-	signed char Right_LostFlag;
-	unsigned char PointCnt;
-	float ControlValue;
-	int Mode;
-	signed char SearchMode;
-	signed char Road;//道路类型
-	unsigned int ErrorCntLeft;
-	unsigned int ErrorCntRight;
-	signed short MidSet;
-}CCD_SLave_Status_Struct;
-
-
-typedef struct
-{
 	signed char LeftLineArr[100];
 	signed char RightLineArr[100];
-	signed short Weighting[100];//加权值..放大10倍
-	signed short BendEndWeighting[30];//过弯完成以后的权值,放大10倍;
 	signed char SearchBegin;
 	signed char LeftPoint;
 	signed char RightPoint;
@@ -82,23 +54,45 @@ typedef struct
 	signed char RightSet;
 	signed char InitOK;
 	float ControlValue;
-	unsigned int ErrorCntLeft;
-	unsigned int ErrorCntRight;
-	int Mode;//-1为左线引导,0为中线引导,1为右线引导
 	signed char SearchMode;
 	unsigned char PointCnt;
 	signed char Left_LostFlag;
 	signed char Right_LostFlag;
-	signed char LostAllLine;
-	unsigned short LostLineCnt;//丢线周期计数
-	signed char Road;//道路类型
+	short Threshold_Left;
+	short Threshold_Right;
+	signed char LineWidth;
+}CCD_SLave_Status_Struct;
+
+
+typedef struct
+{
+	signed char LeftLineArr[100];
+	signed char RightLineArr[100];
+	signed char SearchBegin;
+	signed char LeftPoint;
+	signed char RightPoint;
+	signed char LastLeftPoint;
+	signed char LastRightPoint;
+	signed char MidPoint;
+	signed char MidSet;
+	signed char LeftSet;
+	signed char RightSet;
+	signed char InitOK;
+	float ControlValue;
+	signed char SearchMode;
+	unsigned char PointCnt;
+	signed char Left_LostFlag;
+	signed char Right_LostFlag;
+	short Threshold_Left;
+	short Threshold_Right;
+	signed char LineWidth;
 }CCD_Status_Struct;
 extern CCD_Status_Struct CCDMain_Status;
 extern CCD_SLave_Status_Struct CCDSlave_Status;
 extern DirPID_TypeDef Dir_PID;
 void CCDLineInit(void);
-char CCD_Deal_Main(unsigned char *CCDArr);
-void CCD_Deal_Slave(unsigned char *CCDArr);
+void CCD_GetLine_Slave(void);
+void CCD_GetLine_Main(void);
 
 void ImageCapture_M(unsigned char * ImageData, unsigned char * ImageData2);
 void ImageCapture_S(unsigned char * ImageData);

@@ -222,8 +222,8 @@ void CCDCP(void)
 		//Dir_AngSpeed = L3G4200_GetResult(OUT_Z_L)*Dir_SpeedRatio;
         
 		CCD_Median_Filtering();
-		CCD_Deal_Main(CCDM_Arr);
-		CCD_Deal_Slave(CCDS_Arr);//现在这两个函数只负责找到线
+		CCD_GetLine_Main();
+		CCD_GetLine_Slave();
 		CCD_Deal_Both();
 		//CCD_GetLine();
 		if (CCDMain_Status.InitOK == 0)

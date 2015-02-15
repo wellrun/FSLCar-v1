@@ -3,8 +3,8 @@
 #include "Fuzzy.h"
 //#include "mpu6050.h"
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
-#define MOTOR_OUT_MAX       8000
-#define MOTOR_OUT_MIN       -8000
+#define MOTOR_OUT_MAX       8500
+#define MOTOR_OUT_MIN       -8500
 #define ANGLE_CONTROL_OUT_MAX			20000
 #define ANGLE_CONTROL_OUT_MIN			-20000
 #define SPEED_CONTROL_OUT_MAX			7000
