@@ -10,6 +10,7 @@
 #include "CCD.h"
 #include "Communicate.h"
 #include "MMA8451_moni.h"
+#include "oled.h"
 //#include "MPU6050.h"
 #include "L3G4200.h"
 //#include "DataScope_DP.h"
@@ -26,7 +27,7 @@ PC16-CCDReady(20Ms);
 #define Scope40Ms 15
 #define ScopeCCDReady 16
 #define CCD2
-#define CAR_STAND_ANG_MAX 15
+#define CAR_STAND_ANG_MAX 10
 #define CAR_STAND_ANG_MIN -40
 
 extern float Dir_AngSpeed ;
@@ -106,6 +107,7 @@ uint8 DebugerByte36[PageDateLen];
 extern void Beep_Isr(void);
 extern void AngleIntegration(float Anglespeed);
 extern float GravityAngle, GyroscopeAngleSpeed;
+	float Voltage = 0;
 unsigned char Status_Check(void)
 {
 	if (((CarInfo_Now.CarAngle < CAR_STAND_ANG_MIN) || (CarInfo_Now.CarAngle > CAR_STAND_ANG_MAX)))
@@ -240,6 +242,10 @@ void CCDCP(void)
 			}
 		}
 		CCDDataSendStart = 1;
+
+	/*	showimage(CCDM_Arr);
+        LED_P6x8Str(0,0,"Voltage  ");
+		LED_PrintValueF(70, 0, Voltage, 4);*/
 	}
 }
 
@@ -251,9 +257,11 @@ void main(void)
 	short CCDSendPointCnt = 0;
 	short ScopeSendPointCnt = 0;
 	short DebugDataPointCnt = 0;
+
+	int Voltage_Cnt = 0;
 	Struct_Init(); //初始各种结构体的值
 	CarInit();
-        
+	LED_Init();
 	/*while (1)
 	{
 		LPLD_GPIO_Toggle_b(PTC, 14);
@@ -274,6 +282,11 @@ void main(void)
 			LPLD_GPIO_Toggle_b(PTA, 17);//一闪一闪亮晶晶
             //LPLD_GPIO_Output_b(PTA,17,0);
 			SpeedControlValueCalc();
+			Voltage_Cnt++;
+			if (Voltage_Cnt>10)
+			{
+				Voltage_Cnt = 0;
+			}
 		}
 		if (CCDReady==1)
 		{
@@ -357,6 +370,10 @@ void main(void)
 					{
 						ShanWaiCCD[i+128] = CCDS_Arr[i];
 					}
+					ShanWaiCCD[CCDMain_Status.LeftPoint] = 250;
+					ShanWaiCCD[CCDMain_Status.RightPoint] = 250;
+					ShanWaiCCD[CCDSlave_Status.LeftPoint + 128] = 250;
+					ShanWaiCCD[CCDSlave_Status.RightPoint + 128] = 250;
 					LPLD_UART_PutChar(UART5, 0x02);
 					LPLD_UART_PutChar(UART5, 0xfd);
 					
@@ -382,22 +399,22 @@ void main(void)
 				{
 					AngDataSendOK = 0;
 					//调直立用
-  					Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
+  					/*Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
   					tempfloat = CarInfo_Now.CarAngSpeed;
   					Float2Byte(&tempfloat, OUTDATA, 10);
   					Float2Byte(&AngleIntegraed, OUTDATA, 6);
 					tempfloat = GravityAngle;
-  					Float2Byte(&tempfloat, OUTDATA, 14);
+  					Float2Byte(&tempfloat, OUTDATA, 14);*/
 
 					//调速度PI
-// 					tempfloat = (float)SpeedSet_Variable;
-// 					Float2Byte(&tempfloat, OUTDATA, 2);
-// 					tempfloat = CarInfo_Now.CarAngSpeed;;
-// 					Float2Byte(&tempfloat, OUTDATA, 6);
-// 					tempfloat = (float)CarInfo_Now.CarSpeed;
-// 					Float2Byte(&tempfloat, OUTDATA, 10);
-// 					tempfloat = (float)TempValue.SpeedOutValue;
-// 					Float2Byte(&tempfloat, OUTDATA, 14);
+					tempfloat = (float)Speed_PID.SpeedSet;
+ 					Float2Byte(&tempfloat, OUTDATA, 2);
+ 					tempfloat = Dir_AngSpeed;
+					Float2Byte(&tempfloat, OUTDATA, 6);
+ 					tempfloat = (float)CarInfo_Now.CarSpeed;
+ 					Float2Byte(&tempfloat, OUTDATA, 10);
+ 					tempfloat = (float)TempValue.SpeedOutValue;
+ 					Float2Byte(&tempfloat, OUTDATA, 14);
 
 
 					//调方向和速度
@@ -696,7 +713,6 @@ void main(void)
 		{
 			IntegrationTime = 5;
 		}
-
 	}
 }
 

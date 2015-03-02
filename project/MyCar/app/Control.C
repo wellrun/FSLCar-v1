@@ -7,14 +7,13 @@
 #define MOTOR_OUT_MIN       -8500
 #define ANGLE_CONTROL_OUT_MAX			20000
 #define ANGLE_CONTROL_OUT_MIN			-20000
-#define SPEED_CONTROL_OUT_MAX			7000
-#define SPPED_CONTROL_OUT_MIN			-7000
+#define SPEED_CONTROL_OUT_MAX			13000
+#define SPPED_CONTROL_OUT_MIN			-13000
 #define CoderResolution 500 //编码器的线数
 #define TyreCircumference 20//轮胎周长CM
 //轮子转一圈..编码器增加5200
 int  DeathValueLeft = 100;//死区电压 2%的占空比S
 int DeathValueRight = 100;//右轮的死区电压 
-
 
 extern float Ang_dt;//控制周期,在主函数定义,20ms
 extern float Speed_Dt;//速度的周期,0.08ms
@@ -82,9 +81,48 @@ void AngleControlValueCalc(void)
 	TempValue.AngControl_OutValue = ControlValue; //更新控制临时变量的值
 }
 extern unsigned char Flag_SpeedGot;
-void SpeedGet(void)
+Speed_Data_Struct SpeedCnt;
+Speed_Data_Struct* SpeedGet(int Mode)
 {//FTM1是左电机,FTM2是右电机
-	static int LeftSum = 0;
+	Speed_Data_Struct *p = &SpeedCnt;
+	static int LeftSum1, RightSum1, LeftSum2, RightSum2;
+	int LeftCnt, RightCnt;
+	LeftCnt = LPLD_FTM_GetCounter(FTM1);
+	RightCnt = LPLD_FTM_GetCounter(FTM2);
+	LPLD_FTM_ClearCounter(FTM1);
+	LPLD_FTM_ClearCounter(FTM2);
+	if (LeftCnt >= 30000)
+	{
+		LeftCnt -= 65535;
+	}
+	if (RightCnt >= 30000)
+	{
+		RightCnt -= 65535;
+	}
+	LeftCnt = -LeftCnt;
+	LeftSum1 += LeftCnt;
+	RightSum1 += RightCnt;
+	LeftSum2 += LeftCnt;
+	RightSum2 += RightCnt;
+	if (Mode==1)
+	{
+		p->Left = LeftSum1;
+		p->Right = RightSum1;
+		LeftSum1 = 0, RightSum1 = 0;
+		return p;
+	}
+	else if (Mode==2)
+	{
+		p->Left = LeftSum2;
+		p->Right = RightSum2;
+		LeftSum2 = 0, RightSum2 = 0;
+		return p;
+	}
+	p->Left = 0;
+	p->Right = 0;
+	return p;
+
+/*	static int LeftSum = 0;
 	static int RightSum = 0;
 	static int cnt = 0;
 	CarInfo_Now.MotorCounterLeft = LPLD_FTM_GetCounter(FTM1);
@@ -100,13 +138,9 @@ void SpeedGet(void)
 	{
 		CarInfo_Now.MotorCounterRight -= 65535;
 	}
-	//CarInfo_Now.MotorCounterRight = -CarInfo_Now.MotorCounterRight;
-        CarInfo_Now.MotorCounterLeft=-CarInfo_Now.MotorCounterLeft;
-	//CarInfo_Now.LeftSpeed = (CarInfo_Now.MotorCounterLeft / CoderResolution*TyreCircumference) / Speed_Dt;//计算出速度,是准确的cm/s
-	//CarInfo_Now.RightSpeed = (CarInfo_Now.MotorCounterRight / CoderResolution*TyreCircumference) / Speed_Dt;//计算出速度,是准确的cm/s
-	//CarInfo_Now.CarSpeed = (CarInfo_Now.LeftSpeed + CarInfo_Now.RightSpeed) / 2;//车子的速度用左右轮速度平均值,不准确
-	CarInfo_Now.CarSpeed = (CarInfo_Now.MotorCounterLeft + CarInfo_Now.MotorCounterRight) / 20;
-	Flag_SpeedGot = 1;
+    CarInfo_Now.MotorCounterLeft=-CarInfo_Now.MotorCounterLeft;
+	CarInfo_Now.CarSpeed = (CarInfo_Now.MotorCounterLeft + CarInfo_Now.MotorCounterRight) / 20;*/
+
 /*
 	LeftSum += CarInfo_Now.MotorCounterLeft;
 	RightSum += CarInfo_Now.MotorCounterRight;
@@ -124,7 +158,7 @@ void SpeedGet(void)
 float SpeedSet_Variable = 0;
 void SpeedControlValueCalc(void)
 {
-	static SpeedPID_TypeDef *p = &Speed_PID;
+	
 	//static SpeedPID_TypeDef *Pr = &Speed_PID_Right;
 	//PI
 	// #define INTEGRAL_MAX 200000
@@ -196,66 +230,22 @@ void SpeedControlValueCalc(void)
 	TempValue.Old_SpeedOutValueRight = TempValue.New_SpeedOutValueRight;
 	TempValue.New_SpeedOutValueRight = p->OutValueSum_Right;*/
 
-
+	static SpeedPID_TypeDef *p = &Speed_PID;
+	static Speed_Data_Struct *ps;
 #define ErrorMax 100
-	static int Index = 1;
-	static float Speed_IntSum = 0;
-	SpeedGet();
+	//static int Index = 1;
+	//static float Speed_IntSum = 0;
+	ps=SpeedGet(1);
+	CarInfo_Now.MotorCounterLeft = ps->Left;
+	CarInfo_Now.MotorCounterRight = ps->Right;
+	CarInfo_Now.CarSpeed = (ps->Left + ps->Right) / 20;
 #define IntMax 3500
-	/*static float Dir_ControlValue[8] = { 0 };
-	int i = 0, k = 0, j = 0;
-	float Dir_Diff_10 = 0;
-	for (i = 0; i < 7; i++)
-	{
-		Dir_ControlValue[i + 1] = Dir_ControlValue[i];
-	}
-	if (CCDSlave_Status.MidPoint != 1)
-	{
-		Dir_ControlValue[0] = CCDSlave_Status.MidPoint;
-	}
-	else
-		Dir_ControlValue[0] = Dir_ControlValue[1];
-	for (i = 0; i < 4; i++)
-	{
-		Dir_Diff_10 += Dir_ControlValue[i] - Dir_ControlValue[i + 4];
-	}
-	if (Dir_Diff_10>25 || Dir_Diff_10 < -25 || \
-		(((!(CCDSlave_Status.Left_LostFlag == 1 && CCDSlave_Status.Right_LostFlag == 1)) && \
-		(!(CCDMain_Status.Left_LostFlag == 1 && CCDMain_Status.Right_LostFlag == 1))) && \
-		((CCDMain_Status.MidPoint - CCDSlave_Status.MidPoint >30) || \
-		(CCDMain_Status.MidPoint - CCDSlave_Status.MidPoint < -30))))
-	{//如果差分绝对值大于25或者在不全丢线的情况下 两个ccd的中线差大于30
-		SpeedSet_Variable = p->SpeedSet;
-		BeepBeepBeep(400);
-	}
-	else
-	{
-		SpeedSet_Variable = p->SpeedSet;
-	}*/
-	p->ThisError = SpeedSet_Variable - CarInfo_Now.CarSpeed;
+	//p->ThisError = SpeedSet_Variable - CarInfo_Now.CarSpeed;
+        p->ThisError = Speed_PID.SpeedSet - CarInfo_Now.CarSpeed;
 	if (p->ThisError > ErrorMax)
 		p->ThisError = ErrorMax;
 	else if (p->ThisError < -ErrorMax)
 		p->ThisError = -ErrorMax;
-/*	if (p->OutValueSum >(IntMax))
-	{
-		if (p->ThisError > 0)
-			Index = 0;
-		else
-		{
-			Index = 1;
-		}
-	}
-	else if (p->OutValueSum < (-IntMax))
-	{
-		if (p->ThisError < 0)
-			Index = 0;
-		else
-		{
-			Index = 1;
-		}
-	}*/
-
 	p->OutValue = p->Kp*(p->ThisError - p->LastError) \
 		+ (p->Ki / 10.0)*p->ThisError \
 		+ p->Kd*(p->ThisError - 2 * p->LastError + p->PreError);
@@ -380,7 +370,7 @@ void DirControlValueCale(void)
 	TempValue.DirOutValue_New = p->OutValueSum;*/
 
 
-	float Dir_Diff;
+	//float Dir_Diff;
 	static float Ki = 0;
 	static float Last_DirAngSpeed;
 	extern float Dir_AngSpeed;
@@ -390,7 +380,7 @@ void DirControlValueCale(void)
 	//Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;
 	IntSum += Ki*Dir_PID.ThisError;
 	//Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_Diff)*Dir_PID.Kd_Temp + IntSum;
-	Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_AngSpeed*0.6+Last_DirAngSpeed*0.4)*Dir_PID.Kd_Temp + IntSum;
+	Dir_PID.OutValue = -(Dir_PID.ThisError*0.6 + Dir_PID.LastError*0.4)* (Dir_PID.Kp_Temp) + (Dir_AngSpeed*0.6+Last_DirAngSpeed*0.4)*Dir_PID.Kd_Temp + IntSum;
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
 	Last_DirAngSpeed = Dir_AngSpeed;

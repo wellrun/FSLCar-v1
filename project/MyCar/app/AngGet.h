@@ -14,6 +14,7 @@ void Short2Byte(int16 *target, int8 *buf, int8 beg);
 void Byte2Int(int *target, unsigned char *buf, unsigned char beg);
 void Int2Byte(int *target, unsigned char *buf, unsigned char beg);
 //void AngleControlValueCalc(void);
-
-
+unsigned char DirAng_StartIntegraed(unsigned char Ch);
+float DirAng_GetAng(unsigned char Ch);
+void DirAng_Clear(unsigned char Ch);
 #endif

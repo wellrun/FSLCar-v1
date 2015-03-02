@@ -110,12 +110,13 @@ void Init_ADC(void)
 	Init_ADC_Struct.ADC_Adcx = ADC1;
 	Init_ADC_Struct.ADC_BitMode = SE_12BIT;
 	Init_ADC_Struct.ADC_SampleTimeCfg = SAMTIME_SHORT;
-	Init_ADC_Struct.ADC_HwAvgSel = HW_4AVG;
+	Init_ADC_Struct.ADC_HwAvgSel = HW_DISAVG;
 	Init_ADC_Struct.ADC_CalEnable = TRUE;
 	Init_ADC_Struct.ADC_MuxSel = MUX_ADXXB;
 	LPLD_ADC_Init(Init_ADC_Struct);
 	LPLD_ADC_Chn_Enable(ADC1, AD6);   
 	LPLD_ADC_Chn_Enable(ADC1, AD7);
+	LPLD_ADC_Chn_Enable(ADC1, AD14);
 	//不再需要AD来读数据
 	//开启四个通道的ADC,
 
@@ -127,6 +128,7 @@ void Init_ADC(void)
 	LPLD_ADC_Init(Init_ADC_CCD_Struct);
 	LPLD_ADC_Chn_Enable(ADC0, AD14); //CCD1的AD端口 PTc0
 	LPLD_ADC_Chn_Enable(ADC0, AD15);//CCD2的AD端口 PTC1
+	
 }
 void Init_GPIO(void)
 {
@@ -174,8 +176,10 @@ void Init_GPIO(void)
 	Init_GPIO_Struct.GPIO_Dir = DIR_INPUT;
 	LPLD_GPIO_Init(Init_GPIO_Struct);//4个拨码开关
 
-	
-
+	Init_GPIO_Struct.GPIO_PTx = PTC;
+	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin4 | GPIO_Pin5 | GPIO_Pin6 | GPIO_Pin7;
+	Init_GPIO_Struct.GPIO_Dir = DIR_OUTPUT;
+	LPLD_GPIO_Init(Init_GPIO_Struct);//oled
 }
 
 void CarInit(void)

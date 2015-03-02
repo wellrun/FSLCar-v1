@@ -28,7 +28,7 @@ void complement_filter(float angle_m_cf, float gyro_m_cf)
 float K2 = 0.35; // 对加速度计取值的权重
 float x1, x2, y1;
 
-void complement2(float angle_m, float gyro_m)//采集后计算的角度和角加速度
+void complement2(float angle_m, float gyro_m)
 {
 	bias_cf = bias_cf * 0.999; //陀螺仪零飘低通滤波；500次均值；0.998
 	bias_cf = bias_cf + gyro_m * 0.001; //0.002*/

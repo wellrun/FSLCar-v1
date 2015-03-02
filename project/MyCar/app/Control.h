@@ -21,7 +21,12 @@ extern TempOfMotor_TypeDef TempValue; //临时存储角度和速度控制浮点变量的结构体
 extern DirPID_TypeDef Dir_PID;
 extern SpeedPID_TypeDef Speed_PID;
 
-
+typedef struct 
+{
+	int Left;
+	int Right;
+}Speed_Data_Struct;
+Speed_Data_Struct* SpeedGet(int Mode);
 void MotorControl_Out(void);
 void AngleControlValueCalc(void);
 void SpeedControlValueCalc(void);

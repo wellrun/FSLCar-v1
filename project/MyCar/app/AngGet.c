@@ -4,6 +4,7 @@
 #include "DEV_MMA8451.h"
 #include "datastructure.h"
 #include "Kalman.h"
+#include "MMA8451_moni.h"
 //#include "MPU6050.h"
 //#include "MPU6050_Moni.h"
 #include "math.h"
@@ -44,8 +45,8 @@ void AngleGet(void)
 	Acc_H = MMA8451_ReadByte(MMA8451_REG_OUTZ_MSB);
 	GyroscopeAngleSpeed = (LPLD_ADC_Get(ADC1, AD6)-Gyro_Offset)*GYROSCOPE_ANGLE_RATIO;
         Dir_AngSpeed=-(LPLD_ADC_Get(ADC1, AD7)-Gyro_Offset)*Dir_SpeedRatio;
-        bias_cf = bias_cf * 0.99999; //陀螺仪零飘低通滤波；500次均值；0.998
-	bias_cf = bias_cf + Dir_AngSpeed * 0.00001; //0.002*/
+        bias_cf = bias_cf * 0.999; //陀螺仪零飘低通滤波；500次均值；0.998
+	bias_cf = bias_cf + Dir_AngSpeed * 0.001; //0.002*/
 	Dir_AngSpeed = Dir_AngSpeed- bias_cf;
 	AngleIntegration(Dir_AngSpeed);//确定了当前的值合适
 	//ACC_L = LPLD_MMA8451_ReadReg(MMA8451_REG_OUTZ_LSB);
@@ -61,14 +62,73 @@ void AngleGet(void)
 	CarInfo_Now.CarAngle = angle_com;
 	CarInfo_Now.CarAngSpeed = angle_dot_com;
 }
-
+float AngleIntegraed_Ch1, AngleIntegraed_Ch2;
+unsigned char Flag_Started_Ch1, Flag_Started_Ch2;
 void AngleIntegration(float Anglespeed)//对角速度积分得到角度确定GYROSCOPE_ANGLE_RATIO的值
 {
 	float dt = 0.005;
 
 	AngleIntegraed += Anglespeed*dt;
+	if (Flag_Started_Ch1 == 1)
+	{
+		AngleIntegraed_Ch1 += AngleIntegraed;
+	}
+	if (Flag_Started_Ch2 == 1)
+	{
+		AngleIntegraed_Ch2 += AngleIntegraed;
+	}
 }
-
+unsigned char DirAng_StartIntegraed(unsigned char Ch)//开始对转向角度进行积分
+{
+	if (Ch == 1)
+	{
+		if (Flag_Started_Ch1 == 1)
+		{
+			return 1;
+		}
+		else
+		{
+			Flag_Started_Ch1 = 1;
+			return 0;
+		}
+	}
+	else if (Ch == 2)
+	{
+		if (Flag_Started_Ch2 == 1)
+		{
+			return 1;
+		}
+		else
+		{
+			Flag_Started_Ch2 = 1;
+			return 0;
+		}
+	}
+}
+float DirAng_GetAng(unsigned char Ch)
+{
+	if (Ch == 1)
+	{
+		return AngleIntegraed_Ch1;
+	}
+	else if (Ch == 2)
+	{
+		return AngleIntegraed_Ch2;
+	}
+}
+void DirAng_Clear(unsigned char Ch)
+{
+	if (Ch == 1)
+	{
+		Flag_Started_Ch1 = 0;
+		AngleIntegraed_Ch1 = 0;
+	}
+	else if (Ch == 2)
+	{
+		Flag_Started_Ch2 = 0;
+		AngleIntegraed_Ch2 = 0;
+	}
+}
 //函数说明：将单精度浮点数据转成4字节数据并存入指定地址 //gittest
 //附加说明：用户无需直接操作此函数
 //target:目标单精度数据

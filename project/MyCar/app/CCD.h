@@ -60,7 +60,8 @@ typedef struct
 	signed char Right_LostFlag;
 	short Threshold_Left;
 	short Threshold_Right;
-	signed char LineWidth;
+	short LineWidth;
+	signed char Flag_CenterLine;
 }CCD_SLave_Status_Struct;
 
 
@@ -85,7 +86,8 @@ typedef struct
 	signed char Right_LostFlag;
 	short Threshold_Left;
 	short Threshold_Right;
-	signed char LineWidth;
+	short LineWidth;
+	signed char Flag_CenterLine;
 }CCD_Status_Struct;
 extern CCD_Status_Struct CCDMain_Status;
 extern CCD_SLave_Status_Struct CCDSlave_Status;
