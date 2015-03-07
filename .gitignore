@@ -1,0 +1,10 @@
+*.bin
+*.icf
+/project/Timor/iar/settings
+/project/Timor/iar
+/project/Timor/Vs2013/Timor/Timor.opensdf
+/project/Timor/Vs2013/Timor/Timor.sdf
+/project/Timor/Vs2013/Timor/Timor.sln
+/project/Timor/Vs2013/Timor/Timor.v12.suo
+/project/Timor/Vs2013/Timor/Timor/Timor.vcxproj
+/project/Timor/Vs2013/Timor/Timor/Timor.vcxproj.filters
