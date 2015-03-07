@@ -1,8 +1,8 @@
 
 #include "MyCar.h"
 
-#define CAR_STAND_ANG_MAX 20
-#define CAR_STAND_ANG_MIN 65
+#define CAR_STAND_ANG_MAX 62
+#define CAR_STAND_ANG_MIN 38
 
 extern float Dir_AngSpeed ;
 char CarStandFlag = 1;
@@ -58,7 +58,13 @@ unsigned char Status_Check(void)
 	}
 	else
 	{
-		CarStandFlag = 1;
+		if (CarStandFlag==0)
+		{
+			if (((CarInfo_Now.CarAngle - Ang_PID.AngSet) <5) || ((CarInfo_Now.CarAngle - Ang_PID.AngSet) >-5))
+			{
+				CarStandFlag = 1;
+			}
+		}
 		return 0;
 	}
 }
@@ -85,7 +91,6 @@ void Speed_Change(void)//测试速度pi用..需要配合示波器
 
 void AngleCon_Isr(void)
 {
-  uint8 Whoami=0;
 	unsigned char integration_piont;
 		CCDTimeMs++;
 		TimerMsCnt++;
@@ -124,15 +129,15 @@ void AngleCon_Isr(void)
 			}
 			else
 			{
-				if (CarStandFlag != 0)
-				{
-					CarStandFlag = 0;
-					LPLD_SYSTICK_DelayMs(1000);
-				}
 				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch0, 0);
 				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch1, 0);
 				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch2, 0);
 				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch3, 0);
+                                if (CarStandFlag != 0)
+				{
+					CarStandFlag = 0;
+					LPLD_LPTMR_DelayMs(1000);
+				}
 			}
 		}
 }
@@ -161,10 +166,12 @@ void CCDCP(void)
 			}
 		}
 		CCDDataSendStart = 1;
+		CCDM_Arr[CCDMain_Status.LeftPoint] = 200;
+		CCDM_Arr[CCDMain_Status.RightPoint] = 200;
+		CCDS_Arr[CCDSlave_Status.LeftPoint] = 200;
+		CCDS_Arr[CCDSlave_Status.RightPoint] = 200;
 	}
 }
-
-/**********************/
 void main(void)
 {
 	int i = 0;
@@ -196,6 +203,7 @@ void main(void)
 	Struct_Init(); //初始各种结构体的值
 	CarInit();
 	LED_Init();
+
 	while (1)
 	{
 		//更改了时间片的模式
@@ -204,34 +212,44 @@ void main(void)
 			TimeFlag_40Ms = 0;
 			LPLD_GPIO_Toggle_b(PTA, 17);//一闪一闪亮晶晶
 			SpeedControlValueCalc();
-			Voltage_Cnt++;
-			if (Voltage_Cnt>10)
+			if (LPLD_MMA8451_ReadReg(MMA8451_REG_WHOAMI) != 0x1a)
 			{
-				Voltage_Cnt = 0;
-				Voltage = LPLD_ADC_Get(ADC0, AD11)*3.3 * 4 / 256;
+				LPLD_GPIO_Toggle_b(PTC, 12);
 			}
-			if (Screen_WhichCCDImg==1)
-                        {
-				showimage(CCDM_Arr);
-                                 LED_PrintValueF(0,0,Dir_PID.ControlValue,2);
-				LED_PrintValueF(70, 0, Voltage, 2);
-                        }
-			else if (Screen_WhichCCDImg==2)
+			if (L3G4200_ReadReg(0x0F)!=0xd3)
 			{
-				showimage(CCDS_Arr);
-                                 LED_PrintValueF(0,0,Dir_PID.ControlValue,2);
-				LED_PrintValueF(70, 0, Voltage, 2);
-			}
-			else
-			{
-                          LED_PrintValueF(0,0,Dir_PID.ControlValue,2);
-				LED_PrintValueF(70, 0, Voltage, 2);
+				LPLD_GPIO_Toggle_b(PTC, 13);
 			}
 		}
 		if (CCDReady==1)
 		{
 			CCDReady = 0;
 			CCDCP();
+			Voltage_Cnt++;
+			if (Voltage_Cnt > 10)
+			{
+				Voltage_Cnt = 0;
+				Voltage = LPLD_ADC_Get(ADC0, AD11)*3.3 * 4 / 256;
+			}
+			if (Screen_WhichCCDImg == 1)
+			{
+				showimage(CCDM_Arr);
+				LED_PrintValueF(0, 0, Dir_PID.ControlValue, 2);
+				LED_PrintValueC(40, 0, CCDMain_Status.LeftPoint);
+				LED_PrintValueC(80, 0, CCDMain_Status.RightPoint);
+			}
+			else if (Screen_WhichCCDImg == 2)
+			{
+				showimage(CCDS_Arr);
+				LED_PrintValueF(0, 0, Dir_PID.ControlValue, 2);
+				LED_PrintValueC(40, 0, CCDSlave_Status.LeftPoint);
+				LED_PrintValueC(80, 0, CCDSlave_Status.RightPoint);
+			}
+			else
+			{
+				LED_PrintValueF(0, 0, Dir_PID.ControlValue, 2);
+				LED_PrintValueF(70, 0, Voltage, 2);
+			}
 		}
 
 		if (CCDSendImage == 1 &&CCDtoPC==1)//发送到调试器
@@ -349,7 +367,7 @@ void main(void)
 					//调速度PI
 					tempfloat = (float)Speed_PID.SpeedSet;
  					Float2Byte(&tempfloat, OUTDATA, 2);
- 					tempfloat = Dir_AngSpeed;
+ 					tempfloat = TempValue.AngControl_OutValue;
 					Float2Byte(&tempfloat, OUTDATA, 6);
  					tempfloat = (float)CarInfo_Now.CarSpeed;
  					Float2Byte(&tempfloat, OUTDATA, 10);
@@ -606,11 +624,11 @@ void main(void)
 				}
 			}
 		}
-		if (LPLD_GPIO_Input_b(PTB, 20) == 0)//发送数据到上位机切换模式
+		if (LPLD_GPIO_Input_b(PTC, 16) == 0)//发送数据到上位机切换模式
 		{
 			Debuger = 0;
 			KeyChanged = 0;
-			if (LPLD_GPIO_Input_b(PTB, 21) == 0)
+			if (LPLD_GPIO_Input_b(PTC, 17) == 0)
 			{
 				CCDSendImage = 1;
 				AngDataSend = 0;//发送CCD图像
@@ -622,7 +640,6 @@ void main(void)
 				AngDataSend = 1;//发送角度图像
 				CCDtoPC = 1;
 			}
-			LPLD_GPIO_Output_b(PTE, 4, 1);
 		}
 		else
 		{
@@ -635,23 +652,24 @@ void main(void)
 				CCDtoPC = 1;
 				Debuger = 1;
 			}
-			LPLD_GPIO_Output_b(PTE, 4, 0);
 		}
-		if (LPLD_GPIO_Input_b(PTB, 22) == 1 && LPLD_GPIO_Input_b(PTB, 23) == 1)//这段判定用于修改积分时间
+		if (LPLD_GPIO_Input_b(PTC, 18) == 1 && LPLD_GPIO_Input_b(PTC, 19) == 1)//这段判定用于修改积分时间
 		{
 			IntegrationTime = 3;
 		}
-		else if (LPLD_GPIO_Input_b(PTB, 22) == 0 && LPLD_GPIO_Input_b(PTB, 23) == 0)
+		else if (LPLD_GPIO_Input_b(PTC, 18) == 0 && LPLD_GPIO_Input_b(PTC, 19) == 0)
 		{
 			IntegrationTime = 6;
 		}
-		else if (LPLD_GPIO_Input_b(PTB, 22) == 1 && LPLD_GPIO_Input_b(PTB, 23) == 0)
+		else if (LPLD_GPIO_Input_b(PTC, 18) == 1 && LPLD_GPIO_Input_b(PTC, 19) == 0)
 		{
 			IntegrationTime = 4;
 		}
-		else if (LPLD_GPIO_Input_b(PTB, 22) == 0 && LPLD_GPIO_Input_b(PTB, 23) == 1)
+		else if (LPLD_GPIO_Input_b(PTC, 18) == 0 && LPLD_GPIO_Input_b(PTC, 19) == 1)
 		{
 			IntegrationTime = 5;
 		}
 	}
 }
+
+

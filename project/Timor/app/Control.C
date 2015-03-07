@@ -5,8 +5,8 @@
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
 #define MOTOR_OUT_MAX       8500
 #define MOTOR_OUT_MIN       -8500
-#define ANGLE_CONTROL_OUT_MAX			20000
-#define ANGLE_CONTROL_OUT_MIN			-20000
+#define ANGLE_CONTROL_OUT_MAX			16000
+#define ANGLE_CONTROL_OUT_MIN			-16000
 #define SPEED_CONTROL_OUT_MAX			13000
 #define SPPED_CONTROL_OUT_MIN			-13000
 //轮子转一圈..编码器增加5200

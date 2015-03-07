@@ -762,7 +762,8 @@ void CCD_Deal_Both(void)
 		Dir_PID.ControlValue = CCDMain_Status.MidSet - (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
 	}
 	
-
+	Dir_PID.Kd_Temp = Dir_PID.Kd;
+	Dir_PID.Kp_Temp = Dir_PID.Kp;
 }
 
 void CCD_ControlValueCale(void)
@@ -783,8 +784,8 @@ void CCDLineInit(void)
 	
 	CCDSlave_Status.LeftSet = 27;
 	CCDSlave_Status.RightSet = 104;
-	CCDMain_Status.LeftSet = 42;
-	CCDMain_Status.RightSet = 85;
+	CCDMain_Status.LeftSet = 38;
+	CCDMain_Status.RightSet = 91;
         
     CCDMain_Status.MidSet = (CCDMain_Status.LeftSet+CCDMain_Status.RightSet)/2;
 	CCDMain_Status.SearchBegin = CCDMain_Status.MidSet;

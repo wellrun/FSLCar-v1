@@ -8,3 +8,10 @@
 /project/Timor/Vs2013/Timor/Timor.v12.suo
 /project/Timor/Vs2013/Timor/Timor/Timor.vcxproj
 /project/Timor/Vs2013/Timor/Timor/Timor.vcxproj.filters
+/project/Timor/Vs2013/Timor/Timor/Debug/*.obj
+/project/Timor/Vs2013/Timor/Timor/Debug/*.log
+/project/Timor/Vs2013/Timor/Timor/Debug/Timor.tlog/*.tlog
+/project/Timor/Vs2013/Timor/Timor/Debug/Timor.tlog/*.lastbuildstate
+/project/Timor/Vs2013/Timor/Timor/Debug/Timor.tlog/*
+/project/Timor/Vs2013/Timor/Timor/Debug/*.idb
+/project/Timor/Vs2013/Timor/Timor/Debug/*.pdb

@@ -31,19 +31,19 @@ void errordealy(void)
 			asm("nop");
 }
 void AngleIntegration(float Anglespeed);
+ int Anginitok = 0;
 
 void AngleGet(void)
 {
-	static int initok = 0;
 	Dir_AngSpeed = L3G4200_GetResult(OUT_Z_L)*Dir_SpeedRatio;
 	acc_x = LPLD_MMA8451_GetResult_H(MMA8451_REG_OUTZ_MSB);
 	GyroscopeAngleSpeed = L3G4200_GetResult(OUT_Y_L)*GYROSCOPE_ANGLE_RATIO;
 	GravityAngle = -acc_x*AngRatio;
 	AngleIntegration(Dir_AngSpeed);
-	if (initok == 0)
+	if (Anginitok == 0)
 	{
 		angle_com = GravityAngle;
-		initok = 1;
+		Anginitok = 1;
 	}
 	complement2(GravityAngle, GyroscopeAngleSpeed);
 	CarInfo_Now.CarAngle = angle_com;

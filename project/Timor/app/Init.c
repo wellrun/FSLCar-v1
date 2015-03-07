@@ -88,9 +88,9 @@ void Init_GPIO(void)
 
 	Init_GPIO_Struct.GPIO_PTx = PTC;
 	Init_GPIO_Struct.GPIO_Dir = DIR_OUTPUT;	
-	Init_GPIO_Struct.GPIO_Output = OUTPUT_H;
+	Init_GPIO_Struct.GPIO_Output = OUTPUT_L;
 	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin13 | GPIO_Pin12;
-	LPLD_GPIO_Init(Init_GPIO_Struct); //屏幕
+	LPLD_GPIO_Init(Init_GPIO_Struct); //指示灯
 
 	Init_GPIO_Struct.GPIO_PTx = PTE;
 	Init_GPIO_Struct.GPIO_Dir = DIR_OUTPUT;
@@ -117,19 +117,25 @@ void Init_GPIO(void)
 
 void CarInit(void)
 {
-	static char whoami = 1; //用來判斷寄存器正常不正常
+	unsigned char whoami1 = 1, whoami2 = 1,initok=1; //用來判斷寄存器正常不正常
 	Init_NVIC();
 	Init_Systick();
 	Init_GPIO();
 	Init_ADC();
 	Init_FTM(); 
-       whoami= L3G4200_Init();
-       if (whoami != 0xd3)
+    whoami1= L3G4200_Init();
+	if (whoami1 != 0xd3)
 	{
-		while (1);
+		initok = 0;
+		LPLD_GPIO_Output_b(PTC, 12, 1);
 	}       
-	whoami = LPLD_MMA8451_Init();
-	if (whoami != 0x1a)
+	whoami2 = LPLD_MMA8451_Init();
+	if (whoami2 != 0x1a)
+	{
+		initok = 0;
+		LPLD_GPIO_Output_b(PTC, 13, 1);
+	}
+	if (initok==0)
 	{
 		while (1)
 		{
