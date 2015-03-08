@@ -128,7 +128,7 @@ void CarInit(void)
 	{
 		initok = 0;
 		LPLD_GPIO_Output_b(PTC, 12, 1);
-	}       
+	}
 	whoami2 = LPLD_MMA8451_Init();
 	if (whoami2 != 0x1a)
 	{

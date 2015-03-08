@@ -179,11 +179,12 @@ int16 L3G4200_GetResult(uint8 Regs_Addr)
 {
 
 	int16 result, temp;
+	disable_irq((IRQn_Type)(PORTD_IRQn));
 	result = L3G4200_ReadReg(Regs_Addr);
 	temp = L3G4200_ReadReg(Regs_Addr + 1);
 	temp = temp << 8;
 	result = result | temp;
-
+	enable_irq((IRQn_Type)(PORTD_IRQn));
 	return result;
 }
 

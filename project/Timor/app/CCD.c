@@ -396,7 +396,7 @@ void CCD_Median_Filtering(void)
 	}
 }
 
-
+#define CCD_Threshold_Min 60
 void CCD_GetLine_Main(void)
 {
 	short TempArrLeft[50], TempArrRight[50], i=0, j = 0,k=0;
@@ -404,7 +404,7 @@ void CCD_GetLine_Main(void)
 	int ValueSum = 0;
 	short DiffMax = 0, DiffMaxPoint = 0;
 	short  m=0;
-	if (CCDMain_Status.Flag_CenterLine == 0 && (FindMidLine(CCDM_Arr, &CCDMain_Status.MidPoint, CCDMain_Status.LeftSet , CCDMain_Status.RightSet) == 1))
+	if (CCDMain_Status.Flag_CenterLine == 0 &&(CCDMain_Status.Left_LostFlag==0 && CCDMain_Status.Right_LostFlag==0)&& (FindMidLine(CCDM_Arr, &CCDMain_Status.MidPoint, CCDMain_Status.LeftPoint , CCDMain_Status.RightPoint) == 1))
 	{
 		CCDMain_Status.Flag_CenterLine = 1;
 		CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
@@ -440,10 +440,10 @@ CCDMain_Status.LeftPoint =  CCDMain_Status.MidPoint-CCDMain_Status.MidSet +CCDMa
 		CCDMain_Status.Threshold_Right = ValueSum / j;
 		CCDMain_Status.Threshold_Right /= 2;
 		CCDMain_Status.Threshold_Left /= 2;
-		if (CCDMain_Status.Threshold_Right < 50)
-			CCDMain_Status.Threshold_Right = 50;
-		if (CCDMain_Status.Threshold_Left < 50)
-			CCDMain_Status.Threshold_Left = 50;
+		if (CCDMain_Status.Threshold_Right < CCD_Threshold_Min)
+			CCDMain_Status.Threshold_Right = CCD_Threshold_Min;
+		if (CCDMain_Status.Threshold_Left < CCD_Threshold_Min)
+			CCDMain_Status.Threshold_Left = CCD_Threshold_Min;
 		//1100011
 		for (i = CCDMain_Status.SearchBegin; i > 8; i--)
 		{
@@ -467,6 +467,8 @@ CCDMain_Status.LeftPoint =  CCDMain_Status.MidPoint-CCDMain_Status.MidSet +CCDMa
 		}
 		CCDMain_Status.Left_LostFlag = 1;
 		CCDMain_Status.Right_LostFlag = 1;
+		CCDMain_Status.LastRightPoint = CCDMain_Status.RightPoint;
+		CCDMain_Status.LastLeftPoint = CCDMain_Status.LeftPoint;
 		CCDMain_Status.RightPoint = 127;
 		CCDMain_Status.LeftPoint = 0;
 		for (i = 0; i < Cnt_Left; i++)
@@ -486,7 +488,6 @@ CCDMain_Status.LeftPoint =  CCDMain_Status.MidPoint-CCDMain_Status.MidSet +CCDMa
 				if (DiffMax != 0)
 				{
 					CCDMain_Status.Left_LostFlag = 0;
-					CCDMain_Status.LastLeftPoint = CCDMain_Status.LeftPoint;
 					CCDMain_Status.LeftPoint = DiffMaxPoint;
 					break;
 				}
@@ -510,7 +511,6 @@ CCDMain_Status.LeftPoint =  CCDMain_Status.MidPoint-CCDMain_Status.MidSet +CCDMa
 				if (DiffMax != 0)
 				{
 					CCDMain_Status.Right_LostFlag = 0;
-					CCDMain_Status.LastRightPoint = CCDMain_Status.RightPoint;
 					CCDMain_Status.RightPoint = DiffMaxPoint;
 					break;
 				}
@@ -580,10 +580,10 @@ void CCD_GetLine_Slave(void)
 		CCDSlave_Status.Threshold_Right /= 2;
 		CCDSlave_Status.Threshold_Left /= 2;
 
-		if (CCDSlave_Status.Threshold_Right < 40)
-			CCDSlave_Status.Threshold_Right = 40;
-		if (CCDSlave_Status.Threshold_Left < 40)
-			CCDSlave_Status.Threshold_Left = 40;
+		if (CCDSlave_Status.Threshold_Right < CCD_Threshold_Min)
+			CCDSlave_Status.Threshold_Right = CCD_Threshold_Min;
+		if (CCDSlave_Status.Threshold_Left < CCD_Threshold_Min)
+			CCDSlave_Status.Threshold_Left = CCD_Threshold_Min;
 		//1100011
 		for (i = CCDSlave_Status.SearchBegin; i > 7; i--)
 		{
@@ -607,6 +607,8 @@ void CCD_GetLine_Slave(void)
 		}
 		CCDSlave_Status.Left_LostFlag = 1;
 		CCDSlave_Status.Right_LostFlag = 1;
+		CCDSlave_Status.LastLeftPoint = CCDSlave_Status.LeftPoint;
+		CCDSlave_Status.LastRightPoint = CCDSlave_Status.RightPoint;
 		CCDSlave_Status.LeftPoint = 0;
 		CCDSlave_Status.RightPoint = 127;
 		for (i = 0; i < Cnt_Left; i++)
@@ -626,7 +628,6 @@ void CCD_GetLine_Slave(void)
 				if (DiffMax != 0)
 				{
 					CCDSlave_Status.Left_LostFlag = 0;
-					CCDSlave_Status.LastLeftPoint = CCDSlave_Status.LeftPoint;
 					CCDSlave_Status.LeftPoint = DiffMaxPoint;
 					break;
 				}
@@ -650,7 +651,6 @@ void CCD_GetLine_Slave(void)
 				if (DiffMax != 0)
 				{
 					CCDSlave_Status.Right_LostFlag = 0;
-					CCDSlave_Status.LastRightPoint = CCDSlave_Status.RightPoint;
 					CCDSlave_Status.RightPoint = DiffMaxPoint;
 					break;
 				}
@@ -729,37 +729,79 @@ signed char FindMidLine(unsigned char *Arr,signed char *MidPoint,unsigned char L
 		return 1;
         }
 }
-
+extern signed char FlagToPhone;
 void CCD_Deal_Both(void)
 {
-	static signed char Flag_Cross = 0;
-	static int Cnt_Cross = 0;
-/*	CCDSlave_Status.ControlValue = CCDSlave_Status.MidSet-(CCDSlave_Status.LeftPoint + CCDSlave_Status.RightPoint) / 2;
-	CCDMain_Status.ControlValue = CCDMain_Status.MidSet - (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
-	
-	if (CCDMain_Status.Left_LostFlag == 1 && CCDMain_Status.Right_LostFlag == 1)
+	static signed char Flag_Cross = 0,Flag_LeftLost_Main=0,Flag_RightLost_Main=0;
+	static int Cnt_Cross = 0, Cnt_LeftLost_Main = 0,Cnt_RightLost_Main=0;
+
+	if (CCDMain_Status.LastRightPoint<100 & CCDMain_Status.LastLeftPoint>30)
 	{
-		if (CCDSlave_Status.Left_LostFlag == 0 || CCDSlave_Status.Right_LostFlag == 0)
+		if (CCDMain_Status.LeftPoint==0 && CCDMain_Status.RightPoint>100)
 		{
-			Dir_PID.ControlValue = CCDSlave_Status.ControlValue;
+			Flag_Cross = 1;
+			CCDMain_Status.RightPoint = CCDMain_Status.LastRightPoint;
+			CCDMain_Status.LeftPoint = CCDMain_Status.LastLeftPoint;
 		}
-		else
+		if (CCDMain_Status.RightPoint==0 && CCDMain_Status.LeftPoint<30)
 		{
-			Dir_PID.ControlValue = 0;
+			Flag_Cross = 1;
+			CCDMain_Status.RightPoint = CCDMain_Status.LastRightPoint;
+			CCDMain_Status.LeftPoint = CCDMain_Status.LastLeftPoint;
+		}
+	}
+	if (Flag_Cross==1)
+	{
+		Cnt_Cross++;
+		if (Cnt_Cross>2)
+		{
+			Flag_Cross = 0;
+			Cnt_Cross = 0;
 		}
 	}
 	else
 	{
-		Dir_PID.ControlValue = CCDMain_Status.ControlValue;
+		if (Flag_LeftLost_Main == 0 && CCDMain_Status.Left_LostFlag == 1)
+		{
+			Cnt_LeftLost_Main++;
+			CCDMain_Status.Left_LostFlag = 0;
+			CCDMain_Status.LeftPoint = CCDMain_Status.LastLeftPoint;
+			if (Cnt_LeftLost_Main > 2)
+			{
+				CCDMain_Status.Left_LostFlag = 1;
+			}
+		}
+		else
+		{
+			Cnt_LeftLost_Main = 0;
+		}
+		if (Flag_RightLost_Main == 0 && CCDMain_Status.Right_LostFlag == 1)
+		{
+			Cnt_RightLost_Main++;
+			CCDMain_Status.Right_LostFlag = 0;
+			CCDMain_Status.RightPoint = CCDMain_Status.LastRightPoint;
+			if (Cnt_RightLost_Main > 2)
+			{
+				CCDMain_Status.Right_LostFlag = 1;
+			}
+		}
+		else
+		{
+			Cnt_RightLost_Main = 0;
+		}
 	}
-	*/
 	if (CCDMain_Status.Flag_CenterLine==1)
 	{
 		Dir_PID.ControlValue = CCDMain_Status.MidSet - CCDMain_Status.MidPoint;
 	}
 	else
 	{
-		Dir_PID.ControlValue = CCDMain_Status.MidSet - (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
+		if (CCDMain_Status.Left_LostFlag==1 && CCDMain_Status.Right_LostFlag==1)
+		{
+			Dir_PID.ControlValue =0;
+		}
+		else
+			Dir_PID.ControlValue = CCDMain_Status.MidSet - (CCDMain_Status.LeftPoint + CCDMain_Status.RightPoint) / 2;
 	}
 	
 	Dir_PID.Kd_Temp = Dir_PID.Kd;

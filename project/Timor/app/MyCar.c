@@ -1,8 +1,8 @@
 
 #include "MyCar.h"
 
-#define CAR_STAND_ANG_MAX 62
-#define CAR_STAND_ANG_MIN 38
+#define CAR_STAND_ANG_MAX 67
+#define CAR_STAND_ANG_MIN 20
 
 extern float Dir_AngSpeed ;
 char CarStandFlag = 1;
@@ -38,8 +38,9 @@ int DebugerErrorCnt = 0;
 short Screen_WhichCCDImg = 0;
 short TimeFlag_5Ms, TimeFlag_40Ms, TimeFlag_20Ms, TimeFlag_2Ms;
 short TimerMsCnt = 0,AngTimes=0;
+signed char FlagToPhone = 0;
 
-	float Voltage = 0;
+float Voltage = 0;
 unsigned char Status_Check(void)
 {
 	if (((CarInfo_Now.CarAngle < CAR_STAND_ANG_MIN) || (CarInfo_Now.CarAngle > CAR_STAND_ANG_MAX)))
@@ -60,7 +61,7 @@ unsigned char Status_Check(void)
 	{
 		if (CarStandFlag==0)
 		{
-			if (((CarInfo_Now.CarAngle - Ang_PID.AngSet) <5) || ((CarInfo_Now.CarAngle - Ang_PID.AngSet) >-5))
+			if (((CarInfo_Now.CarAngle - Ang_PID.AngSet) <3) || ((CarInfo_Now.CarAngle - Ang_PID.AngSet) >-3))
 			{
 				CarStandFlag = 1;
 			}
@@ -172,6 +173,8 @@ void CCDCP(void)
 		CCDS_Arr[CCDSlave_Status.RightPoint] = 200;
 	}
 }
+	/*测试死区参数*/
+	//uint32 death1 = 0, death2 = 0, death3= 0, death4 = 0;
 void main(void)
 {
 	int i = 0;
@@ -200,10 +203,19 @@ void main(void)
 	char DataReciveStart = 0;
 	int Voltage_Cnt = 0;
 	uint8 DebugerByte36[PageDateLen];
+
 	Struct_Init(); //初始各种结构体的值
 	CarInit();
 	LED_Init();
-
+	/*测试死区*/
+	/*DisableInterrupts;
+	while (1)
+	{
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch0, death1);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch1, death3);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch2, death4);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch3, death2);
+	}//右反300,右正300,左翻650,左正430*/
 	while (1)
 	{
 		//更改了时间片的模式
@@ -212,14 +224,6 @@ void main(void)
 			TimeFlag_40Ms = 0;
 			LPLD_GPIO_Toggle_b(PTA, 17);//一闪一闪亮晶晶
 			SpeedControlValueCalc();
-			if (LPLD_MMA8451_ReadReg(MMA8451_REG_WHOAMI) != 0x1a)
-			{
-				LPLD_GPIO_Toggle_b(PTC, 12);
-			}
-			if (L3G4200_ReadReg(0x0F)!=0xd3)
-			{
-				LPLD_GPIO_Toggle_b(PTC, 13);
-			}
 		}
 		if (CCDReady==1)
 		{
@@ -643,7 +647,7 @@ void main(void)
 		}
 		else
 		{
-
+			FlagToPhone = 1;
 			if (KeyChanged == 0)
 			{
 				AngDataSend = 0;

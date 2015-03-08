@@ -241,7 +241,7 @@ void Key_Process(void)
 //	static unsigned char Debug = 0;
 	unsigned char temp = 10;
 	PageInit(PageNum);
-
+	DisableInterrupts;
 	LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch0, 0);
 	LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch1, 0);
 	LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch2, 0);
@@ -257,11 +257,11 @@ void Key_Process(void)
 			while (PTD1_I==0)
 			{
 			}
-            enable_irq((IRQn_Type)( PORTD_IRQn));
 			LED_Init();
 			Key_delay();Key_delay();
 			LED_Fill(0);
 			Key_delay();Key_delay();
+			EnableInterrupts;
 			break;
 		}
 		else
@@ -296,12 +296,17 @@ void Key_Isr(void)
 		Key_delay();
 		if (PTD0_I == 0)
 		{
+                  while (PTD0_I == 1)
+			{
+			}
 			if (Screen_WhichCCDImg == 1)
 			{
 				Screen_WhichCCDImg++;
 				LED_Init();
 				Key_delay();
+				Key_delay();
 				LED_Fill(0);
+				Key_delay();
 				Key_delay();
 			}
 			else if (Screen_WhichCCDImg == 2)
@@ -309,7 +314,9 @@ void Key_Isr(void)
 				Screen_WhichCCDImg = 0;
 				LED_Init();
 				Key_delay();
+				Key_delay();
 				LED_Fill(0);
+				Key_delay();
 				Key_delay();
 			}
 			else if (Screen_WhichCCDImg == 0)
@@ -317,12 +324,12 @@ void Key_Isr(void)
 				Screen_WhichCCDImg++;
 				LED_Init();
 				Key_delay();
+				Key_delay();
 				LED_Fill(0);
 				Key_delay();
+				Key_delay();
 			}
-			while (PTD0_I == 1)
-			{
-			}
+			
 		}
 	}
 }

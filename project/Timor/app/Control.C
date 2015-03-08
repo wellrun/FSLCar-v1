@@ -10,8 +10,8 @@
 #define SPEED_CONTROL_OUT_MAX			13000
 #define SPPED_CONTROL_OUT_MIN			-13000
 //轮子转一圈..编码器增加5200
-int  DeathValueLeft = 50;//死区电压 2%的占空比S
-int DeathValueRight = 50;//右轮的死区电压 
+int  DeathValueLeft = 280;//死区电压 2%的占空比S
+int DeathValueRight = 400;//右轮的死区电压 
 
 extern float Ang_dt;//控制周期,在主函数定义,20ms
 extern float Speed_Dt;//速度的周期,0.08ms
