@@ -753,6 +753,7 @@ void CCD_Deal_Both(void)
 	if (Flag_Cross==1)
 	{
 		Cnt_Cross++;
+		BeepBeepBeep(500);
 		if (Cnt_Cross>2)
 		{
 			Flag_Cross = 0;

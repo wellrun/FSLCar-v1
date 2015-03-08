@@ -29,13 +29,13 @@ extern char CarStandFlag;
 void Beep_Isr(void)
 {
 	static int Cnt_Times = 0;
-	if (Beep == 1 && CarStandFlag==1)
+	if (CarStandFlag == 1 && CarInfo_Now.CarSpeed > 20 && Beep == 1 && CarStandFlag == 1)
 	{
-		LPLD_GPIO_Output_b(PTC, 17, 1);
+		LPLD_GPIO_Output_b(PTC, 10, 1);
 		Cnt_Times ++;
 		if (Cnt_Times > Beep_TimeMs)
 		{
-			LPLD_GPIO_Output_b(PTC, 17, 0);
+			LPLD_GPIO_Output_b(PTC, 10, 0);
 			Cnt_Times = 0;
 			Beep_TimeMs = 0;
 			Beep = 0;
@@ -43,7 +43,7 @@ void Beep_Isr(void)
 	}
 	else
 	{
-		LPLD_GPIO_Output_b(PTC, 17, 0);
+		LPLD_GPIO_Output_b(PTC, 10, 0);
 	}
 }
 void BeepBeepBeep(int Times)
@@ -345,7 +345,7 @@ void DirControlValueCale(void)
 	//Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;
 	IntSum += Ki*Dir_PID.ThisError;
 	//Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_Diff)*Dir_PID.Kd_Temp + IntSum;
-	Dir_PID.OutValue = -(Dir_PID.ThisError*0.6 + Dir_PID.LastError*0.4)* (Dir_PID.Kp_Temp) + (Dir_AngSpeed*0.6+Last_DirAngSpeed*0.4)*Dir_PID.Kd_Temp + IntSum;
+	Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_AngSpeed*0.6+Last_DirAngSpeed*0.4)*Dir_PID.Kd_Temp + IntSum;
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
 	Last_DirAngSpeed = Dir_AngSpeed;

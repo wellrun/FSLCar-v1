@@ -98,6 +98,12 @@ void Init_GPIO(void)
 	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin11 | GPIO_Pin10;
 	LPLD_GPIO_Init(Init_GPIO_Struct); //SIºÍCLK
 
+	Init_GPIO_Struct.GPIO_PTx = PTC;
+	Init_GPIO_Struct.GPIO_Dir = DIR_OUTPUT;
+	Init_GPIO_Struct.GPIO_Output = OUTPUT_L;
+	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin10;
+	LPLD_GPIO_Init(Init_GPIO_Struct); //·äÃùÆ÷
+
 	Init_GPIO_Struct.GPIO_PTx = PTD;
 	Init_GPIO_Struct.GPIO_Pins = GPIO_Pin0 | GPIO_Pin1 | GPIO_Pin2 | GPIO_Pin3 | GPIO_Pin4 | GPIO_Pin7;
 	Init_GPIO_Struct.GPIO_Dir = DIR_INPUT;
