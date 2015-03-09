@@ -1,15 +1,6 @@
 #ifndef _DATASTRUCTURE_H
 #define _DATASTRUCTURE_H
 #include "common.h"
-#define NumOfFloat	8
-#define DATA_SIZE	NumOfFloat*4
-#define FLASH_SECTOR   (60)
-#define FLASH_ADDR     (FLASH_SECTOR*2048)
-#define NumOfInt	2
-extern uint8 FlashReadBuffer[DATA_SIZE];
-extern uint8 FlashWriteBuffer[DATA_SIZE];
-extern float FlashFloatBuffer[NumOfFloat];
-extern int FlashIntBuffer[NumOfInt];
 
 
 typedef struct

@@ -203,8 +203,11 @@ void main(void)
 	char DataReciveStart = 0;
 	int Voltage_Cnt = 0;
 	uint8 DebugerByte36[PageDateLen];
-
+	uint8 Voltage_Display = 0;
+	uint8 VoltageTooLowCnt = 0;
 	Struct_Init(); //初始各种结构体的值
+	//LPLD_Flash_Init();
+   // Flash_ReadAllData();
 	CarInit();
 	LED_Init();
 	/*测试死区*/
@@ -234,6 +237,18 @@ void main(void)
 			{
 				Voltage_Cnt = 0;
 				Voltage = LPLD_ADC_Get(ADC0, AD11)*3.3 * 4 / 256;
+				if (Voltage < 7.3)
+				{
+					VoltageTooLowCnt++;
+					if (VoltageTooLowCnt > 30)
+					{
+						BeepBeepBeep(10000);
+					}
+				}
+				else
+				{
+					VoltageTooLowCnt = 0;
+				}
 			}
 			if (Screen_WhichCCDImg == 1)
 			{
@@ -249,7 +264,7 @@ void main(void)
 				LED_PrintValueC(40, 0, CCDSlave_Status.LeftPoint);
 				LED_PrintValueC(80, 0, CCDSlave_Status.RightPoint);
 			}
-			else
+			else if (Voltage_Display==1)
 			{
 				LED_PrintValueF(0, 0, Dir_PID.ControlValue, 2);
 				LED_PrintValueF(70, 0, Voltage, 2);
@@ -672,6 +687,32 @@ void main(void)
 		else if (LPLD_GPIO_Input_b(PTC, 18) == 0 && LPLD_GPIO_Input_b(PTC, 19) == 1)
 		{
 			IntegrationTime = 5;
+		}
+		if (LPLD_GPIO_Input_b(PTD,7)==0)
+		{
+			if (Voltage_Display==1)
+			{
+				Voltage_Display = 0;
+			}
+			else
+			{
+				Voltage_Display = 1;
+			}
+			while (LPLD_GPIO_Input_b(PTD,7)==0)
+			{
+			}
+		}
+		if (LPLD_GPIO_Input_b(PTD,4)==0)
+		{
+			while (LPLD_GPIO_Input_b(PTD, 4) == 0)
+			{
+			}
+			LED_Init();
+			Key_delay();
+			Key_delay();
+			LED_Fill(0);
+			Key_delay();
+			Key_delay();
 		}
 	}
 }

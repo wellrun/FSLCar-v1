@@ -14,6 +14,7 @@
 #include "Communicate.h"
 #include "oled.h"
 #include "L3G4200.h"
+#include "key.h"
 
 extern float GravityAngle; //÷ÿ¡¶Ω«
 extern short TimeFlag_5Ms, TimeFlag_40Ms, TimeFlag_20Ms, TimeFlag_2Ms;

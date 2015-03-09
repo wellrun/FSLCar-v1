@@ -336,12 +336,14 @@ void LPLD_I2C_WaitAck(I2C_Type *i2cx, uint8 is_wait)
                         {
                           flag=1;
                         ErrorCnt++;
-                        if(ErrorCnt>100)
+                        if(ErrorCnt>50)
                         LPLD_GPIO_Output_b(PTC,13,1);
                         }
 		}
-      if(time_out>60000) //如果等待超时，强行退出
-        break;
+		if (time_out > 60000) //如果等待超时，强行退出
+		{
+			break;
+		}
       else time_out++;
     }
     i2cx->S |= I2C_S_IICIF_MASK;
