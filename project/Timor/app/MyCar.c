@@ -39,7 +39,7 @@ short Screen_WhichCCDImg = 0;
 short TimeFlag_5Ms, TimeFlag_40Ms, TimeFlag_20Ms, TimeFlag_2Ms;
 short TimerMsCnt = 0,AngTimes=0;
 signed char FlagToPhone = 0;
-
+uint8 Voltage_Display = 0;
 float Voltage = 0;
 unsigned char Status_Check(void)
 {
@@ -61,9 +61,14 @@ unsigned char Status_Check(void)
 	{
 		if (CarStandFlag==0)
 		{
-			if (((CarInfo_Now.CarAngle - Ang_PID.AngSet) <3) || ((CarInfo_Now.CarAngle - Ang_PID.AngSet) >-3))
+			if (((CarInfo_Now.CarAngle - Ang_PID.AngSet) <5) || ((CarInfo_Now.CarAngle - Ang_PID.AngSet) >-5))
 			{
 				CarStandFlag = 1;
+			}
+			else
+			{
+				Speed_PID.OutValueSum = 0;
+				Speed_PID.IntegralSum = 0;
 			}
 		}
 		return 0;
@@ -93,18 +98,21 @@ void Speed_Change(void)//测试速度pi用..需要配合示波器
 void AngleCon_Isr(void)
 {
 	unsigned char integration_piont;
-		CCDTimeMs++;
-		TimerMsCnt++;
-		AngTimes++;
-		SpeedControlPeriod++;
-		DirectionConrtolPeriod++;
+	
+		CCDTimeMs+=2;
+		TimerMsCnt += 2;
+		AngTimes += 2;
+		SpeedControlPeriod += 2;
+		DirectionConrtolPeriod += 2;
 		integration_piont = DIRECTION_CONTROL_PERIOD - IntegrationTime;
 		if (integration_piont == CCDTimeMs)
 		{
+			LPLD_GPIO_Output_b(PTC, 0,1);
 			StartIntegration_M();
 		}
 		if (CCDTimeMs >= DIRECTION_CONTROL_PERIOD)
 		{
+			LPLD_GPIO_Output_b(PTC, 0, 0);
 			ImageCapture_M(CCDM_Arr, CCDS_Arr);
 			CCDTimeMs = 0;
 			CCDReady = 1;
@@ -117,7 +125,7 @@ void AngleCon_Isr(void)
 			SpeedControlPeriod = 0;
 		}
 		Beep_Isr();
-		if (AngTimes == 5)
+		if (AngTimes == 4)
 		{
 			AngTimes = 0;
 			AngleGet();
@@ -137,7 +145,7 @@ void AngleCon_Isr(void)
                                 if (CarStandFlag != 0)
 				{
 					CarStandFlag = 0;
-					LPLD_LPTMR_DelayMs(1000);
+					//LPLD_LPTMR_DelayMs(3000);
 				}
 			}
 		}
@@ -174,7 +182,7 @@ void CCDCP(void)
 	}
 }
 	/*测试死区参数*/
-	//uint32 death1 = 0, death2 = 0, death3= 0, death4 = 0;
+	uint32 death1 = 0, death2 = 0, death3= 0, death4 = 0;
 void main(void)
 {
 	int i = 0;
@@ -203,13 +211,19 @@ void main(void)
 	char DataReciveStart = 0;
 	int Voltage_Cnt = 0;
 	uint8 DebugerByte36[PageDateLen];
-	uint8 Voltage_Display = 0;
+	
 	uint8 VoltageTooLowCnt = 0;
 	Struct_Init(); //初始各种结构体的值
 	//LPLD_Flash_Init();
    // Flash_ReadAllData();
 	CarInit();
 	LED_Init();
+	Voltage = LPLD_ADC_Get(ADC0, AD11)*3.3 * 4 / 256;
+	LED_PrintValueF(70, 0, Voltage, 2);
+	if (Voltage<7.2)
+	{
+		BeepBeepBeep(2000);
+	}
 	/*测试死区*/
 	/*DisableInterrupts;
 	while (1)
@@ -375,15 +389,22 @@ void main(void)
 				if (AngDataSendOK == 1)
 				{
 					AngDataSendOK = 0;
-					//调直立用
-  					/*Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
-  					tempfloat = CarInfo_Now.CarAngSpeed;
+			/*		Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
+					tempfloat = CarInfo_Now.CarAngSpeed;
+					Float2Byte(&tempfloat, OUTDATA, 10);
+					Float2Byte(&GravityAngle, OUTDATA, 6);
+					tempfloat = Dir_AngSpeed;
+					Float2Byte(&tempfloat, OUTDATA, 14);*/
+					//通用
+  					Float2Byte(&CarInfo_Now.CarAngSpeed, OUTDATA, 2);
+  					tempfloat = CCDMain_Status.RightPoint*10;
   					Float2Byte(&tempfloat, OUTDATA, 10);
-  					Float2Byte(&AngleIntegraed, OUTDATA, 6);
-					tempfloat = GravityAngle;
-  					Float2Byte(&tempfloat, OUTDATA, 14);*/
+					Float2Byte(&Dir_PID.OutValue, OUTDATA, 6);
+					tempfloat = Dir_AngSpeed;
+  					Float2Byte(&tempfloat, OUTDATA, 14);
 
 					//调速度PI
+/*
 					tempfloat = (float)Speed_PID.SpeedSet;
  					Float2Byte(&tempfloat, OUTDATA, 2);
  					tempfloat = TempValue.AngControl_OutValue;
@@ -392,6 +413,7 @@ void main(void)
  					Float2Byte(&tempfloat, OUTDATA, 10);
  					tempfloat = (float)TempValue.SpeedOutValue;
  					Float2Byte(&tempfloat, OUTDATA, 14);
+*/
 
 
 					//调方向和速度
@@ -674,11 +696,11 @@ void main(void)
 		}
 		if (LPLD_GPIO_Input_b(PTC, 18) == 1 && LPLD_GPIO_Input_b(PTC, 19) == 1)//这段判定用于修改积分时间
 		{
-			IntegrationTime = 3;
+			IntegrationTime = 2;
 		}
 		else if (LPLD_GPIO_Input_b(PTC, 18) == 0 && LPLD_GPIO_Input_b(PTC, 19) == 0)
 		{
-			IntegrationTime = 6;
+			IntegrationTime = 8;
 		}
 		else if (LPLD_GPIO_Input_b(PTC, 18) == 1 && LPLD_GPIO_Input_b(PTC, 19) == 0)
 		{
@@ -686,33 +708,7 @@ void main(void)
 		}
 		else if (LPLD_GPIO_Input_b(PTC, 18) == 0 && LPLD_GPIO_Input_b(PTC, 19) == 1)
 		{
-			IntegrationTime = 5;
-		}
-		if (LPLD_GPIO_Input_b(PTD,7)==0)
-		{
-			if (Voltage_Display==1)
-			{
-				Voltage_Display = 0;
-			}
-			else
-			{
-				Voltage_Display = 1;
-			}
-			while (LPLD_GPIO_Input_b(PTD,7)==0)
-			{
-			}
-		}
-		if (LPLD_GPIO_Input_b(PTD,4)==0)
-		{
-			while (LPLD_GPIO_Input_b(PTD, 4) == 0)
-			{
-			}
-			LED_Init();
-			Key_delay();
-			Key_delay();
-			LED_Fill(0);
-			Key_delay();
-			Key_delay();
+			IntegrationTime = 6;
 		}
 	}
 }

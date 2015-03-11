@@ -29,7 +29,7 @@ uint8 L3G4200_Init(void)
 
 //∂¡»°…Ë±∏ID
 	
-	 L3G4200_WriteReg(CTRL_REG1, 0xbd);
+	 L3G4200_WriteReg(CTRL_REG1, 0xff);
 	 L3G4200_WriteReg(CTRL_REG2, 0x00);   
 	 L3G4200_WriteReg(CTRL_REG3, 0x18);  
 	 L3G4200_WriteReg(CTRL_REG4, 0x00);  
@@ -204,7 +204,7 @@ int16 L3G4200_GetResult_H(uint8 Regs_Addr)
 static void MMA8451_Delay(void)
 {
 	int n;
-	for (n = 1; n < 400; n++)
+	for (n = 1; n < 200; n++)
 	{
 		asm("nop");
 	}

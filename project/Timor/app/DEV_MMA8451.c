@@ -15,18 +15,18 @@ static void MMA8451_Delay(void);
  */
 uint8 LPLD_MMA8451_Init(void)
 {
-  I2C_InitTypeDef i2c_init_param;
+ // I2C_InitTypeDef i2c_init_param;
   uint8 device_id=1;
     
-  //初始化MMA8451_I2CX
+/*  //初始化MMA8451_I2CX
   i2c_init_param.I2C_I2Cx = I2C0;       //在DEV_MMA8451.h中修改该值
   i2c_init_param.I2C_IntEnable = FALSE;
-  i2c_init_param.I2C_ICR = 0x17;  //可根据实际电路更改SCL频率
+  i2c_init_param.I2C_ICR = 0x20;  //可根据实际电路更改SCL频率
   i2c_init_param.I2C_SclPin = PTB2;   //MPU
   i2c_init_param.I2C_SdaPin = PTB3;   //MPU
   i2c_init_param.I2C_Isr = NULL;
   
-  LPLD_I2C_Init(i2c_init_param);
+  LPLD_I2C_Init(i2c_init_param);*/
   
   //读取设备ID
   for(device_id=0;device_id<100;device_id++)
@@ -39,7 +39,7 @@ uint8 LPLD_MMA8451_Init(void)
   //进行寄存器配置
   LPLD_MMA8451_WriteReg(MMA8451_REG_SYSMOD, 0x00);       //默认模式Standby Mode
   LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG2, 0x02);    //High Resolution
-  LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG1, 0x09);    //主动模式,800HZ
+  LPLD_MMA8451_WriteReg(MMA8451_REG_CTRL_REG1, 0x01);    //主动模式,800HZ
   
   return device_id;
 }
@@ -156,7 +156,7 @@ int16 LPLD_MMA8451_GetResult_H(uint8 Regs_Addr)
  */
 static void MMA8451_Delay(void){
   int n;
-  for(n=1;n<400;n++) {
+  for(n=1;n<200;n++) {
     asm("nop");
   }
 }

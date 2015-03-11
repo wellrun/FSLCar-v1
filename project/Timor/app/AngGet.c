@@ -53,7 +53,7 @@ float AngleIntegraed_Ch1, AngleIntegraed_Ch2;
 unsigned char Flag_Started_Ch1, Flag_Started_Ch2;
 void AngleIntegration(float Anglespeed)//对角速度积分得到角度确定GYROSCOPE_ANGLE_RATIO的值
 {
-	float dt = 0.005;
+	float dt = 0.004;
 
 	AngleIntegraed += Anglespeed*dt;
 	if (Flag_Started_Ch1 == 1)

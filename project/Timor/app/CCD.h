@@ -3,8 +3,8 @@
 #include "common.h"
 #include "datastructure.h"
 #define CCD_DataLen 50
-extern unsigned char CCDM_Arr[128]; //外部调用的时候用
-extern unsigned char CCDS_Arr[128];
+extern unsigned char CCDM_Arr[256]; //外部调用的时候用
+extern unsigned char CCDS_Arr[256];
 extern unsigned char CCDReady ;
 extern uint16 send_data;
 extern unsigned char CCDTimeMs;
@@ -41,8 +41,8 @@ extern unsigned char CCDTimeMs;
 // }CCD_Status_Struct;
 typedef struct 
 {
-	short LeftLineArr[100];
-	short RightLineArr[100];
+	short LeftLineArr[120];
+	short RightLineArr[120];
 	short SearchBegin;
 	short LeftPoint;
 	short RightPoint;
@@ -67,8 +67,8 @@ typedef struct
 
 typedef struct
 {
-	short LeftLineArr[100];
-	short RightLineArr[100];
+	short LeftLineArr[120];
+	short RightLineArr[120];
 	short SearchBegin;
 	short LeftPoint;
 	short RightPoint;
@@ -88,6 +88,7 @@ typedef struct
 	short Threshold_Right;
 	short LineWidth;
 	signed char  Flag_CenterLine;
+	signed char MidLineSearchStart;
 }CCD_Status_Struct;
 extern CCD_Status_Struct CCDMain_Status;
 extern CCD_SLave_Status_Struct CCDSlave_Status;

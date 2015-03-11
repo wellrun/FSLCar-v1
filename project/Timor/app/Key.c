@@ -72,9 +72,21 @@ signed char Course = 1;
 signed char PageNum = 0;
 float ScreenData[2][8];
 uint8 ScreenStr[2][8][30];
+extern int  DeathValueLeft;//死区电压 2%的占空比S
+extern int DeathValueRight ;//右轮的死区电压 
+void ClearAllParameters(void)
+{
+	Speed_PID.SpeedSet = 0;
+	Dir_PID.Kp = 0;
+	Dir_PID.Kd = 0;
+	Speed_PID.Kp = 0;
+	Speed_PID.Kd = 0;
+	Speed_PID.Ki = 0;
+}
 void PageInit(signed char sPageNum)
 {
 	int i;
+	PageNum = sPageNum;
 	sprintf(ScreenStr[0][0], "Voltage");
 	sprintf(ScreenStr[0][1], "SpeedSet");
 	sprintf(ScreenStr[0][2], "AngSet");
@@ -85,6 +97,9 @@ void PageInit(signed char sPageNum)
 	sprintf(ScreenStr[0][7], "Speed_Ki");
 	sprintf(ScreenStr[1][0], "Ang_Kp");
 	sprintf(ScreenStr[1][1], "Ang_Kd");
+	sprintf(ScreenStr[1][2], "DeathLeft");
+	sprintf(ScreenStr[1][3], "DeathRight");
+	sprintf(ScreenStr[1][4], "ClearAllParameters");
 	disable_irq((IRQn_Type)(PORTD_IRQn));
 	ScreenData[0][0] = LPLD_ADC_Get(ADC0, AD11)*3.3 * 4 / 256;
 	ScreenData[0][1] = Speed_PID.SpeedSet;
@@ -96,6 +111,9 @@ void PageInit(signed char sPageNum)
 	ScreenData[0][7] = Speed_PID.Ki;
 	ScreenData[1][0] = Ang_PID.Kp;
 	ScreenData[1][1] = Ang_PID.Kd;
+	ScreenData[1][2] = DeathValueLeft;
+	ScreenData[1][3] = DeathValueRight;
+
 	Key_delay();
 	LED_Init();
 	Key_delay();
@@ -111,11 +129,12 @@ void PageInit(signed char sPageNum)
 	}
 	else if (sPageNum == 1)
 	{
-		for (i = 0; i < 2; i++)
+		for (i = 0; i < 4; i++)
 		{
 			LED_P6x8Str(8, i, ScreenStr[1][i]);
 			LED_PrintValueF(70, i, ScreenData[1][i], 2);
 		}
+		LED_P6x8Str(8, 4, ScreenStr[1][4]);
 	}
 	LED_P6x8Char(0, Course, '*');
 }
@@ -158,7 +177,7 @@ void Key_Down(void)
 	else if (PageNum == 1)
 	{
 		Course++;
-		if (Course > 1)
+		if (Course > 4)
 		{
 			Course = 0;
 		}
@@ -193,9 +212,14 @@ void Key_DataUp(void)
 		{
 		case 0:ScreenData[PageNum][Course] += 5; break;
 		case 1:ScreenData[PageNum][Course] += 1; break;
+		case 2:ScreenData[PageNum][Course] += 10; break;
+		case 3:ScreenData[PageNum][Course] += 10; break;
+		case 4:ClearAllParameters(); PageInit(0); break;
 		}
 		Ang_PID.Kp = ScreenData[1][0];
 		Ang_PID.Kd = ScreenData[1][1];
+		DeathValueLeft=(int)ScreenData[1][2];
+		DeathValueRight=(int)ScreenData[1][3] ;
 	}
 	LED_P6x8Str(70, Course, "      ");
 	LED_PrintValueF(70, Course, ScreenData[PageNum][Course], 2);
@@ -228,9 +252,13 @@ void Key_DataDown(void)
 		{
 		case 0:ScreenData[PageNum][Course] -= 5; break;
 		case 1:ScreenData[PageNum][Course] -= 1; break;
+		case 2:ScreenData[PageNum][Course] -= 10; break;
+		case 3:ScreenData[PageNum][Course] -= 10; break;
 		}
 		Ang_PID.Kp = ScreenData[1][0];
 		Ang_PID.Kd = ScreenData[1][1];
+		DeathValueLeft =(int) ScreenData[1][2];
+		DeathValueRight = (int)ScreenData[1][3];
 	}
 	LED_P6x8Str(70, Course, "      ");
 	LED_PrintValueF(70, Course, ScreenData[PageNum][Course], 2);
@@ -276,7 +304,7 @@ void Key_Process(void)
 		}
 	}
 }
-
+extern uint8 Voltage_Display;
 void Key_Isr(void)
 {
 	if (LPLD_GPIO_IsPinxExt(PORTD, GPIO_Pin1))
@@ -331,5 +359,31 @@ void Key_Isr(void)
 			}
 			
 		}
+	}
+	else if (LPLD_GPIO_IsPinxExt(PORTD, GPIO_Pin7))
+	{
+		if (Voltage_Display == 1)
+		{
+			Voltage_Display = 0;
+		}
+		else
+		{
+			Voltage_Display = 1;
+		}
+		while (LPLD_GPIO_Input_b(PTD, 7) == 0)
+		{
+		}
+	}
+	else if (LPLD_GPIO_IsPinxExt(PORTD, GPIO_Pin4))
+	{
+		while (LPLD_GPIO_Input_b(PTD, 4) == 0)
+		{
+		}
+		LED_Init();
+		Key_delay();
+		Key_delay();
+		LED_Fill(0);
+		Key_delay();
+		Key_delay();
 	}
 }

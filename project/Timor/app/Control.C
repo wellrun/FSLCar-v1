@@ -10,8 +10,8 @@
 #define SPEED_CONTROL_OUT_MAX			13000
 #define SPPED_CONTROL_OUT_MIN			-13000
 //轮子转一圈..编码器增加5200
-int  DeathValueLeft = 280;//死区电压 2%的占空比S
-int DeathValueRight = 220;//右轮的死区电压 
+int  DeathValueLeft = 390;//死区电压 2%的占空比S
+int DeathValueRight = 170;//右轮的死区电压 
 
 extern float Ang_dt;//控制周期,在主函数定义,20ms
 extern float Speed_Dt;//速度的周期,0.08ms
@@ -347,7 +347,7 @@ void DirControlValueCale(void)
 	//Dir_Diff = Dir_PID.LastError - Dir_PID.ThisError;
 	IntSum += Ki*Dir_PID.ThisError;
 	//Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_Diff)*Dir_PID.Kd_Temp + IntSum;
-	Dir_PID.OutValue = -(Dir_PID.ThisError*0.7 + Dir_PID.LastError*0.3)* (Dir_PID.Kp_Temp) + (Dir_AngSpeed*0.6+Last_DirAngSpeed*0.4)*Dir_PID.Kd_Temp + IntSum;
+	Dir_PID.OutValue = -(Dir_PID.ThisError)* (Dir_PID.Kp_Temp) + (Dir_AngSpeed)*Dir_PID.Kd_Temp + IntSum;
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
 	Last_DirAngSpeed = Dir_AngSpeed;
@@ -443,27 +443,27 @@ void MotorControl_Out(void)
 	{
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch3, 0);
 		DeathTime_Delay();//手动插入死区时间
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch0, MotorControl.LeftMotorOutValue + DeathValueLeft);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch0, MotorControl.LeftMotorOutValue + DeathValueRight);
 	}
 	else
 	{
 		MotorControl.LeftMotorOutValue = -MotorControl.LeftMotorOutValue; //为负值取反
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch0, 0);
 		DeathTime_Delay();
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch3, MotorControl.LeftMotorOutValue + DeathValueLeft);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch3, MotorControl.LeftMotorOutValue + DeathValueRight);
 	}
 	if (MotorControl.RightMotorOutValue >= 0)
 	{
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch2, 0);
 		DeathTime_Delay();
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch1, MotorControl.RightMotorOutValue + DeathValueRight);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch1, MotorControl.RightMotorOutValue + DeathValueLeft);
 	}
 	else
 	{
 		MotorControl.RightMotorOutValue = -MotorControl.RightMotorOutValue;
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch1, 0);
 		DeathTime_Delay();//
-		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch2, MotorControl.RightMotorOutValue + DeathValueRight);
+		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch2, MotorControl.RightMotorOutValue + DeathValueLeft);
 	}
 }
 

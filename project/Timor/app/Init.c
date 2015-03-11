@@ -43,7 +43,7 @@ extern void Status_Check(void);
 void Init_PIT(void)
 {
 	Init_PIT_Struct.PIT_Pitx = PIT0;
-	Init_PIT_Struct.PIT_PeriodMs = 1;
+	Init_PIT_Struct.PIT_PeriodMs = 2;
 	Init_PIT_Struct.PIT_Isr = AngleCon_Isr;
 	LPLD_PIT_Init(Init_PIT_Struct);
 	LPLD_PIT_EnableIrq(Init_PIT_Struct); //CCDµÄºÁÃë¶¨Ê±Æ÷
@@ -147,6 +147,8 @@ void CarInit(void)
 		{
 		}
 	}
+        whoami2=whoami2;
+        whoami1=whoami1;
       Init_PIT();
 }
 void Init_FTM(void)
