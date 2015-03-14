@@ -78,7 +78,7 @@
 uint8 LPLD_MMA8451_Init(void);
 void LPLD_MMA8451_WriteReg(uint8, uint8);
 uint8 LPLD_MMA8451_ReadReg(uint8);
-int16 LPLD_MMA8451_GetResult(uint8, uint8);
+int16 LPLD_MMA8451_GetResult( uint8);
 int16 LPLD_MMA8451_GetResult_H(uint8 Regs_Addr);
 
 #endif 

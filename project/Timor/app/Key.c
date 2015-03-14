@@ -100,7 +100,6 @@ void PageInit(signed char sPageNum)
 	sprintf(ScreenStr[1][2], "DeathLeft");
 	sprintf(ScreenStr[1][3], "DeathRight");
 	sprintf(ScreenStr[1][4], "ClearAllParameters");
-	disable_irq((IRQn_Type)(PORTD_IRQn));
 	ScreenData[0][0] = LPLD_ADC_Get(ADC0, AD11)*3.3 * 4 / 256;
 	ScreenData[0][1] = Speed_PID.SpeedSet;
 	ScreenData[0][2] = Ang_PID.AngSet;
@@ -313,7 +312,7 @@ void Key_Isr(void)
 		Key_delay();
 		if (PTD1_I == 0)
 		{
-			while (PTD1_I == 1)
+			while (PTD1_I == 0)
 			{
 			}
 			Key_Process();
@@ -324,7 +323,7 @@ void Key_Isr(void)
 		Key_delay();
 		if (PTD0_I == 0)
 		{
-                  while (PTD0_I == 1)
+                  while (PTD0_I == 0)
 			{
 			}
 			if (Screen_WhichCCDImg == 1)

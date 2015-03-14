@@ -20,34 +20,32 @@ AngDataStruct page1;
 
 PIT_InitTypeDef Code_Timer_Struct;
 
-extern AngPID_InitTypeDef Ang_PID; //用来调试PID参数
+extern AngPID_InitTypeDef Ang_PID; 
 //extern SpeedPID_TypeDef Speed_PID;
-extern TempOfMotor_TypeDef TempValue; //临时存储角度和速度控制浮点变量的结构体
+extern TempOfMotor_TypeDef TempValue; 
 unsigned int Code_Count = 0;
-
-extern float Dir_Kp_Correction[100];
+extern float AngVar_Arr_Positive[101];
+extern float AngVar_Arr_Negative[101];
 void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 {
 	int i;
-
-	Ang_PID.Kp = 820; 
-	Ang_PID.Kd =10; 
-	Ang_PID.AngSet = 47.8; 
-	Speed_PID.SpeedSet = 90;
-	Speed_PID.Kp = -80;
-	Speed_PID.Ki =-25;
-	Speed_PID.Kd = 50;
-	Dir_PID.Kp = 90;
+	float  a = 0,b=0;
+	Ang_PID.Kp = 350; 
+	Ang_PID.Kd =13; 
+	Ang_PID.AngSet = 47.5; 
+	Speed_PID.SpeedSet = 0;
+	Speed_PID.Kp = -36;
+	Speed_PID.Ki =-60;
+	Speed_PID.Kd = 0;
+	Dir_PID.Kp = 76;
 	Dir_PID.Kd =5.2;
-
-	for (i = 0; i < 50; i++)
+	
+	a = (3.5 / 20);
+	b = (2.0 / 20);
+	for (i = 0; i < 100;i++)
 	{
-		Dir_Kp_Correction[i] = -(((0.007*i) + 0.65)*(i-50));
+		AngVar_Arr_Positive[i] = a*((i+1));
+		AngVar_Arr_Negative[i] = b*(i + 1);
 	}
-	for (i = 50; i < 100; i++)
-	{
-		Dir_Kp_Correction[i] = -((1 - (0.007*(i - 50)))*(i-50));
-	}
-
 }
 

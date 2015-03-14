@@ -1,7 +1,7 @@
 
 #include "MyCar.h"
 
-#define CAR_STAND_ANG_MAX 67
+#define CAR_STAND_ANG_MAX 73
 #define CAR_STAND_ANG_MIN 20
 
 extern float Dir_AngSpeed ;
@@ -10,8 +10,8 @@ CarInfo_TypeDef CarInfo_Now;
 CarControl_TypeDef MotorControl; //存储电机控制的值
 short acc_x, gyro_2;
 float tempfloat = 0;//临时变量,没有意义
-float Ang_dt = 0.005;//全局变量,所有需要周期的都是这个,一个周期20ms
-float Speed_Dt = 0.04;//速度的周期
+//float Ang_dt = 0.002;//全局变量,所有需要周期的都是这个,一个周期20ms
+//float Speed_Dt = 0.04;//速度的周期
 signed char Beep = 0;
 int Beep_TimeMs = 0;
 #define ScopeDataNum 4
@@ -50,6 +50,7 @@ unsigned char Status_Check(void)
 		Speed_PID.IntegralSum = 0;
 		Speed_PID.OutValueSum_Right = 0;
 		Speed_PID.OutValueSum_Left = 0;
+                TempValue.New_SpeedOutValue=0;
 		IntSum = 0;
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch0, 0);
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch1, 0);
@@ -125,7 +126,7 @@ void AngleCon_Isr(void)
 			SpeedControlPeriod = 0;
 		}
 		Beep_Isr();
-		if (AngTimes == 4)
+		if (AngTimes == 2)
 		{
 			AngTimes = 0;
 			AngleGet();
@@ -220,10 +221,7 @@ void main(void)
 	LED_Init();
 	Voltage = LPLD_ADC_Get(ADC0, AD11)*3.3 * 4 / 256;
 	LED_PrintValueF(70, 0, Voltage, 2);
-	if (Voltage<7.2)
-	{
-		BeepBeepBeep(2000);
-	}
+	
 	/*测试死区*/
 	/*DisableInterrupts;
 	while (1)
@@ -389,31 +387,35 @@ void main(void)
 				if (AngDataSendOK == 1)
 				{
 					AngDataSendOK = 0;
-			/*		Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
+
+
+					/*Float2Byte(&CarInfo_Now.CarAngle, OUTDATA, 2);
 					tempfloat = CarInfo_Now.CarAngSpeed;
 					Float2Byte(&tempfloat, OUTDATA, 10);
 					Float2Byte(&GravityAngle, OUTDATA, 6);
 					tempfloat = Dir_AngSpeed;
 					Float2Byte(&tempfloat, OUTDATA, 14);*/
 					//通用
-  					Float2Byte(&CarInfo_Now.CarAngSpeed, OUTDATA, 2);
-  					tempfloat = CCDMain_Status.RightPoint*10;
-  					Float2Byte(&tempfloat, OUTDATA, 10);
-					Float2Byte(&Dir_PID.OutValue, OUTDATA, 6);
-					tempfloat = Dir_AngSpeed;
-  					Float2Byte(&tempfloat, OUTDATA, 14);
+//   					Float2Byte(&CarInfo_Now.CarAngSpeed, OUTDATA, 2);
+//   					tempfloat = CCDMain_Status.RightPoint*10;
+//   					Float2Byte(&tempfloat, OUTDATA, 10);
+// 					Float2Byte(&Dir_PID.OutValue, OUTDATA, 6);
+// 					tempfloat = Dir_AngSpeed;
+//   					Float2Byte(&tempfloat, OUTDATA, 14);
 
 					//调速度PI
-/*
+
 					tempfloat = (float)Speed_PID.SpeedSet;
  					Float2Byte(&tempfloat, OUTDATA, 2);
- 					tempfloat = TempValue.AngControl_OutValue;
+					//tempfloat = CarInfo_Now.MotorCounterRight/ 10;
+					tempfloat = TempValue.AngControl_OutValue/100;
 					Float2Byte(&tempfloat, OUTDATA, 6);
  					tempfloat = (float)CarInfo_Now.CarSpeed;
  					Float2Byte(&tempfloat, OUTDATA, 10);
- 					tempfloat = (float)TempValue.SpeedOutValue;
+					//tempfloat = (float)CarInfo_Now.MotorCounterLeft/ 10;
+					tempfloat = TempValue.SpeedOutValue/100;
  					Float2Byte(&tempfloat, OUTDATA, 14);
-*/
+
 
 
 					//调方向和速度

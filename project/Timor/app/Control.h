@@ -2,13 +2,13 @@
 #define  _CONTROL_H_
 #include "common.h"
 #include "AngGet.h"
-#include "common.h"
+#include "MyCar.h"
 #include "complement.h"
 #include "DEV_MMA8451.h"
 #include "datastructure.h"
 // #define CONTROL_PERIOD	5 //电机的输出周期
 // #define SPEED_CONTROL_COUNT 8 //速度控制的分割次数
-#define SPEED_CONTROL_PERIOD 83//速度控制的总时间40ms
+#define SPEED_CONTROL_PERIOD 100//速度控制的总时间40ms
 //#define DIRECTION_CONTROL_COUNT			4  //方向控制是20Ms一次
 #define DIRECTION_CONTROL_PERIOD		18//方向控制的总时间
 
@@ -26,7 +26,7 @@ typedef struct
 	int Left;
 	int Right;
 }Speed_Data_Struct;
-Speed_Data_Struct* SpeedGet(int Mode);
+Speed_Data_Struct* CounterGet(int Mode);
 void MotorControl_Out(void);
 void AngleControlValueCalc(void);
 void SpeedControlValueCalc(void);

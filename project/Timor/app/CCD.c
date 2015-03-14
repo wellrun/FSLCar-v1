@@ -417,7 +417,7 @@ void CCD_GetLine_Main(void)
 	static signed char LastMid = 0;
 	if ((CCDMain_Status.MidLineSearchStart == 1) && (CCDMain_Status.Flag_CenterLine == 0 && FindMidLine(CCDM_Arr, &CCDMain_Status.MidPoint, CCDMain_Status.LastLeftPoint + 15, CCDMain_Status.LastRightPoint - 15) == 1))
 	{
-		BeepBeepBeep(500);
+		//BeepBeepBeep(500);
 		CCDMain_Status.Flag_CenterLine = 1;
 		CCDMain_Status.SearchBegin = CCDMain_Status.MidPoint;
 		CCDMain_Status.LeftPoint = CCDMain_Status.MidPoint - CCDMain_Status.MidSet + CCDMain_Status.LeftSet;
@@ -870,7 +870,7 @@ void CCD_Deal_Both(void)
 		}
 		if (j - k>15 || k - j > 15)
 		{
-			Dir_PID.ControlValue = LastControlValue[4]*0.02;
+			Dir_PID.ControlValue = 0;
 
 		}
 		else

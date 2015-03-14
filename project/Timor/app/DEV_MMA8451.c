@@ -18,15 +18,7 @@ uint8 LPLD_MMA8451_Init(void)
  // I2C_InitTypeDef i2c_init_param;
   uint8 device_id=1;
     
-/*  //初始化MMA8451_I2CX
-  i2c_init_param.I2C_I2Cx = I2C0;       //在DEV_MMA8451.h中修改该值
-  i2c_init_param.I2C_IntEnable = FALSE;
-  i2c_init_param.I2C_ICR = 0x20;  //可根据实际电路更改SCL频率
-  i2c_init_param.I2C_SclPin = PTB2;   //MPU
-  i2c_init_param.I2C_SdaPin = PTB3;   //MPU
-  i2c_init_param.I2C_Isr = NULL;
-  
-  LPLD_I2C_Init(i2c_init_param);*/
+
   
   //读取设备ID
   for(device_id=0;device_id<100;device_id++)
@@ -131,7 +123,7 @@ uint8 LPLD_MMA8451_ReadReg(uint8 RegisterAddress)
  *       Regs_Addr - 数据寄存器地址
  * 函数返回值：加速度值（int16）
  */   
-int16 LPLD_MMA8451_GetResult(uint8 Status, uint8 Regs_Addr) 
+int16 LPLD_MMA8451_GetResult( uint8 Regs_Addr) 
 {
   int16 result,temp;
   

@@ -5,7 +5,7 @@
 #include "datastructure.h"
 #include "math.h"
 #include "L3G4200.h"
-float GYROSCOPE_ANGLE_RATIO = 0.0115;
+float GYROSCOPE_ANGLE_RATIO = 0.0108;
 float Dir_SpeedRatio = 0.21*0.05;
 float AngRatio=(180.0 / (4096.0 * 2));
 extern CarInfo_TypeDef CarInfo_Now; //当前车子的信息
@@ -45,7 +45,8 @@ void AngleGet(void)
 		angle_com = GravityAngle;
 		Anginitok = 1;
 	}
-	complement2(GravityAngle, GyroscopeAngleSpeed);
+	//complement2(GravityAngle, GyroscopeAngleSpeed);
+        complement_filter(GravityAngle, GyroscopeAngleSpeed);
 	CarInfo_Now.CarAngle = angle_com;
 	CarInfo_Now.CarAngSpeed = angle_dot_com;
 }
@@ -53,7 +54,7 @@ float AngleIntegraed_Ch1, AngleIntegraed_Ch2;
 unsigned char Flag_Started_Ch1, Flag_Started_Ch2;
 void AngleIntegration(float Anglespeed)//对角速度积分得到角度确定GYROSCOPE_ANGLE_RATIO的值
 {
-	float dt = 0.004;
+	float dt = 0.002;
 
 	AngleIntegraed += Anglespeed*dt;
 	if (Flag_Started_Ch1 == 1)

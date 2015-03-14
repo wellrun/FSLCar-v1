@@ -1,17 +1,17 @@
 #include "Control.h"
 #include "CCD.h"
-#include "Fuzzy.h"
+//#include "Fuzzy.h"
 //#include "mpu6050.h"
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
-#define MOTOR_OUT_MAX       8500
-#define MOTOR_OUT_MIN       -8500
-#define ANGLE_CONTROL_OUT_MAX			16000
-#define ANGLE_CONTROL_OUT_MIN			-16000
-#define SPEED_CONTROL_OUT_MAX			13000
-#define SPPED_CONTROL_OUT_MIN			-13000
+#define MOTOR_OUT_MAX       9500
+#define MOTOR_OUT_MIN       -9500
+#define ANGLE_CONTROL_OUT_MAX			15000
+#define ANGLE_CONTROL_OUT_MIN			-15000
+#define SPEED_CONTROL_OUT_MAX			9000
+#define SPPED_CONTROL_OUT_MIN			-9000
 //轮子转一圈..编码器增加5200
-int  DeathValueLeft = 390;//死区电压 2%的占空比S
-int DeathValueRight = 170;//右轮的死区电压 
+int  DeathValueLeft = 220;//死区电压 2%的占空比S
+int DeathValueRight = 90;//右轮的死区电压 
 
 extern float Ang_dt;//控制周期,在主函数定义,20ms
 extern float Speed_Dt;//速度的周期,0.08ms
@@ -29,7 +29,7 @@ extern char CarStandFlag;
 void Beep_Isr(void)
 {
 	static int Cnt_Times = 0;
-	if (CarStandFlag == 1 && CarInfo_Now.CarSpeed > 20 && Beep == 1 && CarStandFlag == 1)
+	if (CarStandFlag == 1 && CarInfo_Now.CarSpeed > 00 && Beep == 1)
 	{
 		LPLD_GPIO_Output_b(PTC, 10, 1);
 		Cnt_Times ++;
@@ -65,12 +65,13 @@ void DeathTime_Delay(void)
 		t--;
 	}
 }
-
+float AngSet_Var = 0;
 void AngleControlValueCalc(void)
 {
 	//static float lastControlValue = 0;
 	float ControlValue = 0;
-	Ang_PID.Delta = (Ang_PID.AngSet) - CarInfo_Now.CarAngle; //当前误差//这里全是角度,值很小
+	//Ang_PID.Delta = (AngSet_Var)-CarInfo_Now.CarAngle; //当前误差//这里全是角度,值很小
+        Ang_PID.Delta = (Ang_PID.AngSet)-CarInfo_Now.CarAngle;
 	//微分项应该是负的
 	ControlValue = Ang_PID.Delta * Ang_PID.Kp - CarInfo_Now.CarAngSpeed* Ang_PID.Kd; //微分项,如果角速度大于0.说明角度趋势变大,把控制量增大
 	//ControlValue *= AngToMotorRatio; //乘上比例因子将角度转换成PWM的占空比
@@ -82,13 +83,13 @@ void AngleControlValueCalc(void)
 }
 extern unsigned char Flag_SpeedGot;
 Speed_Data_Struct SpeedCnt;
-Speed_Data_Struct* SpeedGet(int Mode)
+Speed_Data_Struct* CounterGet(int Mode)
 {//FTM1是左电机,FTM2是右电机
 	Speed_Data_Struct *p = &SpeedCnt;
 	static int LeftSum1, RightSum1, LeftSum2, RightSum2;
 	int LeftCnt, RightCnt;
-	LeftCnt = LPLD_FTM_GetCounter(FTM1);
-	RightCnt = LPLD_FTM_GetCounter(FTM2);
+	LeftCnt = LPLD_FTM_GetCounter(FTM2);
+	RightCnt = LPLD_FTM_GetCounter(FTM1);
 	LPLD_FTM_ClearCounter(FTM1);
 	LPLD_FTM_ClearCounter(FTM2);
 	if (LeftCnt >= 30000)
@@ -123,40 +124,65 @@ Speed_Data_Struct* SpeedGet(int Mode)
 	return p;
 }
 float SpeedSet_Variable = 0;
+
+float AngVar_Arr_Positive[101];
+float AngVar_Arr_Negative[101];
 void SpeedControlValueCalc(void)
 {
+	//15 10
+	//-50*10-(20*-5)
+	/*static SpeedPID_TypeDef *p = &Speed_PID;
+	static Speed_Data_Struct *ps;
+	float SpeedSet_Variable_ORG = 0;
+	int Index = 1;
+#define ErrorMax 400
+#define IntegralSumMAX 50000
+	ps = CounterGet(1);
+	CarInfo_Now.MotorCounterLeft = ps->Left;
+	CarInfo_Now.MotorCounterRight = ps->Right;
+	CarInfo_Now.CarSpeed = (ps->Left + ps->Right) / 20;
 	
-	//static SpeedPID_TypeDef *Pr = &Speed_PID_Right;
-	//PI
-	// #define INTEGRAL_MAX 200000
-	// 	short Index = 0;
-	// 	static float TempIntegral = 0;
-	// 	SpeedGet();
-	// 	Speed_PID.ThisError = Speed_PID.SpeedSet - CarInfo_Now.CarSpeed;
-	// 	if (Speed_PID.ThisError > 100)
-	// 		Speed_PID.ThisError = 100;
-	// 	if (Speed_PID.ThisError < -100)
-	// 		Speed_PID.ThisError = -100;
-	// 	Speed_PID.IntegralSum += (Speed_PID.Ki/10)*Speed_PID.ThisError;
-	// 	Speed_PID.OutValue = Speed_PID.Kp*Speed_PID.ThisError + Speed_PID.IntegralSum;
-	// 
-	// 	if (Speed_PID.OutValue > SPEED_CONTROL_OUT_MAX)
-	// 		Speed_PID.OutValue = SPEED_CONTROL_OUT_MAX;
-	// 	else if (Speed_PID.OutValue < SPPED_CONTROL_OUT_MIN)
-	// 		Speed_PID.OutValue = SPPED_CONTROL_OUT_MIN;
-	// 	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
-	// 	TempValue.New_SpeedOutValue = Speed_PID.OutValue;
-	//PD控制
-	/*static float LastSpeed;
-	SpeedGet();
-	Speed_PID.ThisError = Speed_PID.SpeedSet - CarInfo_Now.CarSpeed;
-	Speed_PID.OutValue = Speed_PID.Kp*Speed_PID.ThisError - Speed_PID.Ki*(CarInfo_Now.CarSpeed-LastSpeed);
-	LastSpeed = CarInfo_Now.CarAngSpeed;
-	Speed_PID.OutValue /= 100;//比例因子,转换为PWM占空比
+	p->ThisError = Speed_PID.SpeedSet - CarInfo_Now.CarSpeed;
+	if (p->ThisError > ErrorMax)
+		p->ThisError = ErrorMax;
+	else if (p->ThisError < -ErrorMax)
+		p->ThisError = -ErrorMax;
+	if (p->OutValue >SPEED_CONTROL_OUT_MAX)
+	{
+		if (p->ThisError>0)
+		{
+			Index = 0;
+		}
+		else
+		{
+			Index = 1;
+		}
+	}
+	else if (p->OutValue < SPPED_CONTROL_OUT_MIN)
+	{
+		if (p->ThisError>0)
+		{
+			Index = 1;
+		}
+		else
+		{
+			Index = 0;
+		}
+	}
+	p->IntegralSum += ((p->Ki / 10.0)*p->ThisError*Index);
+	p->OutValue = p->Kp*(p->ThisError) \
+		+ p->IntegralSum \
+		+ p->Kd*(p->ThisError -  p->LastError);
+	p->LastError = p->ThisError;
+	
+	TempValue.Old_AngSet = TempValue.New_AngSet;
+	TempValue.New_AngSet = SpeedSet_Variable_ORG;
 	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
-	TempValue.New_SpeedOutValue = Speed_PID.OutValue; */
-	//增量PID
-
+	TempValue.New_SpeedOutValue = p->OutValue;
+	if (TempValue.New_SpeedOutValue  > SPEED_CONTROL_OUT_MAX)
+		TempValue.New_SpeedOutValue = SPEED_CONTROL_OUT_MAX;
+	else if (TempValue.New_SpeedOutValue  < SPPED_CONTROL_OUT_MIN)
+		TempValue.New_SpeedOutValue = SPPED_CONTROL_OUT_MIN;*/
 	//左右分开
 	/*CarInfo_Now.MotorCounterLeft /= 10;
 	CarInfo_Now.MotorCounterRight /= 10;
@@ -200,14 +226,10 @@ void SpeedControlValueCalc(void)
 	static SpeedPID_TypeDef *p = &Speed_PID;
 	static Speed_Data_Struct *ps;
 #define ErrorMax 100
-	//static int Index = 1;
-	//static float Speed_IntSum = 0;
-	ps=SpeedGet(1);
+	ps=CounterGet(1);
 	CarInfo_Now.MotorCounterLeft = ps->Left;
 	CarInfo_Now.MotorCounterRight = ps->Right;
 	CarInfo_Now.CarSpeed = (ps->Left + ps->Right) / 20;
-#define IntMax 3500
-	//p->ThisError = SpeedSet_Variable - CarInfo_Now.CarSpeed;
         p->ThisError = Speed_PID.SpeedSet - CarInfo_Now.CarSpeed;
 	if (p->ThisError > ErrorMax)
 		p->ThisError = ErrorMax;
@@ -219,125 +241,16 @@ void SpeedControlValueCalc(void)
 	p->PreError = p->LastError;
 	p->LastError = p->ThisError;
 	p->OutValueSum += p->OutValue;
-	if (p->OutValueSum > SPEED_CONTROL_OUT_MAX)
-		p->OutValueSum = SPEED_CONTROL_OUT_MAX;
-	else if (p->OutValueSum < SPPED_CONTROL_OUT_MIN)
-		p->OutValueSum = SPPED_CONTROL_OUT_MIN;
 	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
 	TempValue.New_SpeedOutValue = p->OutValueSum;
-
-	/*#define ErrorMax 100
-		p->ThisError_Left = SpeedSet_Variable - CarInfo_Now.MotorCounterLeft / 10;
-		p->ThisError_Right = SpeedSet_Variable - CarInfo_Now.MotorCounterRight / 10;
-		if (p->ThisError_Right > ErrorMax)
-		p->ThisError_Right = ErrorMax;
-		else if (p->ThisError_Right < -ErrorMax)
-		p->ThisError_Right = -ErrorMax;
-		if (p->ThisError_Left > ErrorMax)
-		p->ThisError_Left = ErrorMax;
-		else if (p->ThisError_Left < -ErrorMax)
-		p->ThisError_Left = -ErrorMax;
-		p->OutValueSum_Left += p->Kp*(p->ThisError_Left - p->LastError_Left) \
-		+ (p->Ki / 10.0)*p->ThisError_Left \
-		+ p->Kd*(p->ThisError_Left - 2 * p->LastError_Left + p->PreError_Left);
-		p->OutValueSum_Right += p->Kp*(p->ThisError_Right - p->LastError_Right) \
-		+ (p->Ki / 10.0)*p->ThisError_Right \
-		+ p->Kd*(p->ThisError_Right - 2 * p->LastError_Right + p->PreError_Right);
-		if (p->OutValueSum_Left > SPEED_CONTROL_OUT_MAX)
-		p->OutValueSum_Left = SPEED_CONTROL_OUT_MAX;
-		else if (p->OutValueSum_Left < SPPED_CONTROL_OUT_MIN)
-		p->OutValueSum_Left = SPPED_CONTROL_OUT_MIN;
-		if (p->OutValueSum_Right > SPEED_CONTROL_OUT_MAX)
-		p->OutValueSum_Right = SPEED_CONTROL_OUT_MAX;
-		else if (p->OutValueSum_Right < SPPED_CONTROL_OUT_MIN)
-		p->OutValueSum_Right = SPPED_CONTROL_OUT_MIN;
-
-		TempValue.Old_SpeedOutValueLeft = TempValue.New_SpeedOutValueLeft;
-		TempValue.New_SpeedOutValueLeft = p->OutValueSum_Left;
-		TempValue.Old_SpeedOutValueRight = TempValue.New_SpeedOutValueRight;
-		TempValue.New_SpeedOutValueRight = p->OutValueSum_Right;*/
+	if (TempValue.New_SpeedOutValue > SPEED_CONTROL_OUT_MAX)
+		TempValue.New_SpeedOutValue = SPEED_CONTROL_OUT_MAX;
+	else if (TempValue.New_SpeedOutValue < SPPED_CONTROL_OUT_MIN)
+		TempValue.New_SpeedOutValue = SPPED_CONTROL_OUT_MIN;
 }
-int PulseCnt1 = 0;
-int PulseCnt2 = 1;
-void ic_isr0(void)
-{
-	if (LPLD_FTM_IsCHnF(FTM1, FTM_Ch0))
-	{
-		PulseCnt1 += 1;
-		//清空FTM0 COUNTER
-		LPLD_FTM_ClearCounter(FTM1);
-		//清除输入中断标志
-		LPLD_FTM_ClearCHnF(FTM1, FTM_Ch0);
-	}
-}
-void ic_isr1(void)
-{
-	if (LPLD_FTM_IsCHnF(FTM2, FTM_Ch0))
-	{
-		PulseCnt2 += 1;
-		//清空FTM0 COUNTER
-		LPLD_FTM_ClearCounter(FTM2);
-		//清除输入中断标志
-		LPLD_FTM_ClearCHnF(FTM2, FTM_Ch0);
-	}
-}
-
-
-void SpeedInit(void)
-{
-	FTM_InitTypeDef ftm1_init_struct;
-	ftm1_init_struct.FTM_Ftmx = FTM1;      //使能FTM1通道
-	ftm1_init_struct.FTM_Mode = FTM_MODE_IC;       //使能输入捕获模式
-	ftm1_init_struct.FTM_ClkDiv = FTM_CLK_DIV128;  //计数器频率为总线时钟的128分频
-	ftm1_init_struct.FTM_Isr = ic_isr0;     //设置中断函数
-	//初始化FTM0
-	LPLD_FTM_Init(ftm1_init_struct);
-	//使能输入捕获对应通道,上升沿捕获进入中断
-	LPLD_FTM_IC_Enable(FTM1, FTM_Ch0, PTB0, CAPTURE_RI);
-
-	//使能FTM0中断
-	LPLD_FTM_EnableIrq(ftm1_init_struct);
-
-	ftm1_init_struct.FTM_Ftmx = FTM2;      //使能FTM1通道
-	ftm1_init_struct.FTM_Mode = FTM_MODE_IC;       //使能输入捕获模式
-	ftm1_init_struct.FTM_ClkDiv = FTM_CLK_DIV128;  //计数器频率为总线时钟的128分频
-	ftm1_init_struct.FTM_Isr = ic_isr1;     //设置中断函数
-	//初始化FTM0
-	LPLD_FTM_Init(ftm1_init_struct);
-	//使能输入捕获对应通道,上升沿捕获进入中断
-	LPLD_FTM_IC_Enable(FTM1, FTM_Ch0, PTB0, CAPTURE_RI);
-
-	//使能FTM0中断
-	LPLD_FTM_EnableIrq(ftm1_init_struct);
-}
-float Dir_Kp_Correction[100];
 float IntSum = 0;
 void DirControlValueCale(void)
 {
-	// 2  1
-	//50   40  30  20  10 
-
-	/*static float PreError=0;
-	static float temp = 0;
-	Dir_PID.LastError = Dir_PID.ThisError;
-	Dir_PID.ThisError = Dir_PID.ControlValue;
-	Dir_Diff = Dir_PID.LastError-Dir_PID.ThisError;//为了迎合微分项的负号
-	Dir_PID.OutValue = -Dir_PID.ThisError*Dir_PID.Kp + Dir_PID.Kd*Dir_Diff;
-	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
-	TempValue.DirOutValue_New = Dir_PID.OutValue;*/
-	/*static DirPID_TypeDef *p = &Dir_PID;
-
-	p->ThisError = p->ControlValue;
-	p->OutValue = -p->Kp*(p->ThisError - p->LastError)\
-	+ p->Kd*(p->ThisError - 2 * p->LastError + p->PreError);
-	p->PreError = p->LastError;
-	p->LastError = p->ThisError;
-	p->OutValueSum += p->OutValue;
-	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
-	TempValue.DirOutValue_New = p->OutValueSum;*/
-
-
-	//float Dir_Diff;
 	static float Ki = 0;
 	static float Last_DirAngSpeed;
 	extern float Dir_AngSpeed;
@@ -351,37 +264,6 @@ void DirControlValueCale(void)
 	TempValue.DirOutValue_Old = TempValue.DirOutValue_New;
 	TempValue.DirOutValue_New = Dir_PID.OutValue;
 	Last_DirAngSpeed = Dir_AngSpeed;
-	/*TempValue.DirOutValue = Dir_PID.OutValue;
-	if (TempValue.DirOutValue > 0)
-	{
-		TempValue.Dir_LeftOutValue = TempValue.DirOutValue;
-		TempValue.Dir_RightOutValue = -TempValue.DirOutValue;
-	}
-	else
-	{
-		TempValue.Dir_LeftOutValue = TempValue.DirOutValue;
-		TempValue.Dir_RightOutValue = -TempValue.DirOutValue;
-	}*/
-	/*static float LeftError=0;
-	static float RightError=0;
-	static float LastLeftError = 0;
-	static float LastRightError = 0;
-	LastLeftError = LeftError;
-	LastRightError = RightError;
-	LeftError = CCDMain_Status.LeftSet - CCDMain_Status.LeftPoint;
-	RightError = CCDMain_Status.RightSet - CCDMain_Status.RightPoint;
-	if (CCDMain_Status.Left_LostFlag == 1)
-	{
-	TempValue.Dir_RightOutValue = -(LeftError+RightError/4)*Dir_PID.Kp + Dir_PID.Kd*(LastLeftError - LeftError);
-	}
-	else
-	TempValue.Dir_RightOutValue = -LeftError*Dir_PID.Kp + Dir_PID.Kd*(LastLeftError - LeftError);
-	if (CCDMain_Status.Right_LostFlag == 1)
-	{
-	TempValue.Dir_LeftOutValue = -(RightError+LeftError/4)*Dir_PID.Kp + Dir_PID.Kd*(LastRightError - RightError);
-	}
-	else
-	TempValue.Dir_LeftOutValue = -RightError*Dir_PID.Kp + Dir_PID.Kd*(LastRightError - RightError);*/
 }
 
 void ControlSmooth(void)
@@ -394,11 +276,13 @@ void ControlSmooth(void)
 	//TempValue.SpeedOutValueLeft = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValueLeft;
 
 	TempF = TempValue.New_SpeedOutValue - TempValue.Old_SpeedOutValue;
-	TempValue.SpeedOutValue = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValue;
+	TempValue.SpeedOutValue = TempF*((SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD) + TempValue.Old_SpeedOutValue;
 
 
 	TempF = TempValue.DirOutValue_New - TempValue.DirOutValue_Old;
 	TempValue.DirOutValue = TempF*(DirectionConrtolPeriod + 1) / DIRECTION_CONTROL_PERIOD + TempValue.DirOutValue_Old;
+	TempF = TempValue.New_AngSet - TempValue.Old_AngSet;
+	AngSet_Var = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_AngSet;
 	if (TempValue.DirOutValue > 0)
 	{
 	TempValue.Dir_LeftOutValue = TempValue.DirOutValue;

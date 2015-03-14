@@ -109,6 +109,9 @@ typedef struct
 	float SpeedOutValue;//
 	float New_SpeedOutValue;
 	float Old_SpeedOutValue;
+
+	float Old_AngSet;
+	float New_AngSet;
 } TempOfMotor_TypeDef;
 
 typedef struct

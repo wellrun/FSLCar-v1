@@ -15,7 +15,7 @@
 #include "oled.h"
 #include "L3G4200.h"
 #include "key.h"
-
+#define ABS(x)  ( (x)>0?(x):-(x) ) 
 extern float GravityAngle; //÷ÿ¡¶Ω«
 extern short TimeFlag_5Ms, TimeFlag_40Ms, TimeFlag_20Ms, TimeFlag_2Ms;
 extern unsigned char CCDReady;

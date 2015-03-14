@@ -155,7 +155,7 @@ void Init_FTM(void)
 {
   	Init_FTM_Struct.FTM_Ftmx = FTM0;
 	Init_FTM_Struct.FTM_Mode = FTM_MODE_PWM;
-	Init_FTM_Struct.FTM_PwmFreq = 10000;
+	Init_FTM_Struct.FTM_PwmFreq = 20000;
 	LPLD_FTM_Init(Init_FTM_Struct);
 	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch0, 0, PTC1, ALIGN_LEFT); //左边电机正转
 	LPLD_FTM_PWM_Enable(FTM0, FTM_Ch3, 0, PTC4, ALIGN_LEFT); //左边电机反转
