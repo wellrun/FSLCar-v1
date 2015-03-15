@@ -14,11 +14,11 @@ float tempfloat = 0;//临时变量,没有意义
 //float Speed_Dt = 0.04;//速度的周期
 signed char Beep = 0;
 int Beep_TimeMs = 0;
-#define ScopeDataNum 4
+#define ScopeDataNum 8
 #define OutDataLen (ScopeDataNum*4+4)
 #define PageDateLen (4*9)
 uint8 OUTDATA[OutDataLen] =
-{ 0x03, 0xfc, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 0xfc, 0x03 }; //示波器
+{ 0x03, 0xfc, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 0xfc, 0x03 }; //示波器
 //--控制区
  uint8 Debuger = 1;
  uint8 CCDOn = 1;
@@ -41,6 +41,9 @@ short TimerMsCnt = 0,AngTimes=0;
 signed char FlagToPhone = 0;
 uint8 Voltage_Display = 0;
 float Voltage = 0;
+signed char CarStart = 0;//为0未发车.为1已发车
+signed char CarStart_Mask = 0;//为1允许发车,为0不允许发车
+signed char CarStand_Mask = 0;//为0不允许站立,
 unsigned char Status_Check(void)
 {
 	if (((CarInfo_Now.CarAngle < CAR_STAND_ANG_MIN) || (CarInfo_Now.CarAngle > CAR_STAND_ANG_MAX)))
@@ -50,7 +53,11 @@ unsigned char Status_Check(void)
 		Speed_PID.IntegralSum = 0;
 		Speed_PID.OutValueSum_Right = 0;
 		Speed_PID.OutValueSum_Left = 0;
-                TempValue.New_SpeedOutValue=0;
+        TempValue.New_SpeedOutValue=0;
+		SpeedSet_Variable = 0;
+		CarStart = 0;
+		CarStart_Mask = 0;
+		CarStand_Mask = 0;
 		IntSum = 0;
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch0, 0);
 		LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch1, 0);
@@ -64,12 +71,34 @@ unsigned char Status_Check(void)
 		{
 			if (((CarInfo_Now.CarAngle - Ang_PID.AngSet) <5) || ((CarInfo_Now.CarAngle - Ang_PID.AngSet) >-5))
 			{
-				CarStandFlag = 1;
+				if (CarStand_Mask==1)
+				{
+					CarStandFlag = 1;
+				}	
 			}
 			else
 			{
 				Speed_PID.OutValueSum = 0;
 				Speed_PID.IntegralSum = 0;
+				Speed_PID.OutValueSum_Right = 0;
+				Speed_PID.OutValueSum_Left = 0;
+				TempValue.New_SpeedOutValue = 0;
+			}
+		}
+		if (CarStandFlag==1)
+		{
+			if (CarStart_Mask==1 && CarStart==0)
+			{
+				CarStart = 1;
+                                SpeedSet_Variable=20;
+			}
+			else if (CarStart_Mask==1 && CarStart==1)
+			{
+				SpeedSet_Variable += 0.03;
+				if (SpeedSet_Variable >Speed_PID.SpeedSet)
+				{
+					SpeedSet_Variable = Speed_PID.SpeedSet;
+				}
 			}
 		}
 		return 0;
@@ -95,64 +124,6 @@ void Speed_Change(void)//测试速度pi用..需要配合示波器
 	}
 	
 }
-
-void AngleCon_Isr(void)
-{
-	unsigned char integration_piont;
-	
-		CCDTimeMs+=2;
-		TimerMsCnt += 2;
-		AngTimes += 2;
-		SpeedControlPeriod += 2;
-		DirectionConrtolPeriod += 2;
-		integration_piont = DIRECTION_CONTROL_PERIOD - IntegrationTime;
-		if (integration_piont == CCDTimeMs)
-		{
-			LPLD_GPIO_Output_b(PTC, 0,1);
-			StartIntegration_M();
-		}
-		if (CCDTimeMs >= DIRECTION_CONTROL_PERIOD)
-		{
-			LPLD_GPIO_Output_b(PTC, 0, 0);
-			ImageCapture_M(CCDM_Arr, CCDS_Arr);
-			CCDTimeMs = 0;
-			CCDReady = 1;
-			DirectionConrtolPeriod = 0;
-		}
-		if (TimerMsCnt >= SPEED_CONTROL_PERIOD)
-		{
-			TimeFlag_40Ms = 1;
-			TimerMsCnt = 0;
-			SpeedControlPeriod = 0;
-		}
-		Beep_Isr();
-		if (AngTimes == 2)
-		{
-			AngTimes = 0;
-			AngleGet();
-			AngleControlValueCalc();
-			AngData_Ready = 1;
-			Status_Check();
-			if (CarStandFlag == 1 && CarStop == 0)
-			{
-				MotorControl_Out(); //输出电机控制的值
-			}
-			else
-			{
-				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch0, 0);
-				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch1, 0);
-				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch2, 0);
-				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch3, 0);
-                                if (CarStandFlag != 0)
-				{
-					CarStandFlag = 0;
-					//LPLD_LPTMR_DelayMs(3000);
-				}
-			}
-		}
-}
-
-
 void CCDCP(void)
 {
 	
@@ -182,6 +153,67 @@ void CCDCP(void)
 		CCDS_Arr[CCDSlave_Status.RightPoint] = 200;
 	}
 }
+void AngleCon_Isr(void)
+{
+	unsigned char integration_piont;
+	
+		CCDTimeMs+=2;
+		TimerMsCnt += 2;
+		AngTimes += 2;
+		SpeedControlPeriod += 2;
+		DirectionConrtolPeriod += 2;
+		integration_piont = DIRECTION_CONTROL_PERIOD - IntegrationTime;
+		if (integration_piont == CCDTimeMs)
+		{
+			LPLD_GPIO_Output_b(PTC, 0,1);
+			StartIntegration_M();
+		}
+		if (CCDTimeMs >= DIRECTION_CONTROL_PERIOD)
+		{
+			LPLD_GPIO_Output_b(PTC, 0, 0);
+			ImageCapture_M(CCDM_Arr, CCDS_Arr);
+			CCDCP();
+			CCDTimeMs = 0;
+			CCDReady = 1;
+			DirectionConrtolPeriod = 0;
+		}
+		if (TimerMsCnt >= SPEED_CONTROL_PERIOD)
+		{
+			TimeFlag_40Ms = 1;
+			TimerMsCnt = 0;
+			SpeedControlPeriod = 0;
+			SpeedControlValueCalc();
+			LPLD_GPIO_Toggle_b(PTA, 17);//一闪一闪亮晶晶
+		}
+		Beep_Isr();
+		if (AngTimes == 2)
+		{
+			AngTimes = 0;
+			AngleGet();
+			AngleControlValueCalc();
+			AngData_Ready = 1;
+			Status_Check();
+			if (CarStandFlag == 1 && CarStop == 0)
+			{
+				MotorControl_Out(); //输出电机控制的值
+			}
+			else
+			{
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch0, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch1, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch2, 0);
+				LPLD_FTM_PWM_ChangeDuty(FTM0, FTM_Ch3, 0);
+                                if (CarStandFlag != 0)
+				{
+					CarStandFlag = 0;
+					//LPLD_LPTMR_DelayMs(3000);
+				}
+			}
+		}
+}
+
+
+
 	/*测试死区参数*/
 	uint32 death1 = 0, death2 = 0, death3= 0, death4 = 0;
 void main(void)
@@ -233,17 +265,9 @@ void main(void)
 	}//右反300,右正300,左翻650,左正430*/
 	while (1)
 	{
-		//更改了时间片的模式
-		if (TimeFlag_40Ms == 1)
-		{
-			TimeFlag_40Ms = 0;
-			LPLD_GPIO_Toggle_b(PTA, 17);//一闪一闪亮晶晶
-			SpeedControlValueCalc();
-		}
 		if (CCDReady==1)
 		{
 			CCDReady = 0;
-			CCDCP();
 			Voltage_Cnt++;
 			if (Voltage_Cnt > 10)
 			{
@@ -405,7 +429,7 @@ void main(void)
 
 					//调速度PI
 
-					tempfloat = (float)Speed_PID.SpeedSet;
+					tempfloat = (float)SpeedSet_Variable;
  					Float2Byte(&tempfloat, OUTDATA, 2);
 					//tempfloat = CarInfo_Now.MotorCounterRight/ 10;
 					tempfloat = TempValue.AngControl_OutValue/100;
@@ -415,6 +439,15 @@ void main(void)
 					//tempfloat = (float)CarInfo_Now.MotorCounterLeft/ 10;
 					tempfloat = TempValue.SpeedOutValue/100;
  					Float2Byte(&tempfloat, OUTDATA, 14);
+
+					tempfloat = CarInfo_Now.CarAngle;
+					Float2Byte(&tempfloat, OUTDATA, 18);
+					tempfloat = CarInfo_Now.CarAngSpeed;
+					Float2Byte(&tempfloat, OUTDATA, 22);
+					tempfloat = Ang_PID.AngSet;
+					Float2Byte(&tempfloat, OUTDATA, 26);
+					tempfloat = (float)CarInfo_Now.MotorCounterRight / 10;
+					Float2Byte(&tempfloat, OUTDATA, 30);
 
 
 

@@ -57,6 +57,7 @@ uint32_t SystemCoreClock = DEFAULT_SYSTEM_CLOCK;
  */
 void SystemInit (void) {
   UART_InitTypeDef term_port_structure;
+  UART_FIFO_Config_T Uart_Fifo;
   //使能全部IO时钟
   SIM->SCGC5 |= (SIM_SCGC5_PORTA_MASK
               | SIM_SCGC5_PORTB_MASK
@@ -91,10 +92,14 @@ void SystemInit (void) {
   //初始化用于打印调试信息的串口模块
   //TERM_PORT为UART通道，在k60_card.h中定义
   //TERMINAL_BAUD为UART波特率，在k60_card.h中定义
+  Uart_Fifo.FIFO_Enable = TRUE;
+  Uart_Fifo.FIFO_WaterMark = 0;
   term_port_structure.UART_Uartx = TERM_PORT;
   term_port_structure.UART_BaudRate = TERMINAL_BAUD;
   term_port_structure.UART_RxPin = PTA15;
   term_port_structure.UART_TxPin = PTA14;
+  term_port_structure.TxFIFO = Uart_Fifo;
+  /*term_port_structure.*/
   LPLD_UART_Init(term_port_structure);
   
   //打印系统调试信息

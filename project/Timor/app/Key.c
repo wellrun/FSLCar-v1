@@ -359,21 +359,7 @@ void Key_Isr(void)
 			
 		}
 	}
-	else if (LPLD_GPIO_IsPinxExt(PORTD, GPIO_Pin7))
-	{
-		if (Voltage_Display == 1)
-		{
-			Voltage_Display = 0;
-		}
-		else
-		{
-			Voltage_Display = 1;
-		}
-		while (LPLD_GPIO_Input_b(PTD, 7) == 0)
-		{
-		}
-	}
-	else if (LPLD_GPIO_IsPinxExt(PORTD, GPIO_Pin4))
+	/*else if (LPLD_GPIO_IsPinxExt(PORTD, GPIO_Pin4))
 	{
 		while (LPLD_GPIO_Input_b(PTD, 4) == 0)
 		{
@@ -384,5 +370,21 @@ void Key_Isr(void)
 		LED_Fill(0);
 		Key_delay();
 		Key_delay();
+	}*/
+	else if (LPLD_GPIO_IsPinxExt(PORTD, GPIO_Pin7))
+	{
+		if (CarStart_Mask==0)
+		{
+			CarStart_Mask = 1;
+                        BeepBeepBeep(200);
+		}
+	}
+	else if (LPLD_GPIO_IsPinxExt(PORTD, GPIO_Pin4))
+	{
+		if (CarStand_Mask == 0)
+		{
+			CarStand_Mask = 1;
+			BeepBeepBeep(200);
+		}
 	}
 }

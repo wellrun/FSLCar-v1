@@ -5,12 +5,12 @@
 //float AngToMotorRatio=300;//角度转换成电机控制的比例因子..我也不知道取多少合适..以后再调试
 #define MOTOR_OUT_MAX       9500
 #define MOTOR_OUT_MIN       -9500
-#define ANGLE_CONTROL_OUT_MAX			15000
-#define ANGLE_CONTROL_OUT_MIN			-15000
-#define SPEED_CONTROL_OUT_MAX			9000
-#define SPPED_CONTROL_OUT_MIN			-9000
+#define ANGLE_CONTROL_OUT_MAX			12000
+#define ANGLE_CONTROL_OUT_MIN			-12000
+#define SPEED_CONTROL_OUT_MAX			8000
+#define SPPED_CONTROL_OUT_MIN			-5000
 //轮子转一圈..编码器增加5200
-int  DeathValueLeft = 220;//死区电压 2%的占空比S
+int  DeathValueLeft = 290;//死区电压 2%的占空比S
 int DeathValueRight = 90;//右轮的死区电压 
 
 extern float Ang_dt;//控制周期,在主函数定义,20ms
@@ -29,10 +29,10 @@ extern char CarStandFlag;
 void Beep_Isr(void)
 {
 	static int Cnt_Times = 0;
-	if (CarStandFlag == 1 && CarInfo_Now.CarSpeed > 00 && Beep == 1)
+	if (CarStart_Mask==1 && Beep == 1)
 	{
 		LPLD_GPIO_Output_b(PTC, 10, 1);
-		Cnt_Times ++;
+		Cnt_Times +=2;
 		if (Cnt_Times > Beep_TimeMs)
 		{
 			LPLD_GPIO_Output_b(PTC, 10, 0);
@@ -87,11 +87,13 @@ Speed_Data_Struct* CounterGet(int Mode)
 {//FTM1是左电机,FTM2是右电机
 	Speed_Data_Struct *p = &SpeedCnt;
 	static int LeftSum1, RightSum1, LeftSum2, RightSum2;
+	static int LastCntLeft = 0, LastCntRight = 0;
 	int LeftCnt, RightCnt;
 	LeftCnt = LPLD_FTM_GetCounter(FTM2);
 	RightCnt = LPLD_FTM_GetCounter(FTM1);
 	LPLD_FTM_ClearCounter(FTM1);
 	LPLD_FTM_ClearCounter(FTM2);
+
 	if (LeftCnt >= 30000)
 	{
 		LeftCnt -= 65535;
@@ -100,6 +102,12 @@ Speed_Data_Struct* CounterGet(int Mode)
 	{
 		RightCnt -= 65535;
 	}
+        LeftCnt = (int)((float)LeftCnt*0.6 +(float) LastCntLeft*0.4);
+	RightCnt = (int)((float)RightCnt*0.6 + (float)LastCntRight*0.4);
+	LastCntRight = RightCnt;
+	LastCntLeft = LeftCnt;
+        
+        
 	RightCnt = -RightCnt;
 	LeftSum1 += LeftCnt;
 	RightSum1 += RightCnt;
@@ -230,23 +238,33 @@ void SpeedControlValueCalc(void)
 	CarInfo_Now.MotorCounterLeft = ps->Left;
 	CarInfo_Now.MotorCounterRight = ps->Right;
 	CarInfo_Now.CarSpeed = (ps->Left + ps->Right) / 20;
-        p->ThisError = Speed_PID.SpeedSet - CarInfo_Now.CarSpeed;
+        p->ThisError = SpeedSet_Variable - CarInfo_Now.CarSpeed;
 	if (p->ThisError > ErrorMax)
 		p->ThisError = ErrorMax;
 	else if (p->ThisError < -ErrorMax)
 		p->ThisError = -ErrorMax;
-	p->OutValue = p->Kp*(p->ThisError - p->LastError) \
-		+ (p->Ki / 10.0)*p->ThisError \
-		+ p->Kd*(p->ThisError - 2 * p->LastError + p->PreError);
+	if (p->ThisError>=0)
+	{
+		p->OutValue = p->Kp*(p->ThisError - p->LastError) \
+			+ (p->Ki / 10.0)*p->ThisError \
+			+ p->Kd*(p->ThisError - 2 * p->LastError + p->PreError);
+	}
+	else
+	{
+		p->OutValue = (p->Kp*1.5)*(p->ThisError - p->LastError) \
+			+ (p->Ki / 4)*p->ThisError \
+			+ p->Kd*(p->ThisError - 2 * p->LastError + p->PreError);
+	}
 	p->PreError = p->LastError;
 	p->LastError = p->ThisError;
 	p->OutValueSum += p->OutValue;
+	if (p->OutValueSum  > SPEED_CONTROL_OUT_MAX)
+		p->OutValueSum = SPEED_CONTROL_OUT_MAX;
+	else if (p->OutValueSum  < SPPED_CONTROL_OUT_MIN)
+		p->OutValueSum = SPPED_CONTROL_OUT_MIN;
 	TempValue.Old_SpeedOutValue = TempValue.New_SpeedOutValue;
 	TempValue.New_SpeedOutValue = p->OutValueSum;
-	if (TempValue.New_SpeedOutValue > SPEED_CONTROL_OUT_MAX)
-		TempValue.New_SpeedOutValue = SPEED_CONTROL_OUT_MAX;
-	else if (TempValue.New_SpeedOutValue < SPPED_CONTROL_OUT_MIN)
-		TempValue.New_SpeedOutValue = SPPED_CONTROL_OUT_MIN;
+
 }
 float IntSum = 0;
 void DirControlValueCale(void)
@@ -276,11 +294,13 @@ void ControlSmooth(void)
 	//TempValue.SpeedOutValueLeft = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_SpeedOutValueLeft;
 
 	TempF = TempValue.New_SpeedOutValue - TempValue.Old_SpeedOutValue;
-	TempValue.SpeedOutValue = TempF*((SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD) + TempValue.Old_SpeedOutValue;
+	TempValue.SpeedOutValue = TempF*((SpeedControlPeriod + 1) / (float)SPEED_CONTROL_PERIOD) + TempValue.Old_SpeedOutValue;
 
 
 	TempF = TempValue.DirOutValue_New - TempValue.DirOutValue_Old;
-	TempValue.DirOutValue = TempF*(DirectionConrtolPeriod + 1) / DIRECTION_CONTROL_PERIOD + TempValue.DirOutValue_Old;
+	TempValue.DirOutValue = TempF*(DirectionConrtolPeriod + 1) /(float)DIRECTION_CONTROL_PERIOD + TempValue.DirOutValue_Old;
+
+
 	TempF = TempValue.New_AngSet - TempValue.Old_AngSet;
 	AngSet_Var = TempF*(SpeedControlPeriod + 1) / SPEED_CONTROL_PERIOD + TempValue.Old_AngSet;
 	if (TempValue.DirOutValue > 0)

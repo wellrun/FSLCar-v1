@@ -30,13 +30,13 @@ void Struct_Init(void) //在这里调试初始参数,把准备好的参数发往调试器
 {
 	int i;
 	float  a = 0,b=0;
-	Ang_PID.Kp = 350; 
-	Ang_PID.Kd =13; 
-	Ang_PID.AngSet = 47.5; 
-	Speed_PID.SpeedSet = 0;
-	Speed_PID.Kp = -36;
-	Speed_PID.Ki =-60;
-	Speed_PID.Kd = 0;
+	Ang_PID.Kp = 420; 
+	Ang_PID.Kd =16; 
+	Ang_PID.AngSet = 49.5; 
+	Speed_PID.SpeedSet = 45;
+	Speed_PID.Kp = -70;
+	Speed_PID.Ki =-40;
+	//Speed_PID.Kd = 0;
 	Dir_PID.Kp = 76;
 	Dir_PID.Kd =5.2;
 	

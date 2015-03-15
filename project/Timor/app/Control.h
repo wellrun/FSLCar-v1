@@ -8,7 +8,7 @@
 #include "datastructure.h"
 // #define CONTROL_PERIOD	5 //电机的输出周期
 // #define SPEED_CONTROL_COUNT 8 //速度控制的分割次数
-#define SPEED_CONTROL_PERIOD 100//速度控制的总时间40ms
+#define SPEED_CONTROL_PERIOD 50//速度控制的总时间40ms
 //#define DIRECTION_CONTROL_COUNT			4  //方向控制是20Ms一次
 #define DIRECTION_CONTROL_PERIOD		18//方向控制的总时间
 
@@ -20,7 +20,7 @@ extern TempOfMotor_TypeDef TempValue; //临时存储角度和速度控制浮点变量的结构体
 //extern SpeedPID_TypeDef Speed_PID;
 extern DirPID_TypeDef Dir_PID;
 extern SpeedPID_TypeDef Speed_PID;
-
+extern float SpeedSet_Variable;
 typedef struct 
 {
 	int Left;

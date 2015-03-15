@@ -29,11 +29,11 @@ extern float IntSum;
 extern float Dir_AngSpeed;
 extern short SpeedControlPeriod, DirectionConrtolPeriod;
 extern short Screen_WhichCCDImg;
-
+extern signed char CarStart_Mask;
 extern void Beep_Isr(void);
 extern void AngleIntegration(float Anglespeed);
 extern float GravityAngle, GyroscopeAngleSpeed;
-
+extern signed char CarStand_Mask;
 
 
 
